@@ -4,7 +4,10 @@ import {
   ChevronsUpDown,
   CreditCard,
   LogOut,
+  Monitor,
+  Moon,
   Sparkles,
+  Sun,
 } from "lucide-react"
 
 import {
@@ -27,6 +30,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { useThemeStore, type Theme } from "@/stores/theme-store"
 
 export function NavUser({
   user,
@@ -38,6 +42,13 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar()
+  const { theme, setTheme } = useThemeStore()
+
+  const themeOptions: { value: Theme; label: string; icon: typeof Sun }[] = [
+    { value: "system", label: "System", icon: Monitor },
+    { value: "light", label: "Light", icon: Sun },
+    { value: "dark", label: "Dark", icon: Moon },
+  ]
 
   return (
     <SidebarMenu>
@@ -98,6 +109,22 @@ export function NavUser({
                 <Bell />
                 Notifications
               </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">
+                Theme
+              </DropdownMenuLabel>
+              {themeOptions.map((opt) => (
+                <DropdownMenuItem
+                  key={opt.value}
+                  onClick={() => setTheme(opt.value)}
+                  className={theme === opt.value ? "font-medium text-foreground" : "text-muted-foreground"}
+                >
+                  <opt.icon />
+                  {opt.label}
+                </DropdownMenuItem>
+              ))}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem>

@@ -43,10 +43,6 @@ const routes: RouteObject[] = [
         path: "emails",
         lazy: () => import("@/features/emails/emails-page"),
       },
-      {
-        path: "assistant",
-        lazy: () => import("@/features/assistant/assistant-page"),
-      },
     ],
   },
 ];

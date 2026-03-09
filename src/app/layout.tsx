@@ -1,5 +1,6 @@
 import { Link, Outlet, useLocation } from "react-router";
 import { AppSidebar } from "@/components/app-sidebar";
+import { ChatBar } from "@/components/chat-bar";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -27,7 +28,6 @@ const SECTION_TITLES: Record<string, string> = {
   interviews: "Interviews",
   assessments: "Assessments",
   emails: "Emails",
-  assistant: "Assistant",
 };
 
 interface Crumb {
@@ -74,7 +74,7 @@ export function RootLayout() {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset className="min-w-0 overflow-hidden">
+      <SidebarInset className="relative min-w-0 max-h-svh overflow-hidden">
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
@@ -107,9 +107,10 @@ export function RootLayout() {
             </Breadcrumb>
           </div>
         </header>
-        <div className="flex w-full flex-1 flex-col gap-6 pb-12 pl-12 pr-12 pt-4">
+        <div className="flex w-full flex-1 flex-col gap-6 overflow-y-auto px-17 pb-12 pt-6">
           <Outlet />
         </div>
+        <ChatBar />
       </SidebarInset>
     </SidebarProvider>
   );

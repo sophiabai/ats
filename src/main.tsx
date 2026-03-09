@@ -4,6 +4,7 @@ import { RouterProvider } from "react-router";
 import { Providers } from "@/app/providers";
 import { createRouter } from "@/app/router";
 import "@/index.css";
+import "@/stores/theme-store";
 
 const router = createRouter();
 

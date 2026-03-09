@@ -6,7 +6,6 @@ import {
   CalendarDays,
   ClipboardCheck,
   Mail,
-  Bot,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -17,7 +16,6 @@ const sections = [
   { title: "Interviews", description: "Schedule and manage", icon: CalendarDays, href: "/interviews" },
   { title: "Assessments", description: "Scorecards and decisions", icon: ClipboardCheck, href: "/assessments" },
   { title: "Emails", description: "Communication logs", icon: Mail, href: "/emails" },
-  { title: "Assistant", description: "AI-powered help", icon: Bot, href: "/assistant" },
 ];
 
 export function Component() {

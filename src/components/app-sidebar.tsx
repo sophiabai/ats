@@ -7,6 +7,7 @@ import {
   ClipboardList,
   FileText,
   Inbox,
+  Search,
   Send,
   SquareKanban,
   TrendingUp,
@@ -16,10 +17,11 @@ import {
 } from "lucide-react"
 import logoUrl from "@/assets/Logo.svg"
 
-import { NavMain } from "@/components/nav-main"
+import { NavMain, type NavMainItem } from "@/components/nav-main"
 import { NavProjects } from "@/components/nav-projects"
 import { NavUser } from "@/components/nav-user"
 import { TeamSwitcher } from "@/components/team-switcher"
+import { useChatBarStore } from "@/stores/chat-bar-store"
 import {
   Sidebar,
   SidebarContent,
@@ -57,6 +59,11 @@ const data = {
       url: "#",
       icon: Inbox,
       isActive: true,
+    },
+    {
+      title: "Search",
+      url: "#",
+      icon: Search,
     },
     {
       title: "Outreach",
@@ -123,13 +130,19 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { setOpen } = useChatBarStore()
+
+  const quickAccess: NavMainItem[] = data.quickAccess.map((item) =>
+    item.title === "Search" ? { ...item, onClick: () => setOpen(true) } : item
+  )
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <TeamSwitcher teams={data.teams} />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain label="Quick Access" items={data.quickAccess} />
+        <NavMain label="Quick Access" items={quickAccess} />
         <NavProjects
           label="Recruiting"
           items={data.recruiting}

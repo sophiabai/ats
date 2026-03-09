@@ -17,12 +17,9 @@ import { ApplicationTabContent } from "@/features/candidates/components/applicat
 function ProfileSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Skeleton className="size-16 rounded-full" />
-        <div className="space-y-2">
-          <Skeleton className="h-7 w-48" />
-          <Skeleton className="h-4 w-64" />
-        </div>
+      <div className="space-y-2">
+        <Skeleton className="h-7 w-48" />
+        <Skeleton className="h-4 w-64" />
       </div>
       <Skeleton className="h-10 w-full" />
       <Skeleton className="h-64 w-full" />
@@ -64,11 +61,7 @@ export function Component() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start gap-4">
-        <div className="flex size-16 shrink-0 items-center justify-center rounded-full bg-muted text-xl font-semibold uppercase">
-          {candidate.first_name[0]}
-          {candidate.last_name[0]}
-        </div>
+      <div>
         <div className="min-w-0">
           <h1 className="text-2xl font-bold tracking-tight">
             {candidate.first_name} {candidate.last_name}
@@ -132,6 +125,7 @@ export function Component() {
           )}
         </div>
       </div>
+
 
       {apps.length === 0 ? (
         <p className="text-muted-foreground">

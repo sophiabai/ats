@@ -8,17 +8,20 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
+export interface NavMainItem {
+  title: string
+  url: string
+  icon?: LucideIcon
+  isActive?: boolean
+  onClick?: () => void
+}
+
 export function NavMain({
   label,
   items,
 }: {
   label: string
-  items: {
-    title: string
-    url: string
-    icon?: LucideIcon
-    isActive?: boolean
-  }[]
+  items: NavMainItem[]
 }) {
   return (
     <SidebarGroup>
@@ -26,7 +29,11 @@ export function NavMain({
       <SidebarMenu>
         {items.map((item) => (
           <SidebarMenuItem key={item.title}>
-            <SidebarMenuButton isActive={item.isActive} tooltip={item.title}>
+            <SidebarMenuButton
+              isActive={item.isActive}
+              tooltip={item.title}
+              onClick={item.onClick}
+            >
               {item.icon && <item.icon />}
               <span>{item.title}</span>
             </SidebarMenuButton>
