@@ -1,5 +1,4 @@
 import Markdown from "react-markdown";
-import { cn } from "@/lib/utils";
 import type { ChatMessage } from "@/types";
 
 interface MessageBubbleProps {
