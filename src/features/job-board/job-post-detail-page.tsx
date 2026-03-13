@@ -150,7 +150,7 @@ export function Component() {
   const payRanges = job.location_pay_ranges;
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-[1000px] space-y-6">
       <div>
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-bold tracking-tight">{job.title}</h1>
