@@ -58,7 +58,6 @@ const data = {
       title: "Inbox",
       url: "#",
       icon: Inbox,
-      isActive: true,
     },
     {
       title: "Search",
@@ -86,7 +85,6 @@ const data = {
       name: "Candidates",
       url: "#",
       icon: Users,
-      isActive: true,
       items: [
         { title: "All candidates", url: "/candidates" },
         { title: "Design Engineering", url: "#" },
@@ -96,8 +94,17 @@ const data = {
     },
     {
       name: "Headcount Planning",
-      url: "#",
+      url: "/headcount-planning",
       icon: TrendingUp,
+      items: [
+        { title: "My team", url: "/headcount-planning/my-team" },
+        { title: "Roster", url: "/headcount-planning/roster" },
+        { title: "Plan", url: "/headcount-planning/plan" },
+        { title: "Budget", url: "/headcount-planning/budget" },
+        { title: "Scenarios", url: "/headcount-planning/scenarios" },
+        { title: "Approvals", url: "/headcount-planning/approvals" },
+        { title: "Settings", url: "/headcount-planning/settings" },
+      ],
     },
     {
       name: "Analytics",
@@ -113,7 +120,7 @@ const data = {
     },
     {
       name: "Internal Job Board",
-      url: "#",
+      url: "/job-board",
       icon: SquareKanban,
     },
     {

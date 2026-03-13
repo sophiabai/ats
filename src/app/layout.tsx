@@ -21,19 +21,39 @@ export interface BreadcrumbState {
   pageTitle?: string;
 }
 
-const SECTION_TITLES: Record<string, string> = {
+interface Crumb {
+  title: string;
+  href: string;
+}
+
+const SEGMENT_TITLES: Record<string, string> = {
   requisitions: "Requisitions",
   candidates: "Candidates",
   applications: "Applications",
   interviews: "Interviews",
   assessments: "Assessments",
   emails: "Emails",
+  "headcount-planning": "Headcount planning",
+  "job-board": "Internal job board",
+  "my-team": "My team",
+  roster: "Roster",
+  plan: "Plan",
+  "past-plans": "Past plans",
+  budget: "Budget",
+  scenarios: "Scenarios",
+  approvals: "Approvals",
+  settings: "Settings",
 };
 
-interface Crumb {
-  title: string;
-  href: string;
-}
+const ROUTE_OVERRIDES: Record<string, { crumbs: Crumb[]; page: string }> = {
+  "headcount-planning/past-plans": {
+    crumbs: [
+      { title: "Headcount planning", href: "/headcount-planning" },
+      { title: "Plan", href: "/headcount-planning/plan" },
+    ],
+    page: "Past plans",
+  },
+};
 
 function useBreadcrumbs(): { crumbs: Crumb[]; page: string } {
   const { pathname, state } = useLocation() as {
@@ -46,26 +66,31 @@ function useBreadcrumbs(): { crumbs: Crumb[]; page: string } {
     return { crumbs: [], page: "Home" };
   }
 
-  const pageLabel = state?.pageTitle ?? "Details";
-
   if (state?.breadcrumb && state.breadcrumb.length > 0) {
     return {
       crumbs: state.breadcrumb,
-      page: pageLabel,
+      page: state.pageTitle ?? "Details",
     };
   }
 
-  const sectionKey = segments[0];
-  const sectionTitle = SECTION_TITLES[sectionKey] ?? sectionKey;
-
-  if (segments.length === 1) {
-    return { crumbs: [], page: sectionTitle };
+  const routeKey = segments.join("/");
+  if (ROUTE_OVERRIDES[routeKey]) {
+    return ROUTE_OVERRIDES[routeKey];
   }
 
-  return {
-    crumbs: [{ title: sectionTitle, href: `/${sectionKey}` }],
-    page: pageLabel,
-  };
+  const crumbs: Crumb[] = [];
+  for (let i = 0; i < segments.length - 1; i++) {
+    const title = SEGMENT_TITLES[segments[i]];
+    if (title) {
+      crumbs.push({ title, href: "/" + segments.slice(0, i + 1).join("/") });
+    }
+  }
+
+  const lastSegment = segments[segments.length - 1];
+  const page =
+    SEGMENT_TITLES[lastSegment] ?? state?.pageTitle ?? "Details";
+
+  return { crumbs, page };
 }
 
 export function RootLayout() {
@@ -84,14 +109,9 @@ export function RootLayout() {
             />
             <Breadcrumb>
               <BreadcrumbList>
-                <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink asChild>
-                    <Link to="/">Recruiting</Link>
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                {crumbs.map((crumb) => (
+                {crumbs.map((crumb, i) => (
                   <span key={crumb.href} className="contents">
-                    <BreadcrumbSeparator className="hidden md:block" />
+                    {i > 0 && <BreadcrumbSeparator className="hidden md:block" />}
                     <BreadcrumbItem className="hidden md:block">
                       <BreadcrumbLink asChild>
                         <Link to={crumb.href}>{crumb.title}</Link>
@@ -99,7 +119,9 @@ export function RootLayout() {
                     </BreadcrumbItem>
                   </span>
                 ))}
-                <BreadcrumbSeparator className="hidden md:block" />
+                {crumbs.length > 0 && (
+                  <BreadcrumbSeparator className="hidden md:block" />
+                )}
                 <BreadcrumbItem>
                   <BreadcrumbPage>{page}</BreadcrumbPage>
                 </BreadcrumbItem>

@@ -359,7 +359,6 @@ create table hc_plan_settings (
   plan_name text not null default 'AOP 2026',
   collaborators text[] default '{}',
   archived boolean default false,
-  plan_status text default 'open' check (plan_status in ('draft', 'open', 'locked')),
   plan_locked boolean default false,
   locked_at timestamptz,
   locked_by text

@@ -1,0 +1,27 @@
+---
+description: Sync local database to cloud Supabase before every git commit
+globs:
+alwaysApply: true
+---
+
+# Deploy database on commit
+
+When the user asks you to create a git commit (or push), **always run `npm run db:deploy` first** to sync the cloud Supabase database with the local schema and seed data.
+
+## Workflow
+
+1. Run `npm run db:deploy` and wait for it to succeed.
+2. If it fails, diagnose the error and fix it before proceeding.
+3. Only after a successful deploy, continue with the git add / commit / push.
+
+## What `db:deploy` does
+
+- Drops all tables in the cloud Supabase `public` schema
+- Re-applies every migration in `supabase/migrations/` (schema)
+- Re-runs `supabase/seed.sql` (demo data)
+
+This is safe because the app is a demo — production data can be overridden.
+
+## Requirements
+
+`CLOUD_DATABASE_URL` must be set in `.env.local`. If it is missing or empty, remind the user to add it (Supabase Dashboard > Settings > Database > Connection string).

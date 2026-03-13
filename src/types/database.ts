@@ -89,6 +89,12 @@ export interface Candidate {
   avatar_url: string | null;
 }
 
+export interface LocationPayRange {
+  location: string;
+  min: number;
+  max: number;
+}
+
 export interface Requisition {
   id: string;
   created_at: string;
@@ -109,6 +115,7 @@ export interface Requisition {
   salary_max: number | null;
   salary_currency: string;
   headcount: number;
+  location_pay_ranges: LocationPayRange[] | null;
 }
 
 export interface ReqStage {
@@ -217,4 +224,112 @@ export interface Email {
   subject: string;
   body: string;
   status: "draft" | "sent" | "failed";
+}
+
+// --- Headcount Planning ---
+
+export type HcPositionType = "open" | "in_progress" | "filled" | "closed";
+export type HcPositionEmploymentType = "full_time" | "part_time" | "contract" | "intern";
+export type HcPositionPriority = "high" | "medium" | "low";
+export type HcEmploymentType = "full_time" | "contractor";
+export type HcEmployeeStatus = "active" | "on_leave" | "offboarded";
+export type HcScenarioStatus = "pending" | "approved" | "rejected";
+export type HcApprovalStatus = "pending" | "approved" | "rejected";
+
+export interface HcDepartment {
+  id: string;
+  created_at: string;
+  name: string;
+  current_headcount: number;
+  planned_headcount: number;
+  open_positions: number;
+  filled_positions: number;
+  budget_allocated: number;
+  budget_spent: number;
+}
+
+export interface HcPosition {
+  id: string;
+  created_at: string;
+  position_id: string;
+  title: string;
+  department: string;
+  level: string | null;
+  position_type: HcPositionType;
+  hiring_manager: string | null;
+  target_date: string | null;
+  location: string | null;
+  employment_type: HcPositionEmploymentType;
+  cost_center: string | null;
+  salary_min: number | null;
+  salary_max: number | null;
+  priority: HcPositionPriority;
+  in_plan: boolean;
+  scenario_id: string | null;
+}
+
+export interface HcEmployee {
+  id: string;
+  created_at: string;
+  name: string;
+  title: string;
+  department: string;
+  level: string | null;
+  location: string | null;
+  employment_type: HcEmploymentType;
+  start_date: string | null;
+  status: HcEmployeeStatus;
+  is_direct_report: boolean;
+}
+
+export interface HcScenario {
+  id: string;
+  created_at: string;
+  name: string;
+  description: string | null;
+  requested_by: string | null;
+  status: HcScenarioStatus;
+  in_plan: boolean;
+  scenario_positions?: HcScenarioPosition[];
+}
+
+export interface HcScenarioPosition {
+  id: string;
+  created_at: string;
+  scenario_id: string;
+  title: string;
+  department: string;
+  level: string | null;
+  location: string | null;
+  employment_type: HcPositionEmploymentType;
+  cost_center: string | null;
+  salary_min: number | null;
+  salary_max: number | null;
+  priority: HcPositionPriority;
+  hiring_manager: string | null;
+  target_date: string | null;
+}
+
+export type HcPlanStatus = "draft" | "open" | "locked";
+
+export interface HcPlanSettings {
+  id: string;
+  plan_name: string;
+  collaborators: string[];
+  archived: boolean;
+  plan_status: HcPlanStatus;
+  plan_locked: boolean;
+  locked_at: string | null;
+  locked_by: string | null;
+}
+
+export interface HcApprovalRequest {
+  id: string;
+  created_at: string;
+  request_id: string;
+  position: string;
+  department: string;
+  requested_by: string;
+  submitted_date: string;
+  status: HcApprovalStatus;
 }

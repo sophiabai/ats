@@ -2,6 +2,7 @@ import { useNavigate } from "react-router";
 import { formatDistanceToNow } from "date-fns";
 import { Briefcase, MapPin, Building2, Users } from "lucide-react";
 import type { BreadcrumbState } from "@/app/layout";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -12,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import { StatusBadge, EmploymentBadge } from "@/features/requisitions/components/status-badge";
 import type { RequisitionRow } from "@/features/requisitions/api/use-requisitions";
+import type { View } from "@/components/custom/view-toggle";
 
 function formatSalary(min: number | null, max: number | null, currency: string) {
   if (!min && !max) return null;
@@ -27,8 +29,81 @@ function formatSalary(min: number | null, max: number | null, currency: string) 
   return `Up to ${fmt(max!)}`;
 }
 
-export function RequisitionsTable({ data }: { data: RequisitionRow[] }) {
+interface RequisitionsTableProps {
+  data: RequisitionRow[];
+  view?: View;
+}
+
+export function RequisitionsTable({ data, view = "table" }: RequisitionsTableProps) {
   const navigate = useNavigate();
+
+  function navigateToReq(req: RequisitionRow) {
+    navigate(`/requisitions/${req.id}`, {
+      state: {
+        breadcrumb: [{ title: "Requisitions", href: "/requisitions" }],
+        pageTitle: req.title,
+      } satisfies BreadcrumbState,
+    });
+  }
+
+  if (view === "cards") {
+    return (
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {data.map((req) => {
+          const salary = formatSalary(req.salary_min, req.salary_max, req.salary_currency);
+          return (
+            <Card
+              key={req.id}
+              className="cursor-pointer transition-colors hover:bg-muted/50"
+              onClick={() => navigateToReq(req)}
+            >
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  <Briefcase className="size-4 shrink-0 text-muted-foreground" />
+                  <span className="truncate font-medium">{req.title}</span>
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <StatusBadge status={req.status} />
+                  <EmploymentBadge type={req.employment_type} />
+                </div>
+                <div className="mt-3 space-y-1.5 text-sm text-muted-foreground">
+                  {req.department && (
+                    <div className="flex items-center gap-1.5">
+                      <Building2 className="size-3.5 shrink-0" />
+                      {req.department}
+                    </div>
+                  )}
+                  {req.location && (
+                    <div className="flex items-center gap-1.5">
+                      <MapPin className="size-3.5 shrink-0" />
+                      {req.location}
+                    </div>
+                  )}
+                  <div className="flex items-center gap-4">
+                    <span className="flex items-center gap-1.5">
+                      <Users className="size-3.5" />
+                      {req.applicant_count} applicants
+                    </span>
+                    <span>{req.headcount} headcount</span>
+                  </div>
+                  {salary && <div>{salary}</div>}
+                  {req.hiring_manager_name && (
+                    <div>HM: {req.hiring_manager_name}</div>
+                  )}
+                  <div>
+                    Opened{" "}
+                    {formatDistanceToNow(new Date(req.opened_date), {
+                      addSuffix: true,
+                    })}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <Table>
@@ -51,16 +126,7 @@ export function RequisitionsTable({ data }: { data: RequisitionRow[] }) {
           <TableRow
             key={req.id}
             className="cursor-pointer"
-            onClick={() =>
-              navigate(`/requisitions/${req.id}`, {
-                state: {
-                  breadcrumb: [
-                    { title: "Requisitions", href: "/requisitions" },
-                  ],
-                  pageTitle: req.title,
-                } satisfies BreadcrumbState,
-              })
-            }
+            onClick={() => navigateToReq(req)}
           >
             <TableCell className="font-medium">
               <div className="flex items-center gap-2">

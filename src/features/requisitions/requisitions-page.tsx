@@ -1,12 +1,15 @@
+import { useState } from "react";
 import { Briefcase } from "lucide-react";
 import { useRequisitions } from "@/features/requisitions/api/use-requisitions";
 import { RequisitionsTable } from "@/features/requisitions/components/requisitions-table";
 import { RequisitionsSkeleton } from "@/features/requisitions/components/requisitions-skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ViewToggle, type View } from "@/components/custom/view-toggle";
 
 export function RequisitionsPage() {
   const { data, isLoading, error } = useRequisitions();
+  const [view, setView] = useState<View>("table");
 
   if (isLoading) {
     return <RequisitionsSkeleton />;
@@ -50,6 +53,7 @@ export function RequisitionsPage() {
             {totalApplicants} applicant{totalApplicants !== 1 ? "s" : ""}
           </p>
         </div>
+        <ViewToggle view={view} onViewChange={setView} />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
@@ -85,9 +89,13 @@ export function RequisitionsPage() {
         </Card>
       </div>
 
-      <div className="rounded-lg border">
-        <RequisitionsTable data={data} />
-      </div>
+      {view === "cards" ? (
+        <RequisitionsTable data={data} view="cards" />
+      ) : (
+        <div className="rounded-lg border">
+          <RequisitionsTable data={data} view="table" />
+        </div>
+      )}
     </div>
   );
 }

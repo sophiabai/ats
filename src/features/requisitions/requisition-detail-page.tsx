@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams } from "react-router";
 import { formatDistanceToNow } from "date-fns";
 import {
@@ -20,6 +21,7 @@ import {
   useRequisitionDetail,
   groupApplicationsByMilestone,
 } from "@/features/requisitions/api/use-requisition-detail";
+import { ViewToggle, type View } from "@/components/custom/view-toggle";
 import type { Milestone } from "@/types/database";
 
 function formatSalary(
@@ -69,6 +71,7 @@ function DetailSkeleton() {
 export function Component() {
   const { reqId } = useParams<{ reqId: string }>();
   const { data: req, isLoading, error } = useRequisitionDetail(reqId!);
+  const [view, setView] = useState<View>("table");
 
   if (isLoading) return <DetailSkeleton />;
 
@@ -96,11 +99,6 @@ export function Component() {
           <StatusBadge status={req.status} />
           <EmploymentBadge type={req.employment_type} />
         </div>
-        {req.description && (
-          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            {req.description}
-          </p>
-        )}
       </div>
 
       <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
@@ -141,37 +139,37 @@ export function Component() {
         )}
       </div>
 
-      <Tabs defaultValue="all">
-        <TabsList>
-          <TabsTrigger value="all">
-            All ({req.applications?.length ?? 0})
-          </TabsTrigger>
-          {(Object.keys(MILESTONE_LABELS) as Milestone[]).map((m) => (
-            <TabsTrigger key={m} value={m}>
-              {MILESTONE_LABELS[m]} ({grouped[m].length})
-            </TabsTrigger>
-          ))}
-        </TabsList>
-
-        <TabsContent value="all" className="mt-4">
-          <div className="rounded-lg border">
-            <CandidateList
-              applications={req.applications ?? []}
-              reqId={req.id}
-              reqTitle={req.title}
-            />
-          </div>
-        </TabsContent>
+      <Tabs defaultValue="application">
+        <div className="flex items-center justify-between">
+          <TabsList>
+            {(Object.keys(MILESTONE_LABELS) as Milestone[]).map((m) => (
+              <TabsTrigger key={m} value={m}>
+                {MILESTONE_LABELS[m]} ({grouped[m].length})
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          <ViewToggle view={view} onViewChange={setView} />
+        </div>
 
         {(Object.keys(MILESTONE_LABELS) as Milestone[]).map((m) => (
           <TabsContent key={m} value={m} className="mt-4">
-            <div className="rounded-lg border">
+            {view === "cards" ? (
               <CandidateList
                 applications={grouped[m]}
                 reqId={req.id}
                 reqTitle={req.title}
+                view="cards"
               />
-            </div>
+            ) : (
+              <div className="rounded-lg border">
+                <CandidateList
+                  applications={grouped[m]}
+                  reqId={req.id}
+                  reqTitle={req.title}
+                  view="table"
+                />
+              </div>
+            )}
           </TabsContent>
         ))}
       </Tabs>

@@ -1,6 +1,6 @@
 "use client"
 
-import { Link } from "react-router"
+import { Link, useLocation } from "react-router"
 import { ChevronRight, MoreHorizontal, type LucideIcon } from "lucide-react"
 
 import {
@@ -48,17 +48,29 @@ export function NavProjects({
   overflow?: NavItem[]
 }) {
   const { isMobile } = useSidebar()
+  const { pathname } = useLocation()
+
+  function isActive(url: string) {
+    if (!isRealUrl(url)) return false
+    return pathname === url || pathname.startsWith(url + "/")
+  }
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
       <SidebarGroupLabel>{label}</SidebarGroupLabel>
       <SidebarMenu>
-        {items.map((item) =>
-          item.items && item.items.length > 0 ? (
+        {items.map((item) => {
+          const hasSubItems = item.items && item.items.length > 0
+          const sectionActive =
+            hasSubItems &&
+            item.items!.some((sub) => isActive(sub.url))
+          const itemActive = !hasSubItems && isActive(item.url)
+
+          return hasSubItems ? (
             <Collapsible
               key={item.name}
               asChild
-              defaultOpen={item.isActive}
+              defaultOpen={sectionActive || item.isActive}
               className="group/collapsible"
             >
               <SidebarMenuItem>
@@ -71,10 +83,10 @@ export function NavProjects({
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <SidebarMenuSub>
-                    {item.items.map((subItem) => (
+                    {item.items!.map((subItem) => (
                       <SidebarMenuSubItem key={subItem.title}>
                         {isRealUrl(subItem.url) ? (
-                          <SidebarMenuSubButton asChild>
+                          <SidebarMenuSubButton asChild isActive={isActive(subItem.url)}>
                             <Link to={subItem.url}>
                               <span>{subItem.title}</span>
                             </Link>
@@ -92,7 +104,7 @@ export function NavProjects({
             </Collapsible>
           ) : isRealUrl(item.url) ? (
             <SidebarMenuItem key={item.name}>
-              <SidebarMenuButton asChild tooltip={item.name}>
+              <SidebarMenuButton asChild tooltip={item.name} isActive={itemActive}>
                 <Link to={item.url}>
                   <item.icon />
                   <span>{item.name}</span>
@@ -106,8 +118,8 @@ export function NavProjects({
                 <span>{item.name}</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
-          ),
-        )}
+          )
+        })}
         {overflow && overflow.length > 0 && (
           <SidebarMenuItem>
             <DropdownMenu>

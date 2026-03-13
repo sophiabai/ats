@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { formatDistanceToNow, format } from "date-fns";
 import {
   CalendarDays,
@@ -15,6 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ViewToggle, type View } from "@/components/custom/view-toggle";
 import type { ApplicationDetail } from "@/features/candidates/api/use-candidate-detail";
 import type { Milestone } from "@/types/database";
 
@@ -44,6 +46,7 @@ const INTERVIEW_STATUS_COLORS: Record<string, string> = {
 export function ApplicationTabContent({ app }: { app: ApplicationDetail }) {
   const req = app.requisitions;
   const interviews = app.application_interviews ?? [];
+  const [interviewView, setInterviewView] = useState<View>("table");
 
   const interviewsByStage = new Map<string, typeof interviews>();
   for (const interview of interviews) {
@@ -125,7 +128,12 @@ export function ApplicationTabContent({ app }: { app: ApplicationDetail }) {
       )}
 
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Interview schedule</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold">Interview schedule</h3>
+          {interviews.length > 0 && (
+            <ViewToggle view={interviewView} onViewChange={setInterviewView} />
+          )}
+        </div>
         {interviews.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             No interviews scheduled yet.
@@ -137,67 +145,13 @@ export function ApplicationTabContent({ app }: { app: ApplicationDetail }) {
                 <h4 className="text-sm font-medium text-muted-foreground">
                   {stageName}
                 </h4>
-                <div className="rounded-lg border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Interview</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Interviewer</TableHead>
-                        <TableHead>Duration</TableHead>
-                        <TableHead>Scheduled</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {stageInterviews.map((iv) => (
-                        <TableRow key={iv.id}>
-                          <TableCell className="font-medium">
-                            {iv.title}
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {iv.interview_type.replace(/_/g, " ")}
-                          </TableCell>
-                          <TableCell>
-                            {iv.interviewer_name ? (
-                              <div className="flex items-center gap-1.5">
-                                <User className="size-3.5 text-muted-foreground" />
-                                {iv.interviewer_name}
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground/50">
-                                Unassigned
-                              </span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1.5 text-muted-foreground">
-                              <Clock className="size-3.5" />
-                              {iv.duration_minutes}m
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {iv.scheduled_at ? (
-                              <div className="flex items-center gap-1.5 text-muted-foreground">
-                                <CalendarDays className="size-3.5" />
-                                {format(
-                                  new Date(iv.scheduled_at),
-                                  "MMM d, h:mm a",
-                                )}
-                                {iv.location && (
-                                  <span className="flex items-center gap-1">
-                                    <MapPin className="size-3" />
-                                    {iv.location}
-                                  </span>
-                                )}
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground/50">
-                                Not scheduled
-                              </span>
-                            )}
-                          </TableCell>
-                          <TableCell>
+                {interviewView === "cards" ? (
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {stageInterviews.map((iv) => (
+                      <Card key={iv.id}>
+                        <CardContent>
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="font-medium">{iv.title}</span>
                             <Badge
                               variant="outline"
                               className={
@@ -206,12 +160,120 @@ export function ApplicationTabContent({ app }: { app: ApplicationDetail }) {
                             >
                               {iv.status.replace(/_/g, " ")}
                             </Badge>
-                          </TableCell>
+                          </div>
+                          <div className="mt-3 space-y-1.5 text-sm text-muted-foreground">
+                            <div className="capitalize">
+                              {iv.interview_type.replace(/_/g, " ")}
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <User className="size-3.5" />
+                              {iv.interviewer_name ?? "Unassigned"}
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <Clock className="size-3.5" />
+                              {iv.duration_minutes}m
+                            </div>
+                            {iv.scheduled_at ? (
+                              <div className="flex items-center gap-1.5">
+                                <CalendarDays className="size-3.5" />
+                                {format(
+                                  new Date(iv.scheduled_at),
+                                  "MMM d, h:mm a",
+                                )}
+                              </div>
+                            ) : (
+                              <div className="text-muted-foreground/50">
+                                Not scheduled
+                              </div>
+                            )}
+                            {iv.location && (
+                              <div className="flex items-center gap-1.5">
+                                <MapPin className="size-3.5" />
+                                {iv.location}
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-lg border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Interview</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Interviewer</TableHead>
+                          <TableHead>Duration</TableHead>
+                          <TableHead>Scheduled</TableHead>
+                          <TableHead>Status</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                      </TableHeader>
+                      <TableBody>
+                        {stageInterviews.map((iv) => (
+                          <TableRow key={iv.id}>
+                            <TableCell className="font-medium">
+                              {iv.title}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">
+                              {iv.interview_type.replace(/_/g, " ")}
+                            </TableCell>
+                            <TableCell>
+                              {iv.interviewer_name ? (
+                                <div className="flex items-center gap-1.5">
+                                  <User className="size-3.5 text-muted-foreground" />
+                                  {iv.interviewer_name}
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground/50">
+                                  Unassigned
+                                </span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1.5 text-muted-foreground">
+                                <Clock className="size-3.5" />
+                                {iv.duration_minutes}m
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {iv.scheduled_at ? (
+                                <div className="flex items-center gap-1.5 text-muted-foreground">
+                                  <CalendarDays className="size-3.5" />
+                                  {format(
+                                    new Date(iv.scheduled_at),
+                                    "MMM d, h:mm a",
+                                  )}
+                                  {iv.location && (
+                                    <span className="flex items-center gap-1">
+                                      <MapPin className="size-3" />
+                                      {iv.location}
+                                    </span>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground/50">
+                                  Not scheduled
+                                </span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant="outline"
+                                className={
+                                  INTERVIEW_STATUS_COLORS[iv.status] ?? ""
+                                }
+                              >
+                                {iv.status.replace(/_/g, " ")}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
               </div>
             ),
           )

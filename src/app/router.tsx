@@ -3,6 +3,16 @@ import { RootLayout } from "@/app/layout";
 
 const routes: RouteObject[] = [
   {
+    path: "careers",
+    lazy: () =>
+      import("@/features/job-board/public-job-board-page"),
+  },
+  {
+    path: "careers/:postId",
+    lazy: () =>
+      import("@/features/job-board/public-job-post-detail-page"),
+  },
+  {
     path: "/",
     element: <RootLayout />,
     HydrateFallback: () => null,
@@ -42,6 +52,64 @@ const routes: RouteObject[] = [
       {
         path: "emails",
         lazy: () => import("@/features/emails/emails-page"),
+      },
+      {
+        path: "headcount-planning",
+        lazy: () =>
+          import(
+            "@/features/headcount-planning/headcount-planning-page"
+          ),
+      },
+      {
+        path: "headcount-planning/my-team",
+        lazy: () =>
+          import("@/features/headcount-planning/my-team-page"),
+      },
+      {
+        path: "headcount-planning/roster",
+        lazy: () =>
+          import("@/features/headcount-planning/roster-page"),
+      },
+      {
+        path: "headcount-planning/plan",
+        lazy: () =>
+          import("@/features/headcount-planning/plan-page"),
+      },
+      {
+        path: "headcount-planning/past-plans",
+        lazy: () =>
+          import("@/features/headcount-planning/past-plans-page"),
+      },
+      {
+        path: "headcount-planning/budget",
+        lazy: () =>
+          import("@/features/headcount-planning/budget-page"),
+      },
+      {
+        path: "headcount-planning/scenarios",
+        lazy: () =>
+          import("@/features/headcount-planning/scenarios-page"),
+      },
+      {
+        path: "headcount-planning/approvals",
+        lazy: () =>
+          import(
+            "@/features/headcount-planning/approval-requests-page"
+          ),
+      },
+      {
+        path: "headcount-planning/settings",
+        lazy: () =>
+          import("@/features/headcount-planning/settings-page"),
+      },
+      {
+        path: "job-board",
+        lazy: () => import("@/features/job-board/job-board-page"),
+      },
+      {
+        path: "job-board/:postId",
+        lazy: () =>
+          import("@/features/job-board/job-post-detail-page"),
       },
     ],
   },
