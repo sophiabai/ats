@@ -1,4 +1,7 @@
 import {
+  useCallback,
+  useEffect,
+  useRef as useReactRef,
   useState,
   type FormEvent,
   type KeyboardEvent,
@@ -8,10 +11,14 @@ import { ArrowUp, Mic, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const inputWrapperClass = cn(
-  "flex items-end gap-2 rounded-4xl border bg-background px-4 py-3 transition-shadow",
+const inputWrapperBaseClass = cn(
+  "flex items-end gap-2 rounded-3xl border px-5 py-4 shadow-2xl",
   "focus-within:ring-2 focus-within:ring-ring/50",
 );
+
+const inputWrapperClass = cn(inputWrapperBaseClass, "bg-background");
+
+const inputBarWrapperClass = cn(inputWrapperBaseClass, "bg-card");
 
 const textareaClass = cn(
   "flex-1 resize-none bg-transparent py-1.5 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
@@ -27,6 +34,8 @@ interface ChatInputProps {
   onChange?: (value: string) => void;
   inputRef?: Ref<HTMLTextAreaElement>;
   onKeyDown?: (e: KeyboardEvent<HTMLTextAreaElement>) => void;
+  activeCommand?: string | null;
+  onClearCommand?: () => void;
 }
 
 export function ChatInput({
@@ -37,6 +46,8 @@ export function ChatInput({
   onChange,
   inputRef,
   onKeyDown: onKeyDownProp,
+  activeCommand,
+  onClearCommand,
 }: ChatInputProps) {
   const [internalValue, setInternalValue] = useState("");
   const isControlled = controlledValue !== undefined;
@@ -56,11 +67,84 @@ export function ChatInput({
     else onChange?.("");
   }
 
+  const [commandText, setCommandText] = useState("");
+
+  useEffect(() => {
+    setCommandText(activeCommand ? `/${activeCommand}` : "");
+  }, [activeCommand]);
+
+  const commandPrefix = commandText ? commandText + " " : "";
+  const fullValue = commandPrefix + value;
+
+  function handleFullValueChange(raw: string) {
+    if (!commandText) {
+      setValue(raw);
+      return;
+    }
+    if (raw.startsWith(commandPrefix)) {
+      setValue(raw.slice(commandPrefix.length));
+      return;
+    }
+    let match = 0;
+    for (let i = 0; i < Math.min(commandText.length, raw.length); i++) {
+      if (raw[i] === commandText[i]) match = i + 1;
+      else break;
+    }
+    if (match === 0) {
+      setCommandText("");
+      onClearCommand?.();
+      setValue(raw);
+    } else if (match === commandText.length && raw.length <= commandPrefix.length) {
+      // Deleted the separator space (or nothing after the command) — trim one char
+      const shortened = commandText.slice(0, -1);
+      if (!shortened) {
+        setCommandText("");
+        onClearCommand?.();
+      } else {
+        setCommandText(shortened);
+      }
+      setValue("");
+    } else {
+      setCommandText(commandText.slice(0, match));
+      setValue(raw.slice(match).replace(/^\s+/, ""));
+    }
+  }
+
   function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
     onKeyDownProp?.(e);
     if (e.defaultPrevented) return;
+    if (e.key === "Backspace" && commandText && !value) {
+      e.preventDefault();
+      let shortened: string;
+      if (e.altKey) {
+        // Option+Backspace: delete previous word
+        shortened = commandText.replace(/\s*\S+$/, "");
+      } else if (e.metaKey) {
+        // Cmd+Backspace: delete everything
+        shortened = "";
+      } else {
+        shortened = commandText.slice(0, -1);
+      }
+      if (!shortened) {
+        setCommandText("");
+        onClearCommand?.();
+      } else {
+        setCommandText(shortened);
+      }
+      return;
+    }
+    if (e.key === "Escape" && commandText && !value) {
+      e.preventDefault();
+      setCommandText("");
+      onClearCommand?.();
+      return;
+    }
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
+      if (commandText && !trimmed) {
+        onSend("");
+        return;
+      }
       if (trimmed && !disabled) {
         onSend(trimmed);
         if (!isControlled) setInternalValue("");
@@ -69,19 +153,75 @@ export function ChatInput({
     }
   }
 
+  const internalRef = useReactRef<HTMLTextAreaElement | null>(null);
+
+  const mergedRef = useCallback(
+    (node: HTMLTextAreaElement | null) => {
+      internalRef.current = node;
+      if (typeof inputRef === "function") inputRef(node);
+      else if (inputRef && typeof inputRef === "object")
+        (inputRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = node;
+    },
+    [inputRef],
+  );
+
+  useEffect(() => {
+    const el = internalRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [value, commandText]);
+
+  const handleScroll = useCallback(() => {
+    const ta = internalRef.current;
+    const mirror = mirrorRef.current;
+    if (ta && mirror) mirror.scrollTop = ta.scrollTop;
+  }, []);
+
+  const mirrorRef = useReactRef<HTMLDivElement | null>(null);
+
   if (variant === "bar") {
     return (
-      <div className={inputWrapperClass}>
-        <textarea
-          ref={inputRef}
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Search, ask, or type / for actions"
-          disabled={disabled}
-          rows={2}
-          className={textareaClass}
-        />
+      <div className={inputBarWrapperClass}>
+        <div className="relative min-w-0 flex-1">
+          {commandText && (
+            <div
+              ref={mirrorRef}
+              aria-hidden
+              className="pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap break-words py-1.5 text-sm"
+            >
+              <span className="text-berry-500">
+                {commandPrefix}
+              </span>
+              <span>{value || ""}</span>
+            </div>
+          )}
+          <textarea
+            ref={mergedRef}
+            value={commandText ? fullValue : value}
+            onChange={(e) =>
+              commandText
+                ? handleFullValueChange(e.target.value)
+                : setValue(e.target.value)
+            }
+            onKeyDown={handleKeyDown}
+            onScroll={handleScroll}
+            placeholder={
+              commandText
+                ? "Describe the role, or press Enter to skip"
+                : "Search, ask, or type / for actions"
+            }
+            disabled={disabled}
+            rows={1}
+            className={cn(
+              textareaClass,
+              "block w-full",
+              commandText &&
+                "text-transparent caret-foreground [&::placeholder]:text-muted-foreground [&::selection]:bg-ring/20",
+            )}
+            style={{ maxHeight: "40vh" }}
+          />
+        </div>
         <div className="flex shrink-0 items-center gap-0.5">
           <Button
             variant="ghost"
@@ -99,7 +239,7 @@ export function ChatInput({
           >
             <Mic className="size-4" />
           </Button>
-          {trimmed && (
+          {(trimmed || commandText) && (
             <Button
               size="icon-xs"
               className="ml-0.5"

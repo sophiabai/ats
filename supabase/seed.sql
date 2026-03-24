@@ -117,37 +117,91 @@ INSERT INTO requisitions (id, title, department, location, employment_type, recr
 INSERT INTO req_stages (id, req_id, milestone, name, sort_order) VALUES
   ('e0000000-0000-0000-0001-000000000001', 'b0000000-0000-0000-0000-000000000001', 'application', 'Application review', 0),
   ('e0000000-0000-0000-0001-000000000002', 'b0000000-0000-0000-0000-000000000001', 'screen', 'Recruiter screen', 0),
-  ('e0000000-0000-0000-0001-000000000003', 'b0000000-0000-0000-0000-000000000001', 'screen', 'Technical screen', 1),
-  ('e0000000-0000-0000-0001-000000000004', 'b0000000-0000-0000-0000-000000000001', 'final_interview', 'Onsite interview', 0),
+  ('e0000000-0000-0000-0001-000000000003', 'b0000000-0000-0000-0000-000000000001', 'screen', 'Hiring manager screen', 1),
+  ('e0000000-0000-0000-0001-000000000004', 'b0000000-0000-0000-0000-000000000001', 'final_interview', 'Onsite', 0),
+  ('e0000000-0000-0000-0001-000000000006', 'b0000000-0000-0000-0000-000000000001', 'final_interview', 'Reference check', 1),
   ('e0000000-0000-0000-0001-000000000005', 'b0000000-0000-0000-0000-000000000001', 'offer', 'Offer', 0);
 -- Account Executive
 INSERT INTO req_stages (id, req_id, milestone, name, sort_order) VALUES
   ('e0000000-0000-0000-0002-000000000001', 'b0000000-0000-0000-0000-000000000002', 'application', 'Application review', 0),
   ('e0000000-0000-0000-0002-000000000002', 'b0000000-0000-0000-0000-000000000002', 'screen', 'Recruiter screen', 0),
   ('e0000000-0000-0000-0002-000000000003', 'b0000000-0000-0000-0000-000000000002', 'screen', 'Hiring manager screen', 1),
-  ('e0000000-0000-0000-0002-000000000004', 'b0000000-0000-0000-0000-000000000002', 'final_interview', 'Panel interview', 0),
+  ('e0000000-0000-0000-0002-000000000004', 'b0000000-0000-0000-0000-000000000002', 'final_interview', 'Onsite', 0),
+  ('e0000000-0000-0000-0002-000000000006', 'b0000000-0000-0000-0000-000000000002', 'final_interview', 'Reference check', 1),
   ('e0000000-0000-0000-0002-000000000005', 'b0000000-0000-0000-0000-000000000002', 'offer', 'Offer', 0);
 -- Senior Product Designer
 INSERT INTO req_stages (id, req_id, milestone, name, sort_order) VALUES
   ('e0000000-0000-0000-0003-000000000001', 'b0000000-0000-0000-0000-000000000003', 'application', 'Application review', 0),
   ('e0000000-0000-0000-0003-000000000002', 'b0000000-0000-0000-0000-000000000003', 'screen', 'Recruiter screen', 0),
-  ('e0000000-0000-0000-0003-000000000003', 'b0000000-0000-0000-0000-000000000003', 'screen', 'Portfolio review', 1),
-  ('e0000000-0000-0000-0003-000000000004', 'b0000000-0000-0000-0000-000000000003', 'final_interview', 'Design challenge + onsite', 0),
+  ('e0000000-0000-0000-0003-000000000003', 'b0000000-0000-0000-0000-000000000003', 'screen', 'Hiring manager screen', 1),
+  ('e0000000-0000-0000-0003-000000000004', 'b0000000-0000-0000-0000-000000000003', 'final_interview', 'Onsite', 0),
+  ('e0000000-0000-0000-0003-000000000006', 'b0000000-0000-0000-0000-000000000003', 'final_interview', 'Reference check', 1),
   ('e0000000-0000-0000-0003-000000000005', 'b0000000-0000-0000-0000-000000000003', 'offer', 'Offer', 0);
--- Data Engineer
+-- Machine Learning Engineer
 INSERT INTO req_stages (id, req_id, milestone, name, sort_order) VALUES
   ('e0000000-0000-0000-0004-000000000001', 'b0000000-0000-0000-0000-000000000004', 'application', 'Application review', 0),
   ('e0000000-0000-0000-0004-000000000002', 'b0000000-0000-0000-0000-000000000004', 'screen', 'Recruiter screen', 0),
-  ('e0000000-0000-0000-0004-000000000003', 'b0000000-0000-0000-0000-000000000004', 'screen', 'Technical screen', 1),
-  ('e0000000-0000-0000-0004-000000000004', 'b0000000-0000-0000-0000-000000000004', 'final_interview', 'System design interview', 0),
+  ('e0000000-0000-0000-0004-000000000003', 'b0000000-0000-0000-0000-000000000004', 'screen', 'Hiring manager screen', 1),
+  ('e0000000-0000-0000-0004-000000000004', 'b0000000-0000-0000-0000-000000000004', 'final_interview', 'Onsite', 0),
+  ('e0000000-0000-0000-0004-000000000006', 'b0000000-0000-0000-0000-000000000004', 'final_interview', 'Reference check', 1),
   ('e0000000-0000-0000-0004-000000000005', 'b0000000-0000-0000-0000-000000000004', 'offer', 'Offer', 0);
 -- Content Marketing Lead
 INSERT INTO req_stages (id, req_id, milestone, name, sort_order) VALUES
   ('e0000000-0000-0000-0005-000000000001', 'b0000000-0000-0000-0000-000000000005', 'application', 'Application review', 0),
   ('e0000000-0000-0000-0005-000000000002', 'b0000000-0000-0000-0000-000000000005', 'screen', 'Recruiter screen', 0),
-  ('e0000000-0000-0000-0005-000000000003', 'b0000000-0000-0000-0000-000000000005', 'screen', 'Writing exercise', 1),
-  ('e0000000-0000-0000-0005-000000000004', 'b0000000-0000-0000-0000-000000000005', 'final_interview', 'Final interview', 0),
+  ('e0000000-0000-0000-0005-000000000003', 'b0000000-0000-0000-0000-000000000005', 'screen', 'Hiring manager screen', 1),
+  ('e0000000-0000-0000-0005-000000000004', 'b0000000-0000-0000-0000-000000000005', 'final_interview', 'Onsite', 0),
+  ('e0000000-0000-0000-0005-000000000006', 'b0000000-0000-0000-0000-000000000005', 'final_interview', 'Reference check', 1),
   ('e0000000-0000-0000-0005-000000000005', 'b0000000-0000-0000-0000-000000000005', 'offer', 'Offer', 0);
+
+-- ============================================================
+-- Req interviews (interview plan per stage)
+-- ============================================================
+-- Senior Frontend Engineer
+INSERT INTO req_interviews (id, req_id, stage_id, title, interview_type, duration_minutes, interviewer_name, order_position) VALUES
+  ('f0000000-0000-0001-0000-000000000001', 'b0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0001-000000000002', 'Recruiter screen',         'standard',         30, 'Taylor Brooks', 0),
+  ('f0000000-0000-0001-0000-000000000002', 'b0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0001-000000000003', 'Hiring manager screen',    'standard',         45, 'Sarah Chen',    0),
+  ('f0000000-0000-0001-0000-000000000003', 'b0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0001-000000000004', 'Presentation',             'presentation',     45, NULL,            0),
+  ('f0000000-0000-0001-0000-000000000004', 'b0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0001-000000000004', 'Coding exercise',          'technical',        60, NULL,            1),
+  ('f0000000-0000-0001-0000-000000000005', 'b0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0001-000000000004', 'System design',            'technical',        60, NULL,            2),
+  ('f0000000-0000-0001-0000-000000000006', 'b0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0001-000000000004', 'Hiring manager close-up',  'behavioral',       30, 'Sarah Chen',    3),
+  ('f0000000-0000-0001-0000-000000000007', 'b0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0001-000000000006', 'Reference check debrief',  'reference_check',  30, 'Taylor Brooks', 0);
+-- Account Executive
+INSERT INTO req_interviews (id, req_id, stage_id, title, interview_type, duration_minutes, interviewer_name, order_position) VALUES
+  ('f0000000-0000-0002-0000-000000000001', 'b0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0002-000000000002', 'Recruiter screen',         'standard',         30, 'Jordan Lee',    0),
+  ('f0000000-0000-0002-0000-000000000002', 'b0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0002-000000000003', 'Hiring manager screen',    'standard',         45, 'Diana Kim',     0),
+  ('f0000000-0000-0002-0000-000000000003', 'b0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0002-000000000004', 'Presentation',             'presentation',     45, NULL,            0),
+  ('f0000000-0000-0002-0000-000000000004', 'b0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0002-000000000004', 'Mock sales pitch',         'case_study',       60, NULL,            1),
+  ('f0000000-0000-0002-0000-000000000005', 'b0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0002-000000000004', 'Deal strategy deep-dive',  'behavioral',       60, NULL,            2),
+  ('f0000000-0000-0002-0000-000000000006', 'b0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0002-000000000004', 'Hiring manager close-up',  'behavioral',       30, 'Diana Kim',     3),
+  ('f0000000-0000-0002-0000-000000000007', 'b0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0002-000000000006', 'Reference check debrief',  'reference_check',  30, 'Jordan Lee',    0);
+-- Senior Product Designer
+INSERT INTO req_interviews (id, req_id, stage_id, title, interview_type, duration_minutes, interviewer_name, order_position) VALUES
+  ('f0000000-0000-0003-0000-000000000001', 'b0000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0003-000000000002', 'Recruiter screen',         'standard',         30, 'Taylor Brooks', 0),
+  ('f0000000-0000-0003-0000-000000000002', 'b0000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0003-000000000003', 'Hiring manager screen',    'standard',         45, 'James Ortiz',   0),
+  ('f0000000-0000-0003-0000-000000000003', 'b0000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0003-000000000004', 'Presentation',             'presentation',     45, NULL,            0),
+  ('f0000000-0000-0003-0000-000000000004', 'b0000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0003-000000000004', 'Portfolio deep-dive',      'portfolio_review', 60, NULL,            1),
+  ('f0000000-0000-0003-0000-000000000005', 'b0000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0003-000000000004', 'Design exercise',          'case_study',       60, NULL,            2),
+  ('f0000000-0000-0003-0000-000000000006', 'b0000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0003-000000000004', 'Hiring manager close-up',  'behavioral',       30, 'James Ortiz',   3),
+  ('f0000000-0000-0003-0000-000000000007', 'b0000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0003-000000000006', 'Reference check debrief',  'reference_check',  30, 'Taylor Brooks', 0);
+-- Machine Learning Engineer
+INSERT INTO req_interviews (id, req_id, stage_id, title, interview_type, duration_minutes, interviewer_name, order_position) VALUES
+  ('f0000000-0000-0004-0000-000000000001', 'b0000000-0000-0000-0000-000000000004', 'e0000000-0000-0000-0004-000000000002', 'Recruiter screen',         'standard',         30, 'Taylor Brooks', 0),
+  ('f0000000-0000-0004-0000-000000000002', 'b0000000-0000-0000-0000-000000000004', 'e0000000-0000-0000-0004-000000000003', 'Hiring manager screen',    'standard',         45, 'Sarah Chen',    0),
+  ('f0000000-0000-0004-0000-000000000003', 'b0000000-0000-0000-0000-000000000004', 'e0000000-0000-0000-0004-000000000004', 'Presentation',             'presentation',     45, NULL,            0),
+  ('f0000000-0000-0004-0000-000000000004', 'b0000000-0000-0000-0000-000000000004', 'e0000000-0000-0000-0004-000000000004', 'Coding exercise',          'technical',        60, NULL,            1),
+  ('f0000000-0000-0004-0000-000000000005', 'b0000000-0000-0000-0000-000000000004', 'e0000000-0000-0000-0004-000000000004', 'ML system design',         'technical',        60, NULL,            2),
+  ('f0000000-0000-0004-0000-000000000006', 'b0000000-0000-0000-0000-000000000004', 'e0000000-0000-0000-0004-000000000004', 'Hiring manager close-up',  'behavioral',       30, 'Sarah Chen',    3),
+  ('f0000000-0000-0004-0000-000000000007', 'b0000000-0000-0000-0000-000000000004', 'e0000000-0000-0000-0004-000000000006', 'Reference check debrief',  'reference_check',  30, 'Taylor Brooks', 0);
+-- Content Marketing Lead
+INSERT INTO req_interviews (id, req_id, stage_id, title, interview_type, duration_minutes, interviewer_name, order_position) VALUES
+  ('f0000000-0000-0005-0000-000000000001', 'b0000000-0000-0000-0000-000000000005', 'e0000000-0000-0000-0005-000000000002', 'Recruiter screen',         'standard',         30, 'Jordan Lee',    0),
+  ('f0000000-0000-0005-0000-000000000002', 'b0000000-0000-0000-0000-000000000005', 'e0000000-0000-0000-0005-000000000003', 'Hiring manager screen',    'standard',         45, 'Ravi Gupta',    0),
+  ('f0000000-0000-0005-0000-000000000003', 'b0000000-0000-0000-0000-000000000005', 'e0000000-0000-0000-0005-000000000004', 'Presentation',             'presentation',     45, NULL,            0),
+  ('f0000000-0000-0005-0000-000000000004', 'b0000000-0000-0000-0000-000000000005', 'e0000000-0000-0000-0005-000000000004', 'Content strategy exercise','case_study',       60, NULL,            1),
+  ('f0000000-0000-0005-0000-000000000005', 'b0000000-0000-0000-0000-000000000005', 'e0000000-0000-0000-0005-000000000004', 'Editorial review',         'other',            60, NULL,            2),
+  ('f0000000-0000-0005-0000-000000000006', 'b0000000-0000-0000-0000-000000000005', 'e0000000-0000-0000-0005-000000000004', 'Hiring manager close-up',  'behavioral',       30, 'Ravi Gupta',    3),
+  ('f0000000-0000-0005-0000-000000000007', 'b0000000-0000-0000-0000-000000000005', 'e0000000-0000-0000-0005-000000000006', 'Reference check debrief',  'reference_check',  30, 'Jordan Lee',    0);
 
 -- ============================================================
 -- Applications (each req gets 4-6 candidates at various stages)
@@ -195,6 +249,90 @@ INSERT INTO applications (candidate_id, req_id, applied_date, source, current_mi
   ('c0000000-0000-0000-0000-000000000025', 'b0000000-0000-0000-0000-000000000005', '2026-02-22', 'linkedin',     'application',     'e0000000-0000-0000-0005-000000000001', 'active');
 INSERT INTO applications (candidate_id, req_id, applied_date, source, current_milestone, current_stage_id, status, rejected_reason) VALUES
   ('c0000000-0000-0000-0000-000000000024', 'b0000000-0000-0000-0000-000000000005', '2026-02-18', 'agency',       'screen',          'e0000000-0000-0000-0005-000000000003', 'rejected', 'Salary expectations above range');
+
+-- ============================================================
+-- Cross-applications (candidates applying to multiple reqs)
+-- ============================================================
+
+-- Additional → Senior Frontend Engineer
+INSERT INTO applications (candidate_id, req_id, applied_date, source, current_milestone, current_stage_id, status) VALUES
+  ('c0000000-0000-0000-0000-000000000019', 'b0000000-0000-0000-0000-000000000001', '2026-02-08', 'linkedin',     'screen',          'e0000000-0000-0000-0001-000000000003', 'active');
+INSERT INTO applications (candidate_id, req_id, applied_date, source, current_milestone, current_stage_id, status, rejected_reason) VALUES
+  ('c0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000001', '2026-01-28', 'careers_page', 'application',     'e0000000-0000-0000-0001-000000000001', 'rejected', 'Looking for candidates with stronger frontend experience'),
+  ('c0000000-0000-0000-0000-000000000006', 'b0000000-0000-0000-0000-000000000001', '2026-02-28', 'linkedin',     'application',     'e0000000-0000-0000-0001-000000000001', 'rejected', 'Profile focused on data engineering rather than frontend'),
+  ('c0000000-0000-0000-0000-000000000008', 'b0000000-0000-0000-0000-000000000001', '2026-02-25', 'careers_page', 'application',     'e0000000-0000-0000-0001-000000000001', 'rejected', 'Backend-focused; insufficient frontend depth'),
+  ('c0000000-0000-0000-0000-000000000015', 'b0000000-0000-0000-0000-000000000001', '2026-02-08', 'referral',     'application',     'e0000000-0000-0000-0001-000000000001', 'rejected', 'Design-focused; need dedicated frontend engineers'),
+  ('c0000000-0000-0000-0000-000000000017', 'b0000000-0000-0000-0000-000000000001', '2026-02-15', 'careers_page', 'application',     'e0000000-0000-0000-0001-000000000001', 'rejected', 'Design background; looking for dedicated engineers'),
+  ('c0000000-0000-0000-0000-000000000025', 'b0000000-0000-0000-0000-000000000001', '2026-02-19', 'linkedin',     'application',     'e0000000-0000-0000-0001-000000000001', 'rejected', 'Technical writing focus; need stronger engineering background');
+INSERT INTO applications (candidate_id, req_id, applied_date, source, current_milestone, current_stage_id, status, withdrawn_reason) VALUES
+  ('c0000000-0000-0000-0000-000000000016', 'b0000000-0000-0000-0000-000000000001', '2026-02-06', 'linkedin',     'screen',          'e0000000-0000-0000-0001-000000000002', 'withdrawn', 'Decided to focus on design opportunities');
+
+-- Additional → Account Executive
+INSERT INTO applications (candidate_id, req_id, applied_date, source, current_milestone, current_stage_id, status) VALUES
+  ('c0000000-0000-0000-0000-000000000020', 'b0000000-0000-0000-0000-000000000002', '2026-02-11', 'referral',     'screen',          'e0000000-0000-0000-0002-000000000003', 'active'),
+  ('c0000000-0000-0000-0000-000000000022', 'b0000000-0000-0000-0000-000000000002', '2026-02-16', 'linkedin',     'screen',          'e0000000-0000-0000-0002-000000000002', 'active');
+INSERT INTO applications (candidate_id, req_id, applied_date, source, current_milestone, current_stage_id, status, rejected_reason) VALUES
+  ('c0000000-0000-0000-0000-000000000005', 'b0000000-0000-0000-0000-000000000002', '2026-02-14', 'linkedin',     'screen',          'e0000000-0000-0000-0002-000000000002', 'rejected', 'Technical background doesn''t align with sales role'),
+  ('c0000000-0000-0000-0000-000000000021', 'b0000000-0000-0000-0000-000000000002', '2026-02-18', 'careers_page', 'application',     'e0000000-0000-0000-0002-000000000001', 'rejected', 'No direct sales closing experience');
+INSERT INTO applications (candidate_id, req_id, applied_date, source, current_milestone, current_stage_id, status, withdrawn_reason) VALUES
+  ('c0000000-0000-0000-0000-000000000024', 'b0000000-0000-0000-0000-000000000002', '2026-02-24', 'linkedin',     'application',     'e0000000-0000-0000-0002-000000000001', 'withdrawn', 'Pursuing content-focused roles instead');
+
+-- Additional → Senior Product Designer
+INSERT INTO applications (candidate_id, req_id, applied_date, source, current_milestone, current_stage_id, status) VALUES
+  ('c0000000-0000-0000-0000-000000000003', 'b0000000-0000-0000-0000-000000000003', '2026-01-30', 'referral',     'screen',          'e0000000-0000-0000-0003-000000000003', 'active'),
+  ('c0000000-0000-0000-0000-000000000009', 'b0000000-0000-0000-0000-000000000003', '2026-02-12', 'careers_page', 'screen',          'e0000000-0000-0000-0003-000000000002', 'active');
+INSERT INTO applications (candidate_id, req_id, applied_date, source, current_milestone, current_stage_id, status, rejected_reason) VALUES
+  ('c0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000003', '2026-02-22', 'referral',     'application',     'e0000000-0000-0000-0003-000000000001', 'rejected', 'Engineering background; looking for dedicated design experience'),
+  ('c0000000-0000-0000-0000-000000000020', 'b0000000-0000-0000-0000-000000000003', '2026-02-03', 'linkedin',     'application',     'e0000000-0000-0000-0003-000000000001', 'rejected', 'Marketing background; need hands-on design experience'),
+  ('c0000000-0000-0000-0000-000000000023', 'b0000000-0000-0000-0000-000000000003', '2026-02-22', 'careers_page', 'application',     'e0000000-0000-0000-0003-000000000001', 'rejected', 'No design portfolio or tool proficiency');
+INSERT INTO applications (candidate_id, req_id, applied_date, source, current_milestone, current_stage_id, status, withdrawn_reason) VALUES
+  ('c0000000-0000-0000-0000-000000000004', 'b0000000-0000-0000-0000-000000000003', '2026-02-20', 'careers_page', 'application',     'e0000000-0000-0000-0003-000000000001', 'withdrawn', 'Decided to stay focused on engineering roles');
+
+-- Additional → Machine Learning Engineer
+INSERT INTO applications (candidate_id, req_id, applied_date, source, current_milestone, current_stage_id, status) VALUES
+  ('c0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000004', '2026-02-18', 'referral',     'screen',          'e0000000-0000-0000-0004-000000000002', 'active'),
+  ('c0000000-0000-0000-0000-000000000005', 'b0000000-0000-0000-0000-000000000004', '2026-02-22', 'linkedin',     'screen',          'e0000000-0000-0000-0004-000000000003', 'active'),
+  ('c0000000-0000-0000-0000-000000000019', 'b0000000-0000-0000-0000-000000000004', '2026-02-16', 'linkedin',     'screen',          'e0000000-0000-0000-0004-000000000002', 'active');
+
+-- Additional → Content Marketing Lead
+INSERT INTO applications (candidate_id, req_id, applied_date, source, current_milestone, current_stage_id, status) VALUES
+  ('c0000000-0000-0000-0000-000000000011', 'b0000000-0000-0000-0000-000000000005', '2026-02-15', 'linkedin',     'screen',          'e0000000-0000-0000-0005-000000000002', 'active'),
+  ('c0000000-0000-0000-0000-000000000013', 'b0000000-0000-0000-0000-000000000005', '2026-02-17', 'referral',     'screen',          'e0000000-0000-0000-0005-000000000002', 'active'),
+  ('c0000000-0000-0000-0000-000000000015', 'b0000000-0000-0000-0000-000000000005', '2026-02-12', 'referral',     'screen',          'e0000000-0000-0000-0005-000000000003', 'active'),
+  ('c0000000-0000-0000-0000-000000000018', 'b0000000-0000-0000-0000-000000000005', '2026-02-14', 'referral',     'screen',          'e0000000-0000-0000-0005-000000000002', 'active');
+INSERT INTO applications (candidate_id, req_id, applied_date, source, current_milestone, current_stage_id, status, rejected_reason) VALUES
+  ('c0000000-0000-0000-0000-000000000007', 'b0000000-0000-0000-0000-000000000005', '2026-02-14', 'careers_page', 'screen',          'e0000000-0000-0000-0005-000000000003', 'rejected', 'Analytics skills strong but content quality didn''t meet the bar'),
+  ('c0000000-0000-0000-0000-000000000009', 'b0000000-0000-0000-0000-000000000005', '2026-02-25', 'careers_page', 'application',     'e0000000-0000-0000-0005-000000000001', 'rejected', 'Strong UX skills but limited content marketing experience'),
+  ('c0000000-0000-0000-0000-000000000010', 'b0000000-0000-0000-0000-000000000005', '2026-02-22', 'linkedin',     'application',     'e0000000-0000-0000-0005-000000000001', 'rejected', 'No content marketing or writing background'),
+  ('c0000000-0000-0000-0000-000000000012', 'b0000000-0000-0000-0000-000000000005', '2026-02-24', 'agency',       'application',     'e0000000-0000-0000-0005-000000000001', 'rejected', 'Sales background doesn''t align with content marketing');
+INSERT INTO applications (candidate_id, req_id, applied_date, source, current_milestone, current_stage_id, status, withdrawn_reason) VALUES
+  ('c0000000-0000-0000-0000-000000000014', 'b0000000-0000-0000-0000-000000000005', '2026-02-18', 'linkedin',     'application',     'e0000000-0000-0000-0005-000000000001', 'withdrawn', 'Accepted another offer');
+
+-- ============================================================
+-- Candidate pools
+-- ============================================================
+INSERT INTO candidate_pools (id, name) VALUES
+  ('d0000000-0000-0000-0000-000000000001', 'Design engineering'),
+  ('d0000000-0000-0000-0000-000000000002', 'Product designer'),
+  ('d0000000-0000-0000-0000-000000000003', 'Product managers');
+
+INSERT INTO candidate_pool_members (pool_id, candidate_id) VALUES
+  ('d0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000003'),
+  ('d0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000004'),
+  ('d0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000019'),
+  ('d0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000015'),
+  ('d0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000016'),
+  ('d0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000017'),
+  ('d0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000018'),
+  ('d0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000020'),
+  ('d0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000021');
+
+-- ============================================================
+-- Req ↔ Candidate pool links
+-- ============================================================
+INSERT INTO req_candidate_pools (req_id, pool_id) VALUES
+  ('b0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000001'),
+  ('b0000000-0000-0000-0000-000000000003', 'd0000000-0000-0000-0000-000000000002');
 
 -- ============================================================
 -- Headcount planning: departments

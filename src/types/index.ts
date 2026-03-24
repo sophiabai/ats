@@ -1,4 +1,9 @@
-export type { MessageRole, ChatMessage } from "@/features/chat/types";
+export type {
+  MessageRole,
+  ChatMessage,
+  ReqDraftMetadata,
+  ReqDraftFormData,
+} from "@/features/chat/types";
 
 export type {
   EmploymentType,

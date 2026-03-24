@@ -4,25 +4,34 @@ import { formatDistanceToNow } from "date-fns";
 import {
   MapPin,
   Building2,
+  Briefcase,
   Users,
   DollarSign,
   CalendarDays,
   UserCheck,
+  Star,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import {
-  StatusBadge,
-  EmploymentBadge,
-} from "@/features/requisitions/components/status-badge";
+import { StatusBadge } from "@/features/requisitions/components/status-badge";
 import { CandidateList } from "@/features/requisitions/components/candidate-list";
+import { ReqPoolCandidates } from "@/features/requisitions/components/req-pool-candidates";
 import {
   useRequisitionDetail,
   groupApplicationsByMilestone,
 } from "@/features/requisitions/api/use-requisition-detail";
 import { ViewToggle, type View } from "@/components/custom/view-toggle";
+import { useStarredRequisitionsStore } from "@/stores/starred-requisitions-store";
 import type { Milestone } from "@/types/database";
+
+const EMPLOYMENT_LABELS: Record<string, string> = {
+  full_time: "Full-time",
+  part_time: "Part-time",
+  contract: "Contract",
+  intern: "Intern",
+};
 
 function formatSalary(
   min: number | null,
@@ -72,6 +81,7 @@ export function Component() {
   const { reqId } = useParams<{ reqId: string }>();
   const { data: req, isLoading, error } = useRequisitionDetail(reqId!);
   const [view, setView] = useState<View>("table");
+  const { isStarred, toggle: toggleStar } = useStarredRequisitionsStore();
 
   if (isLoading) return <DetailSkeleton />;
 
@@ -88,8 +98,9 @@ export function Component() {
     );
   }
 
-  const grouped = groupApplicationsByMilestone(req.applications ?? []);
+  const { groups: grouped, rejected } = groupApplicationsByMilestone(req.applications ?? []);
   const salary = formatSalary(req.salary_min, req.salary_max, req.salary_currency);
+  const starred = isStarred(req.id);
 
   return (
     <div className="space-y-6">
@@ -97,7 +108,21 @@ export function Component() {
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold tracking-tight">{req.title}</h1>
           <StatusBadge status={req.status} />
-          <EmploymentBadge type={req.employment_type} />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-8"
+            onClick={() => toggleStar({ id: req.id, title: req.title })}
+          >
+            <Star
+              className={cn(
+                "size-4",
+                starred
+                  ? "fill-yellow-400 text-yellow-400"
+                  : "text-muted-foreground",
+              )}
+            />
+          </Button>
         </div>
       </div>
 
@@ -114,6 +139,10 @@ export function Component() {
             {req.location}
           </div>
         )}
+        <div className="flex items-center gap-1.5">
+          <Briefcase className="size-4" />
+          {EMPLOYMENT_LABELS[req.employment_type] ?? req.employment_type}
+        </div>
         <div className="flex items-center gap-1.5">
           <Users className="size-4" />
           {req.headcount} headcount
@@ -139,17 +168,25 @@ export function Component() {
         )}
       </div>
 
-      <Tabs defaultValue="application">
+      <Tabs defaultValue="pools">
         <div className="flex items-center justify-between">
           <TabsList>
+            <TabsTrigger value="pools">Candidate pools</TabsTrigger>
             {(Object.keys(MILESTONE_LABELS) as Milestone[]).map((m) => (
               <TabsTrigger key={m} value={m}>
                 {MILESTONE_LABELS[m]} ({grouped[m].length})
               </TabsTrigger>
             ))}
+            <TabsTrigger value="rejected">
+              Rejected ({rejected.length})
+            </TabsTrigger>
           </TabsList>
           <ViewToggle view={view} onViewChange={setView} />
         </div>
+
+        <TabsContent value="pools" className="mt-4">
+          <ReqPoolCandidates reqId={req.id} reqTitle={req.title} />
+        </TabsContent>
 
         {(Object.keys(MILESTONE_LABELS) as Milestone[]).map((m) => (
           <TabsContent key={m} value={m} className="mt-4">
@@ -172,6 +209,26 @@ export function Component() {
             )}
           </TabsContent>
         ))}
+
+        <TabsContent value="rejected" className="mt-4">
+          {view === "cards" ? (
+            <CandidateList
+              applications={rejected}
+              reqId={req.id}
+              reqTitle={req.title}
+              view="cards"
+            />
+          ) : (
+            <div className="rounded-lg border">
+              <CandidateList
+                applications={rejected}
+                reqId={req.id}
+                reqTitle={req.title}
+                view="table"
+              />
+            </div>
+          )}
+        </TabsContent>
       </Tabs>
     </div>
   );

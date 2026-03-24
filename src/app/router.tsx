@@ -34,6 +34,10 @@ const routes: RouteObject[] = [
         lazy: () => import("@/features/candidates/candidates-page"),
       },
       {
+        path: "candidates/pools/:poolId",
+        lazy: () => import("@/features/candidates/candidate-pool-page"),
+      },
+      {
         path: "candidates/:candidateId",
         lazy: () => import("@/features/candidates/candidate-detail-page"),
       },

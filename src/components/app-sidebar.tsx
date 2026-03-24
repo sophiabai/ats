@@ -22,6 +22,8 @@ import { NavProjects } from "@/components/nav-projects"
 import { NavUser } from "@/components/nav-user"
 import { TeamSwitcher } from "@/components/team-switcher"
 import { useChatBarStore } from "@/stores/chat-bar-store"
+import { useStarredRequisitionsStore } from "@/stores/starred-requisitions-store"
+import { useCandidatePools } from "@/features/candidates/api/use-candidate-pools"
 import {
   Sidebar,
   SidebarContent,
@@ -75,43 +77,6 @@ const data = {
       icon: ClipboardList,
     },
   ],
-  recruiting: [
-    {
-      name: "Job Requisitions",
-      url: "/requisitions",
-      icon: Briefcase,
-    },
-    {
-      name: "Candidates",
-      url: "#",
-      icon: Users,
-      items: [
-        { title: "All candidates", url: "/candidates" },
-        { title: "Design Engineering", url: "#" },
-        { title: "Product Designer", url: "#" },
-        { title: "Product Managers", url: "#" },
-      ],
-    },
-    {
-      name: "Headcount Planning",
-      url: "/headcount-planning",
-      icon: TrendingUp,
-      items: [
-        { title: "My team", url: "/headcount-planning/my-team" },
-        { title: "Roster", url: "/headcount-planning/roster" },
-        { title: "Plan", url: "/headcount-planning/plan" },
-        { title: "Budget", url: "/headcount-planning/budget" },
-        { title: "Scenarios", url: "/headcount-planning/scenarios" },
-        { title: "Approvals", url: "/headcount-planning/approvals" },
-        { title: "Settings", url: "/headcount-planning/settings" },
-      ],
-    },
-    {
-      name: "Analytics",
-      url: "#",
-      icon: BarChart3,
-    },
-  ],
   recruitingOverflow: [
     {
       name: "My Referral",
@@ -138,10 +103,59 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { setOpen } = useChatBarStore()
+  const starred = useStarredRequisitionsStore((s) => s.starred)
+  const { data: pools } = useCandidatePools()
 
   const quickAccess: NavMainItem[] = data.quickAccess.map((item) =>
     item.title === "Search" ? { ...item, onClick: () => setOpen(true) } : item
   )
+
+  const poolSubItems = [
+    { title: "All candidates", url: "/candidates" },
+    ...(pools ?? []).map((p) => ({
+      title: p.name,
+      url: `/candidates/pools/${p.id}`,
+    })),
+  ]
+
+  const recruiting = [
+    {
+      name: "Job Requisitions",
+      url: "/requisitions",
+      icon: Briefcase,
+      ...(starred.length > 0 && {
+        items: [
+          { title: "All requisitions", url: "/requisitions" },
+          ...starred.map((r) => ({ title: r.title, url: `/requisitions/${r.id}` })),
+        ],
+      }),
+    },
+    {
+      name: "Candidates",
+      url: "#",
+      icon: Users,
+      items: poolSubItems,
+    },
+    {
+      name: "Headcount Planning",
+      url: "/headcount-planning",
+      icon: TrendingUp,
+      items: [
+        { title: "My team", url: "/headcount-planning/my-team" },
+        { title: "Roster", url: "/headcount-planning/roster" },
+        { title: "Plan", url: "/headcount-planning/plan" },
+        { title: "Budget", url: "/headcount-planning/budget" },
+        { title: "Scenarios", url: "/headcount-planning/scenarios" },
+        { title: "Approvals", url: "/headcount-planning/approvals" },
+        { title: "Settings", url: "/headcount-planning/settings" },
+      ],
+    },
+    {
+      name: "Analytics",
+      url: "#",
+      icon: BarChart3,
+    },
+  ]
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -152,7 +166,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain label="Quick Access" items={quickAccess} />
         <NavProjects
           label="Recruiting"
-          items={data.recruiting}
+          items={recruiting}
           overflow={data.recruitingOverflow}
         />
       </SidebarContent>

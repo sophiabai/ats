@@ -61,7 +61,12 @@ create table requisitions (
 
   headcount int default 1,
 
-  location_pay_ranges jsonb
+  location_pay_ranges jsonb,
+
+  level text,
+  coordinator_name text,
+  sourcer_name text,
+  assessment_criteria text[]
 );
 
 create index idx_requisitions_status on requisitions(status);
@@ -364,7 +369,38 @@ create table hc_plan_settings (
   locked_by text
 );
 
--- 14. hc_approval_requests (headcount planning – approval workflow)
+-- 14. candidate_pools
+create table candidate_pools (
+  id uuid default gen_random_uuid() primary key,
+  created_at timestamptz default now(),
+  name text not null unique
+);
+
+-- 15. candidate_pool_members (join table)
+create table candidate_pool_members (
+  id uuid default gen_random_uuid() primary key,
+  created_at timestamptz default now(),
+  pool_id uuid references candidate_pools(id) on delete cascade not null,
+  candidate_id uuid references candidates(id) on delete cascade not null
+);
+
+create unique index idx_pool_members_unique on candidate_pool_members(pool_id, candidate_id);
+create index idx_pool_members_pool on candidate_pool_members(pool_id);
+create index idx_pool_members_candidate on candidate_pool_members(candidate_id);
+
+-- 16. req_candidate_pools (link pools to requisitions)
+create table req_candidate_pools (
+  id uuid default gen_random_uuid() primary key,
+  created_at timestamptz default now(),
+  req_id uuid references requisitions(id) on delete cascade not null,
+  pool_id uuid references candidate_pools(id) on delete cascade not null
+);
+
+create unique index idx_req_candidate_pools_unique on req_candidate_pools(req_id, pool_id);
+create index idx_req_candidate_pools_req on req_candidate_pools(req_id);
+create index idx_req_candidate_pools_pool on req_candidate_pools(pool_id);
+
+-- 17. hc_approval_requests (headcount planning – approval workflow)
 create table hc_approval_requests (
   id uuid default gen_random_uuid() primary key,
   created_at timestamptz default now(),

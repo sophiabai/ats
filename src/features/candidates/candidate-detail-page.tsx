@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router";
 import {
   MapPin,
@@ -38,6 +39,17 @@ export function Component() {
     error,
   } = useCandidateDetail(candidateId!);
 
+  const apps = candidate?.applications ?? [];
+  const defaultTab =
+    preselectedAppId && apps.some((a) => a.id === preselectedAppId)
+      ? preselectedAppId
+      : apps[0]?.id;
+  const [activeTab, setActiveTab] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    if (defaultTab && !activeTab) setActiveTab(defaultTab);
+  }, [defaultTab, activeTab]);
+  const activeApp = apps.find((a) => a.id === activeTab);
+
   if (isLoading) return <ProfileSkeleton />;
 
   if (error || !candidate) {
@@ -52,12 +64,6 @@ export function Component() {
       </div>
     );
   }
-
-  const apps = candidate.applications ?? [];
-  const defaultTab =
-    preselectedAppId && apps.some((a) => a.id === preselectedAppId)
-      ? preselectedAppId
-      : apps[0]?.id;
 
   return (
     <div className="space-y-6">
@@ -103,9 +109,14 @@ export function Component() {
             )}
           </div>
 
-          {candidate.skills && candidate.skills.length > 0 && (
+          {(activeApp?.source || (candidate.skills && candidate.skills.length > 0)) && (
             <div className="mt-2 flex flex-wrap gap-1.5">
-              {candidate.skills.map((skill) => (
+              {activeApp?.source && (
+                <Badge variant="outline" className="text-xs capitalize">
+                  Source: {activeApp.source.replace(/_/g, " ")}
+                </Badge>
+              )}
+              {candidate.skills?.map((skill) => (
                 <Badge key={skill} variant="secondary" className="text-xs">
                   {skill}
                 </Badge>
@@ -132,7 +143,7 @@ export function Component() {
           No applications for this candidate.
         </p>
       ) : (
-        <Tabs defaultValue={defaultTab}>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
             {apps.map((app) => (
               <TabsTrigger key={app.id} value={app.id}>

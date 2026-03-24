@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { Users, ExternalLink } from "lucide-react";
+import { Users, ExternalLink, FolderPlus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -13,8 +13,10 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ViewToggle, type View } from "@/components/custom/view-toggle";
 import { useCandidates } from "@/features/candidates/api/use-candidates";
+import { AddToPoolDialog } from "@/features/candidates/components/add-to-pool-dialog";
 import type { BreadcrumbState } from "@/app/layout";
 
 function candidateBreadcrumb(name: string): BreadcrumbState {
@@ -53,6 +55,29 @@ function CandidatesSkeleton() {
 export function CandidatesPage() {
   const { data, isLoading, error } = useCandidates();
   const [view, setView] = useState<View>("table");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [poolDialogOpen, setPoolDialogOpen] = useState(false);
+
+  const allIds = data?.map((c) => c.id) ?? [];
+  const allSelected = allIds.length > 0 && selectedIds.size === allIds.length;
+  const someSelected = selectedIds.size > 0 && selectedIds.size < allIds.length;
+
+  function toggleOne(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleAll() {
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(allIds));
+    }
+  }
 
   if (isLoading) return <CandidatesSkeleton />;
 
@@ -90,61 +115,83 @@ export function CandidatesPage() {
             {data.length} candidate{data.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <ViewToggle view={view} onViewChange={setView} />
+        <div className="flex items-center gap-2">
+          {selectedIds.size > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPoolDialogOpen(true)}
+            >
+              <FolderPlus className="mr-1.5 size-4" />
+              Add to pool ({selectedIds.size})
+            </Button>
+          )}
+          <ViewToggle view={view} onViewChange={setView} />
+        </div>
       </div>
 
       {view === "cards" ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {data.map((c) => {
             const fullName = `${c.first_name} ${c.last_name}`;
+            const checked = selectedIds.has(c.id);
             return (
-              <Card key={c.id}>
+              <Card key={c.id} className={checked ? "ring-2 ring-primary" : ""}>
                 <CardContent>
-                  <Link
-                    to={`/candidates/${c.id}`}
-                    state={candidateBreadcrumb(fullName)}
-                    className="group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold uppercase">
-                        {c.first_name[0]}
-                        {c.last_name[0]}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="truncate font-medium group-hover:underline">
-                          {c.first_name} {c.last_name}
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      checked={checked}
+                      onCheckedChange={() => toggleOne(c.id)}
+                      className="mt-1"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <Link
+                        to={`/candidates/${c.id}`}
+                        state={candidateBreadcrumb(fullName)}
+                        className="group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold uppercase">
+                            {c.first_name[0]}
+                            {c.last_name[0]}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="truncate font-medium group-hover:underline">
+                              {c.first_name} {c.last_name}
+                            </div>
+                            <div className="truncate text-xs text-muted-foreground">
+                              {c.email}
+                            </div>
+                          </div>
                         </div>
-                        <div className="truncate text-xs text-muted-foreground">
-                          {c.email}
+                      </Link>
+                      <div className="mt-3 space-y-2 text-sm text-muted-foreground">
+                        <div>
+                          {c.current_title && c.current_company
+                            ? `${c.current_title} at ${c.current_company}`
+                            : c.current_title ?? c.headline ?? "—"}
                         </div>
-                      </div>
-                    </div>
-                  </Link>
-                  <div className="mt-3 space-y-2 text-sm text-muted-foreground">
-                    <div>
-                      {c.current_title && c.current_company
-                        ? `${c.current_title} at ${c.current_company}`
-                        : c.current_title ?? c.headline ?? "—"}
-                    </div>
-                    {c.location && <div>{c.location}</div>}
-                    {c.years_experience != null && (
-                      <div>{c.years_experience} yrs experience</div>
-                    )}
-                    {c.skills && c.skills.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {c.skills.slice(0, 3).map((s) => (
-                          <Badge key={s} variant="secondary" className="text-xs">
-                            {s}
-                          </Badge>
-                        ))}
-                        {c.skills.length > 3 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{c.skills.length - 3}
-                          </Badge>
+                        {c.location && <div>{c.location}</div>}
+                        {c.years_experience != null && (
+                          <div>{c.years_experience} yrs experience</div>
                         )}
+                        {c.skills && c.skills.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {c.skills.slice(0, 3).map((s) => (
+                              <Badge key={s} variant="secondary" className="text-xs">
+                                {s}
+                              </Badge>
+                            ))}
+                            {c.skills.length > 3 && (
+                              <Badge variant="outline" className="text-xs">
+                                +{c.skills.length - 3}
+                              </Badge>
+                            )}
+                          </div>
+                        )}
+                        <div>{c.application_count} application{c.application_count !== 1 ? "s" : ""}</div>
                       </div>
-                    )}
-                    <div>{c.application_count} application{c.application_count !== 1 ? "s" : ""}</div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -156,6 +203,12 @@ export function CandidatesPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={allSelected ? true : someSelected ? "indeterminate" : false}
+                    onCheckedChange={toggleAll}
+                  />
+                </TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Current role</TableHead>
                 <TableHead>Location</TableHead>
@@ -168,8 +221,15 @@ export function CandidatesPage() {
             <TableBody>
               {data.map((c) => {
                 const fullName = `${c.first_name} ${c.last_name}`;
+                const checked = selectedIds.has(c.id);
                 return (
-                <TableRow key={c.id}>
+                <TableRow key={c.id} data-state={checked ? "selected" : undefined}>
+                  <TableCell>
+                    <Checkbox
+                      checked={checked}
+                      onCheckedChange={() => toggleOne(c.id)}
+                    />
+                  </TableCell>
                   <TableCell>
                     <Link
                       to={`/candidates/${c.id}`}
@@ -240,6 +300,13 @@ export function CandidatesPage() {
           </Table>
         </div>
       )}
+
+      <AddToPoolDialog
+        open={poolDialogOpen}
+        onOpenChange={setPoolDialogOpen}
+        candidateIds={Array.from(selectedIds)}
+        onSuccess={() => setSelectedIds(new Set())}
+      />
     </div>
   );
 }

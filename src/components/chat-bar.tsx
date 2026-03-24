@@ -9,11 +9,8 @@ import {
 import { useNavigate } from "react-router"
 import {
   Briefcase,
-  Mic,
   Minimize2,
-  Paperclip,
   Sparkles,
-  SquarePen,
   Users,
 } from "lucide-react"
 
@@ -24,15 +21,23 @@ import { MessageBubble } from "@/features/chat/components/message-bubble"
 import { MessageSkeleton } from "@/features/chat/components/message-skeleton"
 import { useChat } from "@/features/chat/api/use-chat"
 import { useChatStore } from "@/features/chat/stores/chat-store"
+import { useParseRequisition } from "@/features/requisitions/api/use-parse-requisition"
+import { CreateRequisitionDialog } from "@/features/requisitions/components/create-requisition-dialog"
+import type { FormState } from "@/features/requisitions/components/create-requisition-dialog"
+import type { ReqDraftFormData } from "@/types"
 import { useGlobalSearch } from "@/hooks/use-global-search"
 import { useChatBarStore } from "@/stores/chat-bar-store"
 import { cn } from "@/lib/utils"
 
 const quickActions = [
+  "Create req",
   "Summarize candidates",
   "Draft outreach email",
   "Compare applicants",
 ]
+
+const CREATE_REQ_RE = /^\/?\s*create\s+(?:a\s+)?req(?:uisition)?\s*/i
+const SKIP_PHRASES = /^(empty|skip|blank|i'll fill it in|fill it myself)/i
 
 const ACTION_PATTERNS = [
   /^(schedule|send|email|evaluate|assess|move|reject|approve|compare|summarize|draft)/i,
@@ -61,17 +66,22 @@ const GROUP_LABELS: Record<string, string> = {
 }
 
 export function ChatBar() {
-  const { open, setOpen, toggle } = useChatBarStore()
+  const { open, setOpen } = useChatBarStore()
   const [expanded, setExpanded] = useState(false)
   const [value, setValue] = useState("")
   const { messages, addMessage, clearMessages } = useChatStore()
   const chat = useChat()
+  const parseReq = useParseRequisition()
   const navigate = useNavigate()
   const bottomRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const { data: searchResults } = useGlobalSearch(value)
-  const [selectedIndex, setSelectedIndex] = useState(-1)
+  const [selectedIndex, setSelectedIndex] = useState(0)
+  const reqModeRef = useRef(false)
+  const [activeCommand, setActiveCommand] = useState<string | null>(null)
+  const [reqDialogOpen, setReqDialogOpen] = useState(false)
+  const [reqInitialData, setReqInitialData] = useState<Partial<FormState> | undefined>()
 
   const dropdownItems = useMemo(() => {
     const items: DropdownItem[] = []
@@ -131,34 +141,29 @@ export function ChatBar() {
 
   const showDropdown = dropdownItems.length > 0
 
-  // Cmd+K global shortcut
+  // Cmd+K global shortcut — just focus the input
   useEffect(() => {
     function onKeyDown(e: globalThis.KeyboardEvent) {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault()
-        toggle()
+        inputRef.current?.focus()
       }
     }
     document.addEventListener("keydown", onKeyDown)
     return () => document.removeEventListener("keydown", onKeyDown)
-  }, [toggle])
+  }, [])
 
-  // Focus input when opened
+  // Focus input when triggered from sidebar
   useEffect(() => {
-    if (open) requestAnimationFrame(() => inputRef.current?.focus())
-  }, [open])
-
-  // Reset state when closed
-  useEffect(() => {
-    if (!open) {
-      setExpanded(false)
-      setValue("")
+    if (open) {
+      requestAnimationFrame(() => inputRef.current?.focus())
+      setOpen(false)
     }
-  }, [open])
+  }, [open, setOpen])
 
   // Reset selection when query changes
   useEffect(() => {
-    setSelectedIndex(-1)
+    setSelectedIndex(0)
   }, [value])
 
   // Auto-scroll to latest message
@@ -166,18 +171,18 @@ export function ChatBar() {
     if (expanded) bottomRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages, chat.isPending, expanded])
 
-  // Click outside to close
+  // Click outside to collapse expanded chat
   const handleClickOutside = useCallback(
     (e: MouseEvent) => {
+      if (reqDialogOpen) return
       if (
-        open &&
         containerRef.current &&
         !containerRef.current.contains(e.target as Node)
       ) {
-        setOpen(false)
+        if (expanded) setExpanded(false)
       }
     },
-    [open, setOpen],
+    [expanded, reqDialogOpen],
   )
 
   useEffect(() => {
@@ -185,12 +190,84 @@ export function ChatBar() {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [handleClickOutside])
 
+  function openReqDialog(formData?: ReqDraftFormData) {
+    setReqInitialData(formData ? { ...formData } : undefined)
+    setReqDialogOpen(true)
+  }
+
+  function handleReqParse(userContent: string, allMessages: { role: "user" | "assistant"; content: string }[]) {
+    parseReq.mutate(allMessages, {
+      onSuccess: (result) => {
+        addMessage({
+          role: "assistant",
+          content: result.message,
+          metadata: { type: "req_draft", formData: result.formData },
+        })
+      },
+      onError: () => {
+        addMessage({
+          role: "assistant",
+          content: "Sorry, I couldn't parse that into a requisition. Could you try describing the role again?",
+        })
+      },
+    })
+  }
+
   function handleSend(content: string) {
-    if (!content.trim() || chat.isPending) return
-    const userMessage = { role: "user" as const, content: content.trim() }
+    if (chat.isPending || parseReq.isPending) return
+
+    // Active command chip flow (e.g. "/create req" chip is shown)
+    if (activeCommand === "Create req") {
+      const trimmed = content.trim()
+      setValue("")
+      setActiveCommand(null)
+      reqModeRef.current = true
+      if (!expanded) setExpanded(true)
+
+      if (!trimmed || SKIP_PHRASES.test(trimmed)) {
+        reqModeRef.current = false
+        addMessage({ role: "user" as const, content: "/create req", command: "Create req" })
+        addMessage({
+          role: "assistant",
+          content: "Opening a blank requisition form for you.",
+        })
+        openReqDialog()
+        return
+      }
+
+      const userMessage = { role: "user" as const, content: trimmed, command: "Create req" }
+      addMessage(userMessage)
+      handleReqParse(trimmed, [userMessage])
+      return
+    }
+
+    if (!content.trim()) return
+    const trimmed = content.trim()
+    const userMessage = { role: "user" as const, content: trimmed }
     addMessage(userMessage)
     setValue("")
     if (!expanded) setExpanded(true)
+
+    if (reqModeRef.current) {
+      if (SKIP_PHRASES.test(trimmed)) {
+        reqModeRef.current = false
+        addMessage({
+          role: "assistant",
+          content: "Opening a blank requisition form for you.",
+        })
+        openReqDialog()
+        return
+      }
+      const updatedMessages = [...messages, userMessage]
+      handleReqParse(trimmed, updatedMessages)
+      return
+    }
+
+    const createMatch = CREATE_REQ_RE.test(trimmed)
+    if (createMatch) {
+      setActiveCommand("Create req")
+      return
+    }
 
     const updatedMessages = [...messages, userMessage]
     chat.mutate(updatedMessages, {
@@ -202,7 +279,7 @@ export function ChatBar() {
 
   function handleNavigate(to: string) {
     setValue("")
-    setOpen(false)
+    setExpanded(false)
     if (to !== "#") navigate(to)
   }
 
@@ -210,7 +287,12 @@ export function ChatBar() {
     if (item.to) {
       handleNavigate(item.to)
     } else if (item.type === "action") {
-      handleSend(item.label)
+      if (item.label === "Create req") {
+        setValue("")
+        setActiveCommand("Create req")
+      } else {
+        handleSend(item.label)
+      }
     } else if (item.type === "ai") {
       handleSend(value)
     }
@@ -223,7 +305,7 @@ export function ChatBar() {
         setSelectedIndex((i) => Math.min(i + 1, dropdownItems.length - 1))
       } else if (e.key === "ArrowUp") {
         e.preventDefault()
-        setSelectedIndex((i) => Math.max(i - 1, -1))
+        setSelectedIndex((i) => Math.max(i - 1, 0))
       } else if (e.key === "Enter" && !e.shiftKey && selectedIndex >= 0) {
         e.preventDefault()
         handleItemSelect(dropdownItems[selectedIndex])
@@ -235,56 +317,57 @@ export function ChatBar() {
       e.preventDefault()
       if (value) {
         setValue("")
+      } else if (expanded) {
+        setExpanded(false)
       } else {
-        setOpen(false)
+        inputRef.current?.blur()
       }
     }
   }
 
-  if (!open) {
-    return (
-      <div className="absolute inset-x-4 bottom-4 z-50 mx-auto max-w-[600px] sm:bottom-6">
-        <div
-          className="flex cursor-text items-center gap-2 rounded-full border bg-background px-5 py-4 shadow-lg transition-shadow hover:shadow-xl"
-          onClick={() => setOpen(true)}
-        >
-          <span className="flex-1 text-sm text-muted-foreground">
-            Search, ask, or type / for actions
-          </span>
-          <Paperclip className="size-4 text-muted-foreground" />
-          <Mic className="size-4 text-muted-foreground" />
-        </div>
-      </div>
-    )
-  }
-
   return (
+  <>
     <div
       ref={containerRef}
       className="absolute inset-x-4 bottom-4 z-50 mx-auto flex max-w-[600px] flex-col sm:bottom-6"
     >
       {/* Messages panel */}
       {expanded && (
-        <div className="mb-1.5 max-h-[50vh] overflow-y-auto rounded-2xl border bg-popover px-5 py-4 shadow-lg">
-          {messages.length === 0 && !chat.isPending ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              Send a message to start a conversation.
-            </p>
-          ) : (
-            <div className="flex flex-col gap-4">
-              {messages.map((msg, idx) => (
-                <MessageBubble key={idx} message={msg} />
-              ))}
-              {chat.isPending && <MessageSkeleton />}
-              <div ref={bottomRef} />
-            </div>
-          )}
+        <div className="mb-1.5 flex max-h-[50vh] flex-col rounded-3xl border bg-popover shadow-2xl">
+          <div className="flex shrink-0 items-center justify-end border-b px-3 py-2">
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              onClick={() => setExpanded(false)}
+            >
+              <Minimize2 className="size-3.5" />
+            </Button>
+          </div>
+          <div className="overflow-y-auto px-8 pb-4">
+            {messages.length === 0 && !chat.isPending ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                Send a message to start a conversation.
+              </p>
+            ) : (
+              <div className="flex flex-col gap-4">
+                {messages.map((msg, idx) => (
+                  <MessageBubble
+                    key={idx}
+                    message={msg}
+                    onOpenReqDraft={openReqDialog}
+                  />
+                ))}
+                {(chat.isPending || parseReq.isPending) && <MessageSkeleton />}
+                <div ref={bottomRef} />
+              </div>
+            )}
+          </div>
         </div>
       )}
 
       {/* Search / navigation dropdown */}
-      {showDropdown && (
-        <div className="mb-1.5 max-h-[300px] overflow-y-auto rounded-2xl border bg-popover p-1 shadow-lg">
+      {showDropdown && !expanded && (
+        <div className="mb-1.5 max-h-[300px] overflow-y-auto rounded-3xl border bg-popover p-1 shadow-2xl">
           {dropdownItems.map((item, idx) => {
             const showHeading =
               idx === 0 || dropdownItems[idx - 1].type !== item.type
@@ -312,11 +395,7 @@ export function ChatBar() {
                   onClick={() => handleItemSelect(item)}
                   onMouseEnter={() => setSelectedIndex(idx)}
                 >
-                  {item.type === "action" ? (
-                    <span className="flex size-5 shrink-0 items-center justify-center rounded bg-muted text-xs font-semibold text-muted-foreground">
-                      /
-                    </span>
-                  ) : (
+                  {item.type !== "action" && (
                     <Icon
                       className={cn(
                         "size-4 shrink-0",
@@ -328,7 +407,9 @@ export function ChatBar() {
                   )}
                   <div className="flex min-w-0 flex-1 items-center gap-2">
                     <div className="flex min-w-0 flex-col">
-                      <span className="truncate font-medium">{item.label}</span>
+                      <span className="truncate font-medium">
+                        {item.type === "action" ? `/${item.label}` : item.label}
+                      </span>
                       {item.sublabel && (
                         <span className="truncate text-xs text-muted-foreground">
                           {item.sublabel}
@@ -343,40 +424,16 @@ export function ChatBar() {
                         {item.badge}
                       </Badge>
                     )}
+                    {idx === selectedIndex && (
+                      <kbd className="ml-auto shrink-0 rounded border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                        Enter
+                      </kbd>
+                    )}
                   </div>
                 </button>
               </div>
             )
           })}
-        </div>
-      )}
-
-      {(messages.length > 0 || expanded) && (
-        <div className="flex shrink-0 items-center justify-end px-1 pb-1">
-          {messages.length > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 gap-1.5 text-xs"
-              onClick={() => {
-                clearMessages()
-                setValue("")
-                setExpanded(false)
-              }}
-            >
-              <SquarePen className="size-3.5" />
-              New chat
-            </Button>
-          )}
-          {expanded && (
-            <Button
-              variant="ghost"
-              size="icon-xs"
-              onClick={() => setExpanded(false)}
-            >
-              <Minimize2 className="size-3.5" />
-            </Button>
-          )}
         </div>
       )}
 
@@ -392,10 +449,25 @@ export function ChatBar() {
         value={value}
         onChange={setValue}
         onSend={handleSend}
-        disabled={chat.isPending}
+        disabled={chat.isPending || parseReq.isPending}
         inputRef={inputRef}
         onKeyDown={handleInputKeyDown}
+        activeCommand={activeCommand}
+        onClearCommand={() => setActiveCommand(null)}
       />
+
     </div>
+
+    <CreateRequisitionDialog
+      open={reqDialogOpen}
+      onOpenChange={setReqDialogOpen}
+      initialData={reqInitialData}
+      autoGenerate
+      onCreated={(id) => {
+        setExpanded(false)
+        navigate(`/requisitions/${id}`)
+      }}
+    />
+  </>
   )
 }

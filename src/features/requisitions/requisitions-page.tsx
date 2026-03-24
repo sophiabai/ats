@@ -1,15 +1,18 @@
 import { useState } from "react";
-import { Briefcase } from "lucide-react";
+import { useNavigate } from "react-router";
+import { Briefcase, Plus } from "lucide-react";
 import { useRequisitions } from "@/features/requisitions/api/use-requisitions";
 import { RequisitionsTable } from "@/features/requisitions/components/requisitions-table";
 import { RequisitionsSkeleton } from "@/features/requisitions/components/requisitions-skeleton";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CreateRequisitionDialog } from "@/features/requisitions/components/create-requisition-dialog";
 import { Button } from "@/components/ui/button";
 import { ViewToggle, type View } from "@/components/custom/view-toggle";
 
 export function RequisitionsPage() {
   const { data, isLoading, error } = useRequisitions();
+  const navigate = useNavigate();
   const [view, setView] = useState<View>("table");
+  const [createOpen, setCreateOpen] = useState(false);
 
   if (isLoading) {
     return <RequisitionsSkeleton />;
@@ -30,13 +33,24 @@ export function RequisitionsPage() {
 
   if (!data || data.length === 0) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-4 text-muted-foreground">
-        <Briefcase className="size-12" />
-        <h2 className="text-xl font-semibold text-foreground">
-          No requisitions yet
-        </h2>
-        <p>Create your first job requisition to get started.</p>
-      </div>
+      <>
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 text-muted-foreground">
+          <Briefcase className="size-12" />
+          <h2 className="text-xl font-semibold text-foreground">
+            No requisitions yet
+          </h2>
+          <p>Create your first job requisition to get started.</p>
+          <Button className="gap-1.5" onClick={() => setCreateOpen(true)}>
+            <Plus className="size-4" />
+            Create job requisition
+          </Button>
+        </div>
+        <CreateRequisitionDialog
+          open={createOpen}
+          onOpenChange={setCreateOpen}
+          onCreated={(id) => navigate(`/requisitions/${id}`)}
+        />
+      </>
     );
   }
 
@@ -53,41 +67,23 @@ export function RequisitionsPage() {
             {totalApplicants} applicant{totalApplicants !== 1 ? "s" : ""}
           </p>
         </div>
-        <ViewToggle view={view} onViewChange={setView} />
+        <div className="flex items-center gap-2">
+          <Button
+            className="gap-1.5"
+            onClick={() => setCreateOpen(true)}
+          >
+            <Plus className="size-4" />
+            Create job requisition
+          </Button>
+          <ViewToggle view={view} onViewChange={setView} />
+        </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total requisitions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{data.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Open roles
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{openCount}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total applicants
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalApplicants}</div>
-          </CardContent>
-        </Card>
-      </div>
+      <CreateRequisitionDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onCreated={(id) => navigate(`/requisitions/${id}`)}
+      />
 
       {view === "cards" ? (
         <RequisitionsTable data={data} view="cards" />

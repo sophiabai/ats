@@ -46,10 +46,15 @@ export function groupApplicationsByMilestone(
     offer: [],
     offer_accepted: [],
   };
+  const rejected: ApplicationWithCandidate[] = [];
 
   for (const app of applications) {
-    groups[app.current_milestone].push(app);
+    if (app.status === "rejected" || app.status === "withdrawn") {
+      rejected.push(app);
+    } else {
+      groups[app.current_milestone].push(app);
+    }
   }
 
-  return groups;
+  return { groups, rejected };
 }

@@ -116,6 +116,10 @@ export interface Requisition {
   salary_currency: string;
   headcount: number;
   location_pay_ranges: LocationPayRange[] | null;
+  level: string | null;
+  coordinator_name: string | null;
+  sourcer_name: string | null;
+  assessment_criteria: string[] | null;
 }
 
 export interface ReqStage {
@@ -224,6 +228,28 @@ export interface Email {
   subject: string;
   body: string;
   status: "draft" | "sent" | "failed";
+}
+
+// --- Candidate Pools ---
+
+export interface CandidatePool {
+  id: string;
+  created_at: string;
+  name: string;
+}
+
+export interface CandidatePoolMember {
+  id: string;
+  created_at: string;
+  pool_id: string;
+  candidate_id: string;
+}
+
+export interface ReqCandidatePool {
+  id: string;
+  created_at: string;
+  req_id: string;
+  pool_id: string;
 }
 
 // --- Headcount Planning ---

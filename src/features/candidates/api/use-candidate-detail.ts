@@ -6,10 +6,19 @@ import type {
   Requisition,
   ApplicationInterview,
   ReqStage,
+  ReqInterview,
 } from "@/types/database";
 
+export interface ReqStageWithInterviews extends ReqStage {
+  req_interviews: ReqInterview[];
+}
+
+export interface RequisitionWithPipeline extends Requisition {
+  req_stages: ReqStageWithInterviews[];
+}
+
 export interface ApplicationDetail extends Application {
-  requisitions: Requisition;
+  requisitions: RequisitionWithPipeline;
   application_interviews: (ApplicationInterview & {
     req_stages: ReqStage;
   })[];
@@ -29,7 +38,7 @@ export function useCandidateDetail(candidateId: string) {
           `*,
           applications(
             *,
-            requisitions(*),
+            requisitions(*, req_stages(*, req_interviews(*))),
             application_interviews(*, req_stages(*))
           )`,
         )

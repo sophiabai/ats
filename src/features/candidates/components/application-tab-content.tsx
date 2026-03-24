@@ -1,24 +1,18 @@
-import { useState } from "react";
-import { formatDistanceToNow, format } from "date-fns";
-import {
-  CalendarDays,
-  Clock,
-  MapPin,
-  User,
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { ViewToggle, type View } from "@/components/custom/view-toggle";
+import { useMemo } from "react";
+import { Check, Circle, Clock, Minus, User } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import type { ApplicationDetail } from "@/features/candidates/api/use-candidate-detail";
-import type { Milestone } from "@/types/database";
+import type { Milestone, ReqInterview } from "@/types/database";
+import type { ReqStageWithInterviews } from "@/features/candidates/api/use-candidate-detail";
+
+const MILESTONE_ORDER: Milestone[] = [
+  "application",
+  "screen",
+  "final_interview",
+  "offer",
+  "offer_accepted",
+];
 
 const MILESTONE_LABELS: Record<Milestone, string> = {
   application: "Application",
@@ -28,256 +22,195 @@ const MILESTONE_LABELS: Record<Milestone, string> = {
   offer_accepted: "Offer accepted",
 };
 
-const STATUS_COLORS: Record<string, string> = {
-  active: "bg-emerald-500/15 text-emerald-700",
-  hired: "bg-blue-500/15 text-blue-700",
-  rejected: "bg-destructive/15 text-destructive",
-  withdrawn: "bg-amber-500/15 text-amber-700",
-};
+type StageStatus = "completed" | "current" | "upcoming";
 
-const INTERVIEW_STATUS_COLORS: Record<string, string> = {
-  pending: "bg-muted text-muted-foreground",
-  scheduled: "bg-blue-500/15 text-blue-700",
-  completed: "bg-emerald-500/15 text-emerald-700",
-  cancelled: "bg-muted text-muted-foreground line-through",
-  no_show: "bg-destructive/15 text-destructive",
-};
+function getStageStatus(
+  milestone: Milestone,
+  stageId: string,
+  currentMilestone: Milestone,
+  currentStageId: string | null,
+  stages: ReqStageWithInterviews[],
+): StageStatus {
+  const milestoneIdx = MILESTONE_ORDER.indexOf(milestone);
+  const currentMilestoneIdx = MILESTONE_ORDER.indexOf(currentMilestone);
+
+  if (milestoneIdx < currentMilestoneIdx) return "completed";
+  if (milestoneIdx > currentMilestoneIdx) return "upcoming";
+
+  // Same milestone — compare sort_order within that milestone
+  if (stageId === currentStageId) return "current";
+  const thisStage = stages.find((s) => s.id === stageId);
+  const curStage = stages.find((s) => s.id === currentStageId);
+  if (thisStage && curStage && thisStage.sort_order < curStage.sort_order)
+    return "completed";
+  return "upcoming";
+}
+
+function StageIcon({ status }: { status: StageStatus }) {
+  if (status === "completed")
+    return (
+      <div className="flex size-5 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600">
+        <Check className="size-3" strokeWidth={3} />
+      </div>
+    );
+  if (status === "current")
+    return (
+      <div className="flex size-5 items-center justify-center rounded-full bg-blue-500/15 text-blue-600">
+        <Circle className="size-2.5 fill-current" />
+      </div>
+    );
+  return (
+    <div className="flex size-5 items-center justify-center rounded-full bg-muted text-muted-foreground/40">
+      <Minus className="size-3" />
+    </div>
+  );
+}
+
+function InterviewTimeline({ interviews }: { interviews: ReqInterview[] }) {
+  return (
+    <div className="mt-2 border-t pt-2">
+      {interviews.map((iv, idx) => {
+        const isLast = idx === interviews.length - 1;
+        return (
+          <div key={iv.id} className="flex gap-3">
+            <div className="flex flex-col items-center">
+              <div className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border bg-background">
+                <Circle className="size-1.5 fill-muted-foreground/40 text-muted-foreground/40" />
+              </div>
+              {!isLast && <div className="w-px flex-1 bg-border" />}
+            </div>
+            <div className={cn("pb-3", isLast && "pb-0")}>
+              <span className="text-sm text-muted-foreground">{iv.title}</span>
+              <div className="flex items-center gap-3 text-xs text-muted-foreground/60">
+                <span className="flex items-center gap-1">
+                  <Clock className="size-3" />
+                  {iv.duration_minutes}m
+                </span>
+                {iv.interviewer_name && (
+                  <span className="flex items-center gap-1">
+                    <User className="size-3" />
+                    {iv.interviewer_name}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 export function ApplicationTabContent({ app }: { app: ApplicationDetail }) {
-  const req = app.requisitions;
-  const interviews = app.application_interviews ?? [];
-  const [interviewView, setInterviewView] = useState<View>("table");
+  const pipeline = useMemo(() => {
+    const stages = app.requisitions?.req_stages ?? [];
+    const grouped = new Map<Milestone, ReqStageWithInterviews[]>();
 
-  const interviewsByStage = new Map<string, typeof interviews>();
-  for (const interview of interviews) {
-    const stageName = interview.req_stages?.name ?? "Unknown";
-    if (!interviewsByStage.has(stageName)) {
-      interviewsByStage.set(stageName, []);
+    for (const ms of MILESTONE_ORDER) {
+      grouped.set(ms, []);
     }
-    interviewsByStage.get(stageName)!.push(interview);
-  }
+    for (const stage of stages) {
+      grouped.get(stage.milestone)?.push(stage);
+    }
+    for (const [, arr] of grouped) {
+      arr.sort((a, b) => a.sort_order - b.sort_order);
+    }
+    for (const [, arr] of grouped) {
+      for (const stage of arr) {
+        stage.req_interviews = (stage.req_interviews ?? []).sort(
+          (a, b) => (a.order_position ?? 0) - (b.order_position ?? 0),
+        );
+      }
+    }
+
+    return grouped;
+  }, [app.requisitions?.req_stages]);
+
+  const allStages = app.requisitions?.req_stages ?? [];
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Position
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="font-semibold">{req.title}</div>
-            <div className="text-xs text-muted-foreground">
-              {req.department}
-              {req.location ? ` · ${req.location}` : ""}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Current milestone
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="font-semibold">
-              {MILESTONE_LABELS[app.current_milestone]}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Status
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Badge
-              variant="outline"
-              className={STATUS_COLORS[app.status] ?? ""}
-            >
-              {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
-            </Badge>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Applied
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="font-semibold">
-              {formatDistanceToNow(new Date(app.applied_date), {
-                addSuffix: true,
-              })}
-            </div>
-            <div className="text-xs text-muted-foreground">
-              {format(new Date(app.applied_date), "MMM d, yyyy")}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {app.source && (
-        <div className="text-sm text-muted-foreground">
-          Source: <Badge variant="secondary">{app.source}</Badge>
-          {app.referrer_name && <span> · Referred by {app.referrer_name}</span>}
-        </div>
-      )}
-
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Interview schedule</h3>
-          {interviews.length > 0 && (
-            <ViewToggle view={interviewView} onViewChange={setInterviewView} />
-          )}
-        </div>
-        {interviews.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            No interviews scheduled yet.
-          </p>
-        ) : (
-          [...interviewsByStage.entries()].map(
-            ([stageName, stageInterviews]) => (
-              <div key={stageName} className="space-y-2">
-                <h4 className="text-sm font-medium text-muted-foreground">
-                  {stageName}
-                </h4>
-                {interviewView === "cards" ? (
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {stageInterviews.map((iv) => (
-                      <Card key={iv.id}>
-                        <CardContent>
-                          <div className="flex items-start justify-between gap-2">
-                            <span className="font-medium">{iv.title}</span>
-                            <Badge
-                              variant="outline"
-                              className={
-                                INTERVIEW_STATUS_COLORS[iv.status] ?? ""
-                              }
-                            >
-                              {iv.status.replace(/_/g, " ")}
-                            </Badge>
+        {MILESTONE_ORDER.map((ms) => {
+          const stages = pipeline.get(ms) ?? [];
+          const hasStages = stages.length > 0;
+          const milestonePastOrCurrent =
+            MILESTONE_ORDER.indexOf(ms) <=
+            MILESTONE_ORDER.indexOf(app.current_milestone);
+
+          return (
+            <div key={ms}>
+              <h4
+                className={cn(
+                  "text-sm font-semibold",
+                  milestonePastOrCurrent
+                    ? "text-foreground"
+                    : "text-muted-foreground/60",
+                )}
+              >
+                {MILESTONE_LABELS[ms]}
+              </h4>
+
+              {hasStages ? (
+                <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                  {stages.map((stage) => {
+                    const status = getStageStatus(
+                      ms,
+                      stage.id,
+                      app.current_milestone,
+                      app.current_stage_id,
+                      allStages,
+                    );
+
+                    return (
+                      <Card
+                        key={stage.id}
+                        className={cn(
+                          "gap-0 py-0",
+                          status === "current" &&
+                            "ring-2 ring-blue-500/30",
+                          status === "upcoming" && "opacity-50",
+                        )}
+                      >
+                        <CardContent className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <StageIcon status={status} />
+                            <span className="text-sm font-medium">
+                              {stage.name}
+                            </span>
                           </div>
-                          <div className="mt-3 space-y-1.5 text-sm text-muted-foreground">
-                            <div className="capitalize">
-                              {iv.interview_type.replace(/_/g, " ")}
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                              <User className="size-3.5" />
-                              {iv.interviewer_name ?? "Unassigned"}
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                              <Clock className="size-3.5" />
-                              {iv.duration_minutes}m
-                            </div>
-                            {iv.scheduled_at ? (
-                              <div className="flex items-center gap-1.5">
-                                <CalendarDays className="size-3.5" />
-                                {format(
-                                  new Date(iv.scheduled_at),
-                                  "MMM d, h:mm a",
-                                )}
-                              </div>
-                            ) : (
-                              <div className="text-muted-foreground/50">
-                                Not scheduled
-                              </div>
-                            )}
-                            {iv.location && (
-                              <div className="flex items-center gap-1.5">
-                                <MapPin className="size-3.5" />
-                                {iv.location}
-                              </div>
-                            )}
-                          </div>
+                          {stage.req_interviews.length > 0 && (
+                            <InterviewTimeline interviews={stage.req_interviews} />
+                          )}
                         </CardContent>
                       </Card>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="rounded-lg border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Interview</TableHead>
-                          <TableHead>Type</TableHead>
-                          <TableHead>Interviewer</TableHead>
-                          <TableHead>Duration</TableHead>
-                          <TableHead>Scheduled</TableHead>
-                          <TableHead>Status</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {stageInterviews.map((iv) => (
-                          <TableRow key={iv.id}>
-                            <TableCell className="font-medium">
-                              {iv.title}
-                            </TableCell>
-                            <TableCell className="text-muted-foreground">
-                              {iv.interview_type.replace(/_/g, " ")}
-                            </TableCell>
-                            <TableCell>
-                              {iv.interviewer_name ? (
-                                <div className="flex items-center gap-1.5">
-                                  <User className="size-3.5 text-muted-foreground" />
-                                  {iv.interviewer_name}
-                                </div>
-                              ) : (
-                                <span className="text-muted-foreground/50">
-                                  Unassigned
-                                </span>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-1.5 text-muted-foreground">
-                                <Clock className="size-3.5" />
-                                {iv.duration_minutes}m
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              {iv.scheduled_at ? (
-                                <div className="flex items-center gap-1.5 text-muted-foreground">
-                                  <CalendarDays className="size-3.5" />
-                                  {format(
-                                    new Date(iv.scheduled_at),
-                                    "MMM d, h:mm a",
-                                  )}
-                                  {iv.location && (
-                                    <span className="flex items-center gap-1">
-                                      <MapPin className="size-3" />
-                                      {iv.location}
-                                    </span>
-                                  )}
-                                </div>
-                              ) : (
-                                <span className="text-muted-foreground/50">
-                                  Not scheduled
-                                </span>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <Badge
-                                variant="outline"
-                                className={
-                                  INTERVIEW_STATUS_COLORS[iv.status] ?? ""
-                                }
-                              >
-                                {iv.status.replace(/_/g, " ")}
-                              </Badge>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </div>
-            ),
-          )
-        )}
+                    );
+                  })}
+                </div>
+              ) : (
+                <Card
+                  className={cn(
+                    "mt-2 gap-0 py-0",
+                    !milestonePastOrCurrent && "opacity-50",
+                  )}
+                >
+                  <CardContent className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <StageIcon
+                        status={
+                          milestonePastOrCurrent ? "completed" : "upcoming"
+                        }
+                      />
+                      <span className="text-sm text-muted-foreground">
+                        {MILESTONE_LABELS[ms]}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {app.notes && (

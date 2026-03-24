@@ -102,13 +102,14 @@ function JobCard({ job }: { job: Requisition }) {
                   </span>
                 </span>
               )}
+              <span className="flex items-center gap-1.5">
+                <Briefcase className="size-3.5 shrink-0" />
+                {EMPLOYMENT_LABELS[job.employment_type] ?? job.employment_type}
+              </span>
             </div>
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
-            <Badge variant="outline">
-              {EMPLOYMENT_LABELS[job.employment_type] ?? job.employment_type}
-            </Badge>
             <Badge variant="secondary">
               {job.headcount} opening{job.headcount !== 1 ? "s" : ""}
             </Badge>
