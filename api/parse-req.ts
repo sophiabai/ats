@@ -1,13 +1,6 @@
-import { useMutation } from "@tanstack/react-query";
 import OpenAI from "openai";
-import { apiClient } from "@/lib/api-client";
-import { API_ENDPOINTS, DEFAULT_MODEL } from "@/lib/constants";
-import type { ChatMessage, ReqDraftFormData } from "@/types";
 
-export interface ParseReqResult {
-  message: string;
-  formData: ReqDraftFormData;
-}
+export const config = { runtime: "edge" };
 
 const SYSTEM_PROMPT = `You are a recruiting assistant that parses natural language job requisition descriptions into structured data.
 
@@ -44,39 +37,47 @@ Respond with ONLY valid JSON in this exact format, no other text:
   }
 }`;
 
-async function parseViaApi(
-  messages: ChatMessage[],
-): Promise<ParseReqResult> {
-  return apiClient<ParseReqResult>(API_ENDPOINTS.parseReq, {
-    method: "POST",
-    body: { messages: messages.map((m) => ({ role: m.role, content: m.content })) },
-  });
-}
+export default async function handler(req: Request) {
+  if (req.method !== "POST") {
+    return new Response("Method not allowed", { status: 405 });
+  }
 
-async function parseDirect(
-  messages: ChatMessage[],
-): Promise<ParseReqResult> {
-  const client = new OpenAI({
-    apiKey: import.meta.env.VITE_OPENAI_API_KEY,
-    dangerouslyAllowBrowser: true,
-  });
+  try {
+    const { messages, model = "gpt-4o" } = await req.json();
 
-  const response = await client.chat.completions.create({
-    model: DEFAULT_MODEL,
-    messages: [
-      { role: "system", content: SYSTEM_PROMPT },
-      ...messages.map((m) => ({ role: m.role, content: m.content })),
-    ],
-  });
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "Messages array is required" }),
+        { status: 400, headers: { "Content-Type": "application/json" } },
+      );
+    }
 
-  const raw = response.choices[0]?.message?.content ?? "";
-  const match = raw.match(/\{[\s\S]*\}/);
-  if (!match) throw new Error("Failed to parse AI response");
-  return JSON.parse(match[0]) as ParseReqResult;
-}
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const response = await openai.chat.completions.create({
+      model,
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        ...messages,
+      ],
+    });
 
-const parseRequisition = import.meta.env.DEV ? parseDirect : parseViaApi;
+    const raw = response.choices[0]?.message?.content ?? "";
+    const match = raw.match(/\{[\s\S]*\}/);
+    if (!match) {
+      return new Response(
+        JSON.stringify({ error: "Failed to parse AI response" }),
+        { status: 500, headers: { "Content-Type": "application/json" } },
+      );
+    }
 
-export function useParseRequisition() {
-  return useMutation({ mutationFn: parseRequisition });
+    return new Response(match[0], {
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    console.error("Parse req error:", error);
+    return new Response(
+      JSON.stringify({ error: "Failed to parse requisition" }),
+      { status: 500, headers: { "Content-Type": "application/json" } },
+    );
+  }
 }

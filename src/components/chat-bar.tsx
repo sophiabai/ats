@@ -76,7 +76,8 @@ export function ChatBar() {
   const bottomRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
-  const { data: searchResults } = useGlobalSearch(value)
+  const searchQuery = expanded ? "" : value
+  const { data: searchResults } = useGlobalSearch(searchQuery)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const reqModeRef = useRef(false)
   const [activeCommand, setActiveCommand] = useState<string | null>(null)

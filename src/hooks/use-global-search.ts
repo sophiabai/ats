@@ -23,27 +23,37 @@ export interface SearchResults {
   requisitions: RequisitionResult[];
 }
 
+const MAX_SEARCH_LENGTH = 200;
+
+function escapeFilterValue(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
+
 export function useGlobalSearch(query: string) {
+  const trimmed = query.slice(0, MAX_SEARCH_LENGTH);
+
   return useQuery({
-    queryKey: ["global-search", query],
+    queryKey: ["global-search", trimmed],
     queryFn: async (): Promise<SearchResults> => {
-      if (!query || query.length < 2)
+      if (!trimmed || trimmed.length < 2)
         return { candidates: [], requisitions: [] };
+
+      const escaped = escapeFilterValue(trimmed);
 
       const [candidateRes, reqRes] = await Promise.all([
         supabase
           .from("candidates")
           .select("id, first_name, last_name, headline, email, current_company")
           .or(
-            `first_name.ilike.%${query}%,last_name.ilike.%${query}%,` +
-              `headline.ilike.%${query}%,email.ilike.%${query}%,` +
-              `current_company.ilike.%${query}%`,
+            `first_name.ilike."%${escaped}%",last_name.ilike."%${escaped}%",` +
+              `headline.ilike."%${escaped}%",email.ilike."%${escaped}%",` +
+              `current_company.ilike."%${escaped}%"`,
           )
           .limit(5),
         supabase
           .from("requisitions")
           .select("id, title, department, location, status")
-          .or(`title.ilike.%${query}%,department.ilike.%${query}%`)
+          .or(`title.ilike."%${escaped}%",department.ilike."%${escaped}%"`)
           .limit(5),
       ]);
 
@@ -52,7 +62,7 @@ export function useGlobalSearch(query: string) {
         requisitions: reqRes.data || [],
       };
     },
-    enabled: query.length >= 2,
+    enabled: trimmed.length >= 2,
     staleTime: 1000,
   });
 }

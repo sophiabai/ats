@@ -2,6 +2,7 @@ export const APP_NAME = "ATS";
 
 export const API_ENDPOINTS = {
   chat: "/api/chat",
+  parseReq: "/api/parse-req",
   createReq: "/api/create-req",
   apply: "/api/apply",
   syncInterviews: "/api/sync-interviews",
