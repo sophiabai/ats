@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useMutation } from "@tanstack/react-query";
 import OpenAI from "openai";
+import { apiClient } from "@/lib/api-client";
 import { marked } from "marked";
 import {
   Briefcase,
@@ -12,7 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { StepNav } from "@/components/custom/step-nav";
-import { DEFAULT_MODEL } from "@/lib/constants";
+import { API_ENDPOINTS, DEFAULT_MODEL } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -89,7 +90,15 @@ const INITIAL_FORM: FormState = {
   assessment_criteria: [],
 };
 
-async function aiGenerate(prompt: string): Promise<string> {
+async function aiGenerateViaApi(prompt: string): Promise<string> {
+  const res = await apiClient<{ content: string }>(API_ENDPOINTS.aiGenerate, {
+    method: "POST",
+    body: { prompt },
+  });
+  return res.content;
+}
+
+async function aiGenerateDirect(prompt: string): Promise<string> {
   const client = new OpenAI({
     apiKey: import.meta.env.VITE_OPENAI_API_KEY,
     dangerouslyAllowBrowser: true,
@@ -102,6 +111,8 @@ async function aiGenerate(prompt: string): Promise<string> {
 
   return response.choices[0]?.message?.content ?? "";
 }
+
+const aiGenerate = import.meta.env.DEV ? aiGenerateDirect : aiGenerateViaApi;
 
 
 export function CreateRequisitionDialog({
