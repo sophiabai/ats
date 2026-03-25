@@ -24,7 +24,7 @@ import { useChatStore } from "@/features/chat/stores/chat-store"
 import { useParseRequisition } from "@/features/requisitions/api/use-parse-requisition"
 import { CreateRequisitionDialog } from "@/features/requisitions/components/create-requisition-dialog"
 import type { FormState } from "@/features/requisitions/components/create-requisition-dialog"
-import type { ReqDraftFormData } from "@/types"
+import type { ChatMessage, ReqDraftFormData } from "@/types"
 import { useGlobalSearch } from "@/hooks/use-global-search"
 import { useChatBarStore } from "@/stores/chat-bar-store"
 import { cn } from "@/lib/utils"
@@ -69,7 +69,7 @@ export function ChatBar() {
   const { open, setOpen } = useChatBarStore()
   const [expanded, setExpanded] = useState(false)
   const [value, setValue] = useState("")
-  const { messages, addMessage, clearMessages } = useChatStore()
+  const { messages, addMessage } = useChatStore()
   const chat = useChat()
   const parseReq = useParseRequisition()
   const navigate = useNavigate()
@@ -195,7 +195,7 @@ export function ChatBar() {
     setReqDialogOpen(true)
   }
 
-  function handleReqParse(userContent: string, allMessages: { role: "user" | "assistant"; content: string }[]) {
+  function handleReqParse(allMessages: ChatMessage[]) {
     parseReq.mutate(allMessages, {
       onSuccess: (result) => {
         addMessage({
@@ -237,7 +237,7 @@ export function ChatBar() {
 
       const userMessage = { role: "user" as const, content: trimmed, command: "Create req" }
       addMessage(userMessage)
-      handleReqParse(trimmed, [userMessage])
+      handleReqParse([userMessage])
       return
     }
 
@@ -259,7 +259,7 @@ export function ChatBar() {
         return
       }
       const updatedMessages = [...messages, userMessage]
-      handleReqParse(trimmed, updatedMessages)
+      handleReqParse(updatedMessages)
       return
     }
 
