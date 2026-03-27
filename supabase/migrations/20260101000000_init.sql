@@ -24,7 +24,10 @@ create table candidates (
   notes text,
 
   resume_url text,
-  avatar_url text
+  avatar_url text,
+
+  last_activity_action text,
+  last_activity_at timestamptz
 );
 
 create index idx_candidates_name on candidates(last_name, first_name);
@@ -400,7 +403,22 @@ create unique index idx_req_candidate_pools_unique on req_candidate_pools(req_id
 create index idx_req_candidate_pools_req on req_candidate_pools(req_id);
 create index idx_req_candidate_pools_pool on req_candidate_pools(pool_id);
 
--- 17. hc_approval_requests (headcount planning – approval workflow)
+-- 17. criteria_evaluations (AI evaluation of candidates against req criteria)
+create table criteria_evaluations (
+  id uuid default gen_random_uuid() primary key,
+  created_at timestamptz default now(),
+  req_id uuid not null references requisitions(id) on delete cascade,
+  candidate_id uuid not null references candidates(id) on delete cascade,
+  criterion text not null,
+  met boolean not null,
+  reasoning text
+);
+
+create unique index idx_criteria_eval_unique on criteria_evaluations(req_id, candidate_id, criterion);
+create index idx_criteria_eval_req on criteria_evaluations(req_id);
+create index idx_criteria_eval_candidate on criteria_evaluations(candidate_id);
+
+-- 18. hc_approval_requests (headcount planning – approval workflow)
 create table hc_approval_requests (
   id uuid default gen_random_uuid() primary key,
   created_at timestamptz default now(),

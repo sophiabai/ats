@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import {
   SidebarGroup,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -31,7 +30,7 @@ interface NavItem {
   url: string
   icon: LucideIcon
   isActive?: boolean
-  items?: { title: string; url: string }[]
+  items?: { title: string; url: string; icon?: LucideIcon }[]
 }
 
 function isRealUrl(url: string) {
@@ -55,9 +54,18 @@ export function NavProjects({
     return pathname === url || pathname.startsWith(url + "/")
   }
 
+  function bestSubMatch(subItems: { url: string }[]): string | null {
+    let best: string | null = null
+    for (const sub of subItems) {
+      if (isActive(sub.url) && (!best || sub.url.length > best.length)) {
+        best = sub.url
+      }
+    }
+    return best
+  }
+
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel>{label}</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => {
           const hasSubItems = item.items && item.items.length > 0
@@ -65,6 +73,8 @@ export function NavProjects({
             hasSubItems &&
             item.items!.some((sub) => isActive(sub.url))
           const itemActive = !hasSubItems && isActive(item.url)
+
+          const best = hasSubItems ? bestSubMatch(item.items!) : null
 
           return hasSubItems ? (
             <Collapsible
@@ -86,8 +96,9 @@ export function NavProjects({
                     {item.items!.map((subItem) => (
                       <SidebarMenuSubItem key={subItem.title}>
                         {isRealUrl(subItem.url) ? (
-                          <SidebarMenuSubButton asChild isActive={isActive(subItem.url)}>
+                          <SidebarMenuSubButton asChild isActive={subItem.url === best}>
                             <Link to={subItem.url}>
+                              {subItem.icon && <subItem.icon className="size-3.5" />}
                               <span>{subItem.title}</span>
                             </Link>
                           </SidebarMenuSubButton>

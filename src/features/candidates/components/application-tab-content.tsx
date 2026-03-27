@@ -1,7 +1,14 @@
 import { useMemo } from "react";
-import { Check, Circle, Clock, Minus, User } from "lucide-react";
+import { Check, CheckCircle2, Circle, Clock, Minus, User, XCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { useCriteriaEvaluations } from "@/features/requisitions/api/use-criteria-evaluations";
 import type { ApplicationDetail } from "@/features/candidates/api/use-candidate-detail";
 import type { Milestone, ReqInterview } from "@/types/database";
 import type { ReqStageWithInterviews } from "@/features/candidates/api/use-candidate-detail";
@@ -97,6 +104,61 @@ function InterviewTimeline({ interviews }: { interviews: ReqInterview[] }) {
           </div>
         );
       })}
+    </div>
+  );
+}
+
+function CriteriaEvaluationsSection({
+  reqId,
+  candidateId,
+}: {
+  reqId: string;
+  candidateId: string;
+}) {
+  const { data: evaluations } = useCriteriaEvaluations(reqId);
+  const evals = evaluations?.get(candidateId);
+
+  if (!evals || evals.length === 0) {
+    return (
+      <div className="space-y-2">
+        <h3 className="text-sm font-semibold">Criteria evaluations</h3>
+        <p className="text-sm text-muted-foreground">Not yet evaluated</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <h3 className="text-sm font-semibold">Criteria evaluations</h3>
+      <TooltipProvider>
+        <div className="space-y-1">
+          {evals.map((ev) => (
+            <Tooltip key={ev.criterion}>
+              <TooltipTrigger asChild>
+                <div className="flex items-start gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted/50">
+                  {ev.met ? (
+                    <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" />
+                  ) : (
+                    <XCircle className="mt-0.5 size-4 shrink-0 text-destructive" />
+                  )}
+                  <span
+                    className={cn(
+                      ev.met ? "text-foreground" : "text-muted-foreground",
+                    )}
+                  >
+                    {ev.criterion}
+                  </span>
+                </div>
+              </TooltipTrigger>
+              {ev.reasoning && (
+                <TooltipContent side="bottom" className="max-w-xs">
+                  <p className="text-xs">{ev.reasoning}</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          ))}
+        </div>
+      </TooltipProvider>
     </div>
   );
 }
@@ -212,6 +274,11 @@ export function ApplicationTabContent({ app }: { app: ApplicationDetail }) {
           );
         })}
       </div>
+
+      <CriteriaEvaluationsSection
+        reqId={app.req_id}
+        candidateId={app.candidate_id}
+      />
 
       {app.notes && (
         <div className="space-y-2">

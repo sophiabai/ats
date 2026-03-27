@@ -6,7 +6,7 @@ import { RequisitionsTable } from "@/features/requisitions/components/requisitio
 import { RequisitionsSkeleton } from "@/features/requisitions/components/requisitions-skeleton";
 import { CreateRequisitionDialog } from "@/features/requisitions/components/create-requisition-dialog";
 import { Button } from "@/components/ui/button";
-import { ViewToggle, type View } from "@/components/custom/view-toggle";
+import type { View } from "@/components/custom/view-toggle";
 
 export function RequisitionsPage() {
   const { data, isLoading, error } = useRequisitions();
@@ -40,7 +40,7 @@ export function RequisitionsPage() {
             No requisitions yet
           </h2>
           <p>Create your first job requisition to get started.</p>
-          <Button className="gap-1.5" onClick={() => setCreateOpen(true)}>
+          <Button size="sm" className="gap-1.5" onClick={() => setCreateOpen(true)}>
             <Plus className="size-4" />
             Create job requisition
           </Button>
@@ -61,7 +61,7 @@ export function RequisitionsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Requisitions</h1>
+          <h1 className="text-2xl font-semibold ">Requisitions</h1>
           <p className="text-sm text-muted-foreground">
             {data.length} total &middot; {openCount} open &middot;{" "}
             {totalApplicants} applicant{totalApplicants !== 1 ? "s" : ""}
@@ -69,13 +69,13 @@ export function RequisitionsPage() {
         </div>
         <div className="flex items-center gap-2">
           <Button
+            size="sm"
             className="gap-1.5"
             onClick={() => setCreateOpen(true)}
           >
             <Plus className="size-4" />
             Create job requisition
           </Button>
-          <ViewToggle view={view} onViewChange={setView} />
         </div>
       </div>
 

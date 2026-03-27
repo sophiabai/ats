@@ -33,7 +33,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ViewToggle, type View } from "@/components/custom/view-toggle";
+import type { View } from "@/components/custom/view-toggle";
 import { useHcDepartments } from "@/features/headcount-planning/api/use-hc-departments";
 import { useHcPositions } from "@/features/headcount-planning/api/use-hc-positions";
 import {
@@ -191,7 +191,7 @@ export function PlanPage() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight">
+            <h1 className="text-2xl font-semibold ">
               {planSettings?.plan_name ?? "Plan"}
             </h1>
             {(() => {
@@ -245,7 +245,7 @@ export function PlanPage() {
             <Users className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalCurrent}</div>
+            <div className="text-2xl font-semibold">{totalCurrent}</div>
           </CardContent>
         </Card>
         <Card>
@@ -256,7 +256,7 @@ export function PlanPage() {
             <TrendingUp className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalPlanned}</div>
+            <div className="text-2xl font-semibold">{totalPlanned}</div>
           </CardContent>
         </Card>
         <Card>
@@ -267,7 +267,7 @@ export function PlanPage() {
             <UserPlus className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalOpen}</div>
+            <div className="text-2xl font-semibold">{totalOpen}</div>
           </CardContent>
         </Card>
         <Card>
@@ -278,7 +278,7 @@ export function PlanPage() {
             <CircleDollarSign className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalFilled}</div>
+            <div className="text-2xl font-semibold">{totalFilled}</div>
           </CardContent>
         </Card>
       </div>
@@ -300,7 +300,6 @@ export function PlanPage() {
             </TabsTrigger>
           </TabsList>
           <div className="flex items-center gap-2">
-            <ViewToggle view={view} onViewChange={setView} />
             {!isLocked && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

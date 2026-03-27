@@ -19,7 +19,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ViewToggle, type View } from "@/components/custom/view-toggle";
+import type { View } from "@/components/custom/view-toggle";
 import { useHcDepartments } from "@/features/headcount-planning/api/use-hc-departments";
 import { useHcPositions } from "@/features/headcount-planning/api/use-hc-positions";
 import { useHcPlanSettings } from "@/features/headcount-planning/api/use-hc-plan-settings";
@@ -113,14 +113,13 @@ export function HeadcountPlanningPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">
+          <h1 className="text-2xl font-semibold ">
             Headcount planning
           </h1>
           <p className="text-sm text-muted-foreground">
             Track and manage your organization's hiring plan for 2026.
           </p>
         </div>
-        <ViewToggle view={view} onViewChange={setView} />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-4">
@@ -132,7 +131,7 @@ export function HeadcountPlanningPage() {
             <Users className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalCurrent}</div>
+            <div className="text-2xl font-semibold">{totalCurrent}</div>
           </CardContent>
         </Card>
         <Card>
@@ -143,7 +142,7 @@ export function HeadcountPlanningPage() {
             <TrendingUp className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalPlanned}</div>
+            <div className="text-2xl font-semibold">{totalPlanned}</div>
           </CardContent>
         </Card>
         <Card>
@@ -154,7 +153,7 @@ export function HeadcountPlanningPage() {
             <UserPlus className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalOpen}</div>
+            <div className="text-2xl font-semibold">{totalOpen}</div>
           </CardContent>
         </Card>
         <Card>
@@ -165,7 +164,7 @@ export function HeadcountPlanningPage() {
             <CircleDollarSign className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalFilled}</div>
+            <div className="text-2xl font-semibold">{totalFilled}</div>
           </CardContent>
         </Card>
       </div>

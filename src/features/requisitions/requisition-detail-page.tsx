@@ -10,20 +10,40 @@ import {
   CalendarDays,
   UserCheck,
   Star,
+  MoreHorizontal,
+  Pencil,
+  Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { StatusBadge } from "@/features/requisitions/components/status-badge";
 import { CandidateList } from "@/features/requisitions/components/candidate-list";
 import { ReqPoolCandidates } from "@/features/requisitions/components/req-pool-candidates";
+import { useReqCandidatePools } from "@/features/requisitions/api/use-req-candidate-pools";
+import { useCriteriaEvaluations } from "@/features/requisitions/api/use-criteria-evaluations";
+import {
+  CreateRequisitionDialog,
+  type FormState,
+} from "@/features/requisitions/components/create-requisition-dialog";
 import {
   useRequisitionDetail,
   groupApplicationsByMilestone,
 } from "@/features/requisitions/api/use-requisition-detail";
-import { ViewToggle, type View } from "@/components/custom/view-toggle";
+import type { View } from "@/components/custom/view-toggle";
+import {
+  ResponsiveTabsList,
+  type TabItem,
+} from "@/components/custom/responsive-tabs-list";
 import { useStarredRequisitionsStore } from "@/stores/starred-requisitions-store";
+import { useSetPageTitle } from "@/stores/page-title-store";
 import type { Milestone } from "@/types/database";
 
 const EMPLOYMENT_LABELS: Record<string, string> = {
@@ -80,7 +100,14 @@ function DetailSkeleton() {
 export function Component() {
   const { reqId } = useParams<{ reqId: string }>();
   const { data: req, isLoading, error } = useRequisitionDetail(reqId!);
+  useSetPageTitle(req?.title ?? null);
+  const { data: pools } = useReqCandidatePools(reqId!);
+  const { data: evaluations } = useCriteriaEvaluations(reqId);
+  const poolCandidateCount = pools?.reduce((sum, p) => sum + p.candidates.length, 0) ?? 0;
   const [view, setView] = useState<View>("table");
+  const [editOpen, setEditOpen] = useState(false);
+  const [linkPoolsOpen, setLinkPoolsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("pools");
   const { isStarred, toggle: toggleStar } = useStarredRequisitionsStore();
 
   if (isLoading) return <DetailSkeleton />;
@@ -102,27 +129,51 @@ export function Component() {
   const salary = formatSalary(req.salary_min, req.salary_max, req.salary_currency);
   const starred = isStarred(req.id);
 
+  const tabItems: TabItem[] = [
+    { value: "pools", label: `Candidate pools (${poolCandidateCount})` },
+    ...(Object.keys(MILESTONE_LABELS) as Milestone[]).map((m) => ({
+      value: m,
+      label: `${MILESTONE_LABELS[m]} (${grouped[m].length})`,
+    })),
+    { value: "rejected", label: `Rejected (${rejected.length})` },
+  ];
+
   return (
     <div className="space-y-6">
       <div>
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold tracking-tight">{req.title}</h1>
+          <h1 className="text-2xl font-semibold ">{req.title}</h1>
           <StatusBadge status={req.status} />
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-8"
-            onClick={() => toggleStar({ id: req.id, title: req.title })}
-          >
-            <Star
-              className={cn(
-                "size-4",
-                starred
-                  ? "fill-yellow-400 text-yellow-400"
-                  : "text-muted-foreground",
-              )}
-            />
-          </Button>
+          <div className="ml-auto flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8"
+              onClick={() => toggleStar({ id: req.id, title: req.title })}
+            >
+              <Star
+                className={cn(
+                  "size-4",
+                  starred
+                    ? "fill-yellow-400 text-yellow-400"
+                    : "text-muted-foreground",
+                )}
+              />
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="size-8">
+                  <MoreHorizontal className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onSelect={() => setEditOpen(true)}>
+                  <Pencil />
+                  Edit requisition
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
 
@@ -168,24 +219,36 @@ export function Component() {
         )}
       </div>
 
-      <Tabs defaultValue="pools">
-        <div className="flex items-center justify-between">
-          <TabsList>
-            <TabsTrigger value="pools">Candidate pools</TabsTrigger>
-            {(Object.keys(MILESTONE_LABELS) as Milestone[]).map((m) => (
-              <TabsTrigger key={m} value={m}>
-                {MILESTONE_LABELS[m]} ({grouped[m].length})
-              </TabsTrigger>
-            ))}
-            <TabsTrigger value="rejected">
-              Rejected ({rejected.length})
-            </TabsTrigger>
-          </TabsList>
-          <ViewToggle view={view} onViewChange={setView} />
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <div className="flex items-center gap-2">
+          <ResponsiveTabsList
+            items={tabItems}
+            activeValue={activeTab}
+            onValueChange={setActiveTab}
+          />
+          <div className="flex shrink-0 items-center gap-2">
+            {activeTab === "pools" && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setLinkPoolsOpen(true)}
+              >
+                <Plus className="mr-1.5 size-4" />
+                Link pools
+              </Button>
+            )}
+          </div>
         </div>
 
         <TabsContent value="pools" className="mt-4">
-          <ReqPoolCandidates reqId={req.id} reqTitle={req.title} />
+          <ReqPoolCandidates
+            reqId={req.id}
+            reqTitle={req.title}
+            linkDialogOpen={linkPoolsOpen}
+            onLinkDialogOpenChange={setLinkPoolsOpen}
+            evaluations={evaluations}
+            assessmentCriteria={req.assessment_criteria ?? undefined}
+          />
         </TabsContent>
 
         {(Object.keys(MILESTONE_LABELS) as Milestone[]).map((m) => (
@@ -196,6 +259,7 @@ export function Component() {
                 reqId={req.id}
                 reqTitle={req.title}
                 view="cards"
+                evaluations={evaluations}
               />
             ) : (
               <div className="rounded-lg border">
@@ -204,6 +268,7 @@ export function Component() {
                   reqId={req.id}
                   reqTitle={req.title}
                   view="table"
+                  evaluations={evaluations}
                 />
               </div>
             )}
@@ -217,6 +282,7 @@ export function Component() {
               reqId={req.id}
               reqTitle={req.title}
               view="cards"
+              evaluations={evaluations}
             />
           ) : (
             <div className="rounded-lg border">
@@ -225,11 +291,31 @@ export function Component() {
                 reqId={req.id}
                 reqTitle={req.title}
                 view="table"
+                evaluations={evaluations}
               />
             </div>
           )}
         </TabsContent>
       </Tabs>
+
+      <CreateRequisitionDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        initialData={{
+          title: req.title,
+          department: req.department ?? "Any department",
+          employment_type: req.employment_type,
+          level: req.level ?? "",
+          hiring_manager_name: req.hiring_manager_name ?? "",
+          recruiter_name: req.recruiter_name ?? "",
+          include_coordinator: !!req.coordinator_name,
+          coordinator_name: req.coordinator_name ?? "",
+          include_sourcer: !!req.sourcer_name,
+          sourcer_name: req.sourcer_name ?? "",
+          description: req.description ?? "",
+          assessment_criteria: req.assessment_criteria ?? [],
+        } satisfies FormState}
+      />
     </div>
   );
 }

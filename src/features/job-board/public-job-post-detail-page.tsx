@@ -178,7 +178,7 @@ export function Component() {
 
               <div>
                 <div className="flex flex-wrap items-center gap-3">
-                  <h1 className="text-2xl font-bold tracking-tight">
+                  <h1 className="text-2xl font-semibold ">
                     {job.title}
                   </h1>
                   <Badge variant="outline">

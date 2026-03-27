@@ -7,6 +7,7 @@ import {
   Briefcase,
 } from "lucide-react";
 import { useJobPost } from "@/features/job-board/api/use-job-posts";
+import { useSetPageTitle } from "@/stores/page-title-store";
 import type { LocationPayRange } from "@/types/database";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -129,6 +130,7 @@ function IconDetail({
 export function Component() {
   const { postId } = useParams<{ postId: string }>();
   const { data: job, isLoading, error } = useJobPost(postId!);
+  useSetPageTitle(job?.title ?? null);
 
   if (isLoading) return <DetailSkeleton />;
 
@@ -153,7 +155,7 @@ export function Component() {
     <div className="mx-auto max-w-[1000px] space-y-6">
       <div>
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-bold tracking-tight">{job.title}</h1>
+          <h1 className="text-2xl font-semibold ">{job.title}</h1>
           <Badge variant="outline">
             {EMPLOYMENT_LABELS[job.employment_type] ?? job.employment_type}
           </Badge>

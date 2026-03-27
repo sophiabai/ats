@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ViewToggle, type View } from "@/components/custom/view-toggle";
+import type { View } from "@/components/custom/view-toggle";
 import {
   useHcScenarios,
   useApproveScenario,
@@ -107,12 +107,11 @@ export function ApprovalRequestsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Approvals</h1>
+          <h1 className="text-2xl font-semibold ">Approvals</h1>
           <p className="text-sm text-muted-foreground">
             {pendingCount} pending &middot; {totalCount} total
           </p>
         </div>
-        <ViewToggle view={view} onViewChange={setView} />
       </div>
 
       {grouped.length === 0 ? (

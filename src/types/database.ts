@@ -71,6 +71,7 @@ export interface Candidate {
   work_history: Array<{
     company: string;
     title: string;
+    location: string | null;
     start_date: string;
     end_date: string | null;
     description: string | null;
@@ -87,6 +88,8 @@ export interface Candidate {
   notes: string | null;
   resume_url: string | null;
   avatar_url: string | null;
+  last_activity_action: string | null;
+  last_activity_at: string | null;
 }
 
 export interface LocationPayRange {
@@ -334,6 +337,16 @@ export interface HcScenarioPosition {
   priority: HcPositionPriority;
   hiring_manager: string | null;
   target_date: string | null;
+}
+
+export interface CriteriaEvaluation {
+  id: string;
+  created_at: string;
+  req_id: string;
+  candidate_id: string;
+  criterion: string;
+  met: boolean;
+  reasoning: string | null;
 }
 
 export type HcPlanStatus = "draft" | "open" | "locked";

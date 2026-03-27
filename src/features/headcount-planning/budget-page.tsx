@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ViewToggle, type View } from "@/components/custom/view-toggle";
+import type { View } from "@/components/custom/view-toggle";
 import { useHcDepartments } from "@/features/headcount-planning/api/use-hc-departments";
 
 function formatCurrency(amount: number) {
@@ -66,12 +66,11 @@ export function BudgetPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Budget</h1>
+          <h1 className="text-2xl font-semibold ">Budget</h1>
           <p className="text-sm text-muted-foreground">
             Headcount budget allocation and spend tracking for 2026.
           </p>
         </div>
-        <ViewToggle view={view} onViewChange={setView} />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-4">
@@ -82,7 +81,7 @@ export function BudgetPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(totalAllocated)}</div>
+            <div className="text-2xl font-semibold">{formatCurrency(totalAllocated)}</div>
           </CardContent>
         </Card>
         <Card>
@@ -92,7 +91,7 @@ export function BudgetPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(totalSpent)}</div>
+            <div className="text-2xl font-semibold">{formatCurrency(totalSpent)}</div>
           </CardContent>
         </Card>
         <Card>
@@ -102,7 +101,7 @@ export function BudgetPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(totalRemaining)}</div>
+            <div className="text-2xl font-semibold">{formatCurrency(totalRemaining)}</div>
           </CardContent>
         </Card>
         <Card>
@@ -112,7 +111,7 @@ export function BudgetPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{overallUtilization}%</div>
+            <div className="text-2xl font-semibold">{overallUtilization}%</div>
           </CardContent>
         </Card>
       </div>

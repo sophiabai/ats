@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ViewToggle, type View } from "@/components/custom/view-toggle";
+import type { View } from "@/components/custom/view-toggle";
 import { useHcPositions } from "@/features/headcount-planning/api/use-hc-positions";
 import { useHcPlanSettings } from "@/features/headcount-planning/api/use-hc-plan-settings";
 import type { HcPositionType } from "@/types/database";
@@ -84,12 +84,11 @@ export function MyTeamPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">My team</h1>
+          <h1 className="text-2xl font-semibold ">My team</h1>
           <p className="text-sm text-muted-foreground">
             {filledPositions.length} filled positions
           </p>
         </div>
-        <ViewToggle view={view} onViewChange={setView} />
       </div>
 
       {view === "cards" ? (

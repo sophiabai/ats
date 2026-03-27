@@ -6,6 +6,7 @@ import {
   Briefcase,
   ClipboardList,
   FileText,
+  Folder,
   Inbox,
   Search,
   Send,
@@ -115,6 +116,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     ...(pools ?? []).map((p) => ({
       title: p.name,
       url: `/candidates/pools/${p.id}`,
+      icon: Folder,
     })),
   ]
 

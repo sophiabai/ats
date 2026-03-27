@@ -1,6 +1,8 @@
 import { Link, Outlet, useLocation } from "react-router";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ChatBar } from "@/components/chat-bar";
+import { DockedChatPanel } from "@/components/docked-chat-panel";
+import { useChatBarStore } from "@/stores/chat-bar-store";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -15,6 +17,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { usePageTitleStore } from "@/stores/page-title-store";
 
 export interface BreadcrumbState {
   breadcrumb?: Array<{ title: string; href: string }>;
@@ -60,6 +63,7 @@ function useBreadcrumbs(): { crumbs: Crumb[]; page: string } {
     pathname: string;
     state: BreadcrumbState | null;
   };
+  const dynamicTitle = usePageTitleStore((s) => s.pageTitle);
   const segments = pathname.split("/").filter(Boolean);
 
   if (segments.length === 0) {
@@ -69,7 +73,7 @@ function useBreadcrumbs(): { crumbs: Crumb[]; page: string } {
   if (state?.breadcrumb && state.breadcrumb.length > 0) {
     return {
       crumbs: state.breadcrumb,
-      page: state.pageTitle ?? "Details",
+      page: state.pageTitle ?? dynamicTitle ?? "Details",
     };
   }
 
@@ -88,19 +92,20 @@ function useBreadcrumbs(): { crumbs: Crumb[]; page: string } {
 
   const lastSegment = segments[segments.length - 1];
   const page =
-    SEGMENT_TITLES[lastSegment] ?? state?.pageTitle ?? "Details";
+    SEGMENT_TITLES[lastSegment] ?? state?.pageTitle ?? dynamicTitle ?? "Details";
 
   return { crumbs, page };
 }
 
 export function RootLayout() {
   const { crumbs, page } = useBreadcrumbs();
+  const docked = useChatBarStore((s) => s.docked);
 
   return (
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset className="relative min-w-0 max-h-svh overflow-hidden">
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-in-out-quart group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b border-border transition-[width,height] ease-in-out-quart group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator
@@ -129,11 +134,12 @@ export function RootLayout() {
             </Breadcrumb>
           </div>
         </header>
-        <div className="flex w-full flex-1 flex-col gap-6 overflow-y-auto px-17 pb-12 pt-6">
+        <div className="flex w-full flex-1 flex-col gap-6 overflow-y-auto px-17 pb-[120px] pt-6">
           <Outlet />
         </div>
         <ChatBar />
       </SidebarInset>
+      {docked && <DockedChatPanel />}
     </SidebarProvider>
   );
 }

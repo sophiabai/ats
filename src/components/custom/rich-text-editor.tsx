@@ -127,17 +127,63 @@ function serializeToHtml(value: Value): string {
   return results.join("");
 }
 
-function htmlToSlate(editor: any, html: string): Value {
-  if (!html || !html.trim()) {
-    return [{ type: "p", children: [{ text: "" }] }];
+function parseInlineNodes(el: Node): TText[] {
+  if (el.nodeType === Node.TEXT_NODE) {
+    return [{ text: el.textContent ?? "" }];
   }
+  if (el.nodeType !== Node.ELEMENT_NODE) return [];
+  const tag = (el as HTMLElement).tagName.toLowerCase();
+  const kids: TText[] = [];
+  for (const c of Array.from(el.childNodes)) kids.push(...parseInlineNodes(c));
+
+  const marks: Record<string, boolean> = {};
+  if (tag === "strong" || tag === "b") marks.bold = true;
+  if (tag === "em" || tag === "i") marks.italic = true;
+  if (tag === "u") marks.underline = true;
+  if (Object.keys(marks).length > 0) return kids.map((k) => ({ ...k, ...marks }));
+  return kids;
+}
+
+function ensureChildren(nodes: TText[]): TText[] {
+  return nodes.length > 0 ? nodes : [{ text: "" }];
+}
+
+function parseBlockNode(node: Node): TElement[] {
+  if (node.nodeType !== Node.ELEMENT_NODE) {
+    const t = node.textContent?.trim();
+    return t ? [{ type: "p", children: [{ text: t }] } as TElement] : [];
+  }
+  const el = node as HTMLElement;
+  const tag = el.tagName.toLowerCase();
+  if (tag === "h2") return [{ type: "h2", children: ensureChildren(parseInlineNodes(el)) } as TElement];
+  if (tag === "h3") return [{ type: "h3", children: ensureChildren(parseInlineNodes(el)) } as TElement];
+  if (tag === "blockquote") return [{ type: "blockquote", children: ensureChildren(parseInlineNodes(el)) } as TElement];
+  if (tag === "ul" || tag === "ol") {
+    return Array.from(el.children)
+      .filter((li) => li.tagName.toLowerCase() === "li")
+      .map(
+        (li) =>
+          ({
+            type: "p",
+            listStyleType: tag === "ol" ? ListStyleType.Decimal : ListStyleType.Disc,
+            indent: 1,
+            children: ensureChildren(parseInlineNodes(li)),
+          }) as unknown as TElement,
+      );
+  }
+  return [{ type: "p", children: ensureChildren(parseInlineNodes(el)) } as TElement];
+}
+
+function parseHtmlToSlate(html: string): Value {
+  if (!html?.trim()) return [{ type: "p", children: [{ text: "" }] } as TElement];
   try {
-    const value = editor.api.html.deserialize({ element: html });
-    if (Array.isArray(value) && value.length > 0) return value as Value;
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    const result: TElement[] = [];
+    for (const child of Array.from(doc.body.childNodes)) result.push(...parseBlockNode(child));
+    return result.length > 0 ? result : [{ type: "p", children: [{ text: "" }] } as TElement];
   } catch {
-    // fall through
+    return [{ type: "p", children: [{ text: "" }] } as TElement];
   }
-  return [{ type: "p", children: [{ text: "" }] }];
 }
 
 // --- Toolbar (rendered inside Plate context) ---
@@ -258,11 +304,6 @@ export function RichTextEditor({
     [],
   );
 
-  const editor = usePlateEditor({
-    id: `rich-text-editor-${key}`,
-    plugins,
-  });
-
   // When external content changes (e.g. AI generation), remount the editor
   React.useEffect(() => {
     if (content !== contentRef.current) {
@@ -271,14 +312,17 @@ export function RichTextEditor({
     }
   }, [content]);
 
-  // Set initial value after editor is ready
-  React.useEffect(() => {
-    if (contentRef.current) {
-      const value = htmlToSlate(editor, contentRef.current);
-      editor.tf.setValue(value);
-    }
+  const initialValue = React.useMemo(
+    () => parseHtmlToSlate(contentRef.current),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key]);
+    [key],
+  );
+
+  const editor = usePlateEditor({
+    id: `rich-text-editor-${key}`,
+    plugins,
+    value: initialValue,
+  });
 
   const handleChange = React.useCallback(
     ({ value }: { value: Value }) => {
@@ -292,13 +336,13 @@ export function RichTextEditor({
   return (
     <div
       className={cn(
-        "rounded-md border bg-background focus-within:ring-1 focus-within:ring-ring",
+        "flex flex-col rounded-md border bg-background focus-within:ring-1 focus-within:ring-ring",
         className,
       )}
     >
-      <Plate editor={editor} onChange={handleChange}>
+      <Plate key={key} editor={editor} onChange={handleChange}>
         <EditorToolbar />
-        <div className="max-h-[40vh] overflow-y-auto">
+        <div className="min-h-0 flex-1 overflow-y-auto">
           <EditorContainer className="h-auto">
             <Editor
               variant="none"

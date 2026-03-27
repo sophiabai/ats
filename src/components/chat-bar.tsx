@@ -9,7 +9,7 @@ import {
 import { useNavigate } from "react-router"
 import {
   Briefcase,
-  Minimize2,
+  PanelRightDashed,
   Sparkles,
   Users,
 } from "lucide-react"
@@ -66,7 +66,7 @@ const GROUP_LABELS: Record<string, string> = {
 }
 
 export function ChatBar() {
-  const { open, setOpen } = useChatBarStore()
+  const { open, setOpen, docked, setDocked } = useChatBarStore()
   const [expanded, setExpanded] = useState(false)
   const [value, setValue] = useState("")
   const { messages, addMessage } = useChatStore()
@@ -326,6 +326,8 @@ export function ChatBar() {
     }
   }
 
+  if (docked) return null
+
   return (
   <>
     <div
@@ -334,17 +336,21 @@ export function ChatBar() {
     >
       {/* Messages panel */}
       {expanded && (
-        <div className="mb-1.5 flex max-h-[50vh] flex-col rounded-3xl border bg-popover shadow-2xl">
-          <div className="flex shrink-0 items-center justify-end border-b px-3 py-2">
+        <div className="mb-1.5 flex max-h-[50vh] flex-col rounded-2xl border bg-popover shadow-2xl">
+          <div className="flex shrink-0 items-center justify-end gap-1 border-b px-4 py-4">
             <Button
               variant="ghost"
               size="icon-xs"
-              onClick={() => setExpanded(false)}
+              onClick={() => {
+                setExpanded(false)
+                setDocked(true)
+              }}
+              title="Open as side panel"
             >
-              <Minimize2 className="size-3.5" />
+              <PanelRightDashed className="size-3.5" />
             </Button>
           </div>
-          <div className="overflow-y-auto px-8 pb-4">
+          <div className="overflow-y-auto px-6 py-6">
             {messages.length === 0 && !chat.isPending ? (
               <p className="py-8 text-center text-sm text-muted-foreground">
                 Send a message to start a conversation.
@@ -368,7 +374,7 @@ export function ChatBar() {
 
       {/* Search / navigation dropdown */}
       {showDropdown && !expanded && (
-        <div className="mb-1.5 max-h-[300px] overflow-y-auto rounded-3xl border bg-popover p-1 shadow-2xl">
+        <div className="mb-1.5 max-h-[300px] overflow-y-auto rounded-2xl border bg-popover px-4 py-2 shadow-2xl">
           {dropdownItems.map((item, idx) => {
             const showHeading =
               idx === 0 || dropdownItems[idx - 1].type !== item.type
@@ -381,14 +387,14 @@ export function ChatBar() {
             return (
               <div key={item.id}>
                 {showHeading && (
-                  <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+                  <div className="py-1.5 text-xs font-medium text-muted-foreground">
                     {GROUP_LABELS[item.type]}
                   </div>
                 )}
                 <button
                   type="button"
                   className={cn(
-                    "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition-colors",
+                    "flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-left text-sm transition-colors",
                     idx === selectedIndex
                       ? "bg-accent text-accent-foreground"
                       : "hover:bg-accent/50",
@@ -439,7 +445,7 @@ export function ChatBar() {
       )}
 
       {chat.isError && (
-        <p className="px-4 py-2 text-center text-sm text-destructive">
+        <p className="px-5 py-2 text-center text-sm text-destructive">
           Failed to get a response. Try again.
         </p>
       )}

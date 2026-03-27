@@ -36,6 +36,325 @@ INSERT INTO candidates (id, first_name, last_name, email, phone, location, headl
   ('c0000000-0000-0000-0000-000000000025', 'Isaac', 'Lee', 'isaac.l@email.com', '206-555-0125', 'Seattle', 'Technical content writer for developer audiences', 3, 'Vercel', 'Technical Writer', ARRAY['Technical Writing','Developer Marketing','MDX','SEO'], ARRAY['mid-level','linkedin']);
 
 -- ============================================================
+-- Candidate work history, education & last activity
+-- ============================================================
+
+-- 1. Emily Zhang – Senior Software Engineer at Stripe
+UPDATE candidates SET last_activity_action = 'Emailed candidate', last_activity_at = '2026-03-11T14:30:00Z',
+work_history = '[
+  {"company":"Stripe","title":"Senior Software Engineer","location":"San Francisco, CA","start_date":"2023-01","end_date":null,"description":"Lead frontend architecture for Stripe Dashboard, serving millions of merchants worldwide. Drove migration from legacy React codebase to Next.js, reducing page load times by 40%."},
+  {"company":"Dropbox","title":"Software Engineer","location":"San Francisco, CA","start_date":"2020-06","end_date":"2022-12","description":"Built real-time collaboration features for Dropbox Paper. Implemented optimistic UI updates and conflict resolution for concurrent editing."},
+  {"company":"Pivotal Labs","title":"Junior Software Engineer","location":"San Francisco, CA","start_date":"2019-01","end_date":"2020-05","description":"Delivered full-stack features for enterprise clients using pair programming and TDD. Worked across React, Rails, and Spring Boot projects."}
+]'::jsonb,
+education = '[
+  {"school":"Stanford University","degree":"M.S.","field":"Computer Science","start_year":2019,"end_year":2021},
+  {"school":"UC Berkeley","degree":"B.S.","field":"Computer Science","start_year":2015,"end_year":2019}
+]'::jsonb
+WHERE id = 'c0000000-0000-0000-0000-000000000001';
+
+-- 2. Alex Rivera – Data Engineer at Databricks
+UPDATE candidates SET last_activity_action = 'Submitted application', last_activity_at = '2026-03-09T10:15:00Z',
+work_history = '[
+  {"company":"Databricks","title":"Data Engineer","location":"Austin, TX","start_date":"2024-02","end_date":null,"description":"Build and maintain ETL pipelines processing 5TB+ daily using Spark and Delta Lake. Reduced pipeline failures by 60% through improved monitoring and retry logic."},
+  {"company":"Indeed","title":"Junior Data Engineer","location":"Austin, TX","start_date":"2022-03","end_date":"2024-01","description":"Developed data ingestion pipelines for job posting analytics. Built dbt models powering executive dashboards tracking 300M+ job searches monthly."}
+]'::jsonb,
+education = '[
+  {"school":"Georgia Tech","degree":"M.S.","field":"Computer Science","start_year":2022,"end_year":2024},
+  {"school":"University of Texas at Austin","degree":"B.S.","field":"Computer Science","start_year":2018,"end_year":2022}
+]'::jsonb
+WHERE id = 'c0000000-0000-0000-0000-000000000002';
+
+-- 3. Liam O'Brien – Frontend Engineer at Airbnb
+UPDATE candidates SET last_activity_action = 'Recruiter screen scheduled', last_activity_at = '2026-03-10T16:45:00Z',
+work_history = '[
+  {"company":"Airbnb","title":"Frontend Engineer","location":"San Francisco, CA","start_date":"2023-04","end_date":null,"description":"Own the design system powering all Airbnb guest-facing surfaces. Led the migration to Airbnb''s new token-based theming architecture, enabling dark mode across 200+ components."},
+  {"company":"Figma","title":"Frontend Engineer","location":"San Francisco, CA","start_date":"2021-06","end_date":"2023-03","description":"Built interactive canvas features for FigJam using WebGL and React. Contributed to Figma''s component library and design token infrastructure."},
+  {"company":"Freelance","title":"Frontend Developer","location":"Remote","start_date":"2020-01","end_date":"2021-05","description":"Delivered web apps for startups using React, TypeScript, and Tailwind CSS. Built a component library used across 4 client projects."}
+]'::jsonb,
+education = '[
+  {"school":"University College London","degree":"M.Sc.","field":"Human-Computer Interaction","start_year":2020,"end_year":2021},
+  {"school":"Dublin City University","degree":"B.Sc.","field":"Computing","start_year":2016,"end_year":2020}
+]'::jsonb
+WHERE id = 'c0000000-0000-0000-0000-000000000003';
+
+-- 4. Nina Patel – Senior Frontend Engineer at Netflix
+UPDATE candidates SET last_activity_action = 'Offer extended', last_activity_at = '2026-03-12T09:00:00Z',
+work_history = '[
+  {"company":"Netflix","title":"Senior Frontend Engineer","location":"Los Gatos, CA","start_date":"2022-08","end_date":null,"description":"Lead performance optimization for the Netflix TV UI, reducing time-to-interactive by 35% on low-end devices. Architect the A/B testing framework used across all UI experiments."},
+  {"company":"Google","title":"Frontend Engineer","location":"Mountain View, CA","start_date":"2020-01","end_date":"2022-07","description":"Built interactive data visualization components for Google Cloud Console. Implemented lazy loading and code splitting that reduced initial bundle size by 50%."},
+  {"company":"Intuit","title":"Software Engineer","location":"Mountain View, CA","start_date":"2018-06","end_date":"2019-12","description":"Developed React components for TurboTax online filing experience serving 40M+ users during tax season."}
+]'::jsonb,
+education = '[
+  {"school":"Stanford University","degree":"M.S.","field":"Computer Science","start_year":2016,"end_year":2018},
+  {"school":"University of Michigan","degree":"B.S.E.","field":"Computer Science","start_year":2012,"end_year":2016}
+]'::jsonb
+WHERE id = 'c0000000-0000-0000-0000-000000000004';
+
+-- 5. Jordan Kim – Software Engineer at Amazon
+UPDATE candidates SET last_activity_action = 'Moved to technical screen', last_activity_at = '2026-03-08T11:20:00Z',
+work_history = '[
+  {"company":"Amazon","title":"Software Engineer","location":"Seattle, WA","start_date":"2023-07","end_date":null,"description":"Build and maintain microservices for Amazon Prime Video''s content delivery platform. Reduced API latency by 25% through caching optimizations and connection pooling."},
+  {"company":"Tableau","title":"Software Engineer Intern","location":"Seattle, WA","start_date":"2022-06","end_date":"2022-09","description":"Developed a prototype for real-time collaborative dashboard editing using WebSockets and React."}
+]'::jsonb,
+education = '[
+  {"school":"University of Washington","degree":"M.S.","field":"Computer Science","start_year":2023,"end_year":2025},
+  {"school":"University of Washington","degree":"B.S.","field":"Computer Science","start_year":2019,"end_year":2023}
+]'::jsonb
+WHERE id = 'c0000000-0000-0000-0000-000000000005';
+
+-- 6. Tyler Washington – Senior Data Engineer at Snowflake
+UPDATE candidates SET last_activity_action = 'Interview completed', last_activity_at = '2026-03-07T15:30:00Z',
+work_history = '[
+  {"company":"Snowflake","title":"Senior Data Engineer","location":"Denver, CO","start_date":"2023-01","end_date":null,"description":"Design and operate real-time streaming pipelines using Kafka and Snowpipe, ingesting 2B+ events daily. Led migration from batch to streaming architecture, reducing data freshness from hours to minutes."},
+  {"company":"Palantir","title":"Data Engineer","location":"Denver, CO","start_date":"2020-09","end_date":"2022-12","description":"Built data integration pipelines for government and commercial clients using Palantir Foundry. Developed reusable transforms processing classified datasets at petabyte scale."},
+  {"company":"Lockheed Martin","title":"Data Analyst","location":"Denver, CO","start_date":"2019-06","end_date":"2020-08","description":"Automated reporting workflows using Python and Airflow, saving 20 hours per week of manual work. Built dashboards tracking satellite telemetry data."}
+]'::jsonb,
+education = '[
+  {"school":"Colorado School of Mines","degree":"M.S.","field":"Data Science","start_year":2017,"end_year":2019},
+  {"school":"University of Colorado Boulder","degree":"B.S.","field":"Applied Mathematics","start_year":2013,"end_year":2017}
+]'::jsonb
+WHERE id = 'c0000000-0000-0000-0000-000000000006';
+
+-- 7. Ava Nguyen – Data Engineer at Lyft
+UPDATE candidates SET last_activity_action = 'Scorecard submitted', last_activity_at = '2026-03-06T13:00:00Z',
+work_history = '[
+  {"company":"Lyft","title":"Data Engineer","location":"San Francisco, CA","start_date":"2024-03","end_date":null,"description":"Build and maintain the analytics data warehouse powering pricing and marketplace decisions. Developed dbt models that reduced query costs by 40% through incremental materialization."},
+  {"company":"Coursera","title":"Analytics Engineer","location":"Mountain View, CA","start_date":"2023-01","end_date":"2024-02","description":"Owned the learner engagement data model, enabling product teams to track course completion and retention metrics across 100M+ users."}
+]'::jsonb,
+education = '[
+  {"school":"UC San Diego","degree":"M.S.","field":"Data Science","start_year":2023,"end_year":2024},
+  {"school":"UC San Diego","degree":"B.S.","field":"Data Science","start_year":2019,"end_year":2023}
+]'::jsonb
+WHERE id = 'c0000000-0000-0000-0000-000000000007';
+
+-- 8. Daniel Santos – Software Engineer at Meta
+UPDATE candidates SET last_activity_action = 'Emailed candidate', last_activity_at = '2026-03-05T17:45:00Z',
+work_history = '[
+  {"company":"Meta","title":"Software Engineer","location":"Austin, TX","start_date":"2023-06","end_date":null,"description":"Build real-time data pipelines for Instagram Reels recommendation system using Spark Streaming and Flink. Process 1T+ events daily with sub-second latency requirements."},
+  {"company":"Confluent","title":"Software Engineer","location":"Austin, TX","start_date":"2021-08","end_date":"2023-05","description":"Developed Kafka Connect connectors for cloud storage sinks. Contributed to open-source Kafka Streams library with improvements to windowed aggregations."},
+  {"company":"IBM","title":"Associate Software Engineer","location":"Austin, TX","start_date":"2020-06","end_date":"2021-07","description":"Built ETL pipelines for IBM Cloud Pak for Data using Apache Spark. Developed automated data quality checks for enterprise clients."}
+]'::jsonb,
+education = '[
+  {"school":"Georgia Tech","degree":"M.S.","field":"Computer Science","start_year":2018,"end_year":2020},
+  {"school":"University of São Paulo","degree":"B.S.","field":"Computer Engineering","start_year":2014,"end_year":2018}
+]'::jsonb
+WHERE id = 'c0000000-0000-0000-0000-000000000008';
+
+-- 9. Mia Thompson – Frontend Engineer at Slack
+UPDATE candidates SET last_activity_action = 'Rejected', last_activity_at = '2026-03-04T10:30:00Z',
+work_history = '[
+  {"company":"Slack","title":"Frontend Engineer","location":"San Francisco, CA","start_date":"2024-01","end_date":null,"description":"Build accessible UI components for Slack''s messaging interface. Led an accessibility audit that improved WCAG compliance from 72% to 96% across core workflows."},
+  {"company":"Khan Academy","title":"Frontend Engineer","location":"Remote","start_date":"2023-01","end_date":"2023-12","description":"Developed interactive math exercises and lesson components using React. Ensured all new features met WCAG 2.1 AA standards for screen reader compatibility."}
+]'::jsonb,
+education = '[
+  {"school":"Carnegie Mellon University","degree":"M.S.","field":"Human-Computer Interaction","start_year":2023,"end_year":2024},
+  {"school":"San Francisco State University","degree":"B.S.","field":"Computer Science","start_year":2019,"end_year":2023}
+]'::jsonb
+WHERE id = 'c0000000-0000-0000-0000-000000000009';
+
+-- 10. Marcus Johnson – Account Executive at Salesforce
+UPDATE candidates SET last_activity_action = 'Onsite interview scheduled', last_activity_at = '2026-03-12T08:15:00Z',
+work_history = '[
+  {"company":"Salesforce","title":"Account Executive, Enterprise","location":"Chicago, IL","start_date":"2022-03","end_date":null,"description":"Manage a $4.2M annual quota selling Salesforce Platform and Data Cloud to Fortune 500 accounts. Closed the largest deal in Central region history at $1.8M ARR."},
+  {"company":"ServiceNow","title":"Account Executive","location":"Chicago, IL","start_date":"2019-09","end_date":"2022-02","description":"Consistently exceeded quota by 120%+ selling IT workflow automation to mid-market and enterprise accounts. Built a $3M pipeline from scratch in the first year."},
+  {"company":"CDW","title":"Inside Sales Representative","location":"Chicago, IL","start_date":"2017-06","end_date":"2019-08","description":"Top-performing ISR selling IT infrastructure solutions. Promoted to strategic accounts within 12 months."}
+]'::jsonb,
+education = '[
+  {"school":"Kellogg School of Management","degree":"M.B.A.","field":"Marketing & Sales","start_year":2017,"end_year":2019},
+  {"school":"Northwestern University","degree":"B.A.","field":"Economics","start_year":2013,"end_year":2017}
+]'::jsonb
+WHERE id = 'c0000000-0000-0000-0000-000000000010';
+
+-- 11. Rachel Foster – Account Executive at Zendesk
+UPDATE candidates SET last_activity_action = 'Hiring manager screen completed', last_activity_at = '2026-03-10T14:00:00Z',
+work_history = '[
+  {"company":"Zendesk","title":"Account Executive","location":"Chicago, IL","start_date":"2023-06","end_date":null,"description":"Own full-cycle sales for mid-market SaaS accounts in the Central region. Achieved 135% of quota in first full year by developing a consultative approach to customer support transformation."},
+  {"company":"HubSpot","title":"Business Development Representative","location":"Chicago, IL","start_date":"2021-08","end_date":"2023-05","description":"Generated $2.1M in qualified pipeline through outbound prospecting. Promoted from BDR to Senior BDR in 10 months based on consistent top-quartile performance."}
+]'::jsonb,
+education = '[
+  {"school":"University of Chicago Booth","degree":"M.B.A.","field":"Entrepreneurship","start_year":2021,"end_year":2023},
+  {"school":"University of Illinois at Urbana-Champaign","degree":"B.S.","field":"Business Administration","start_year":2017,"end_year":2021}
+]'::jsonb
+WHERE id = 'c0000000-0000-0000-0000-000000000011';
+
+-- 12. Derek Coleman – Senior Account Executive at Oracle
+UPDATE candidates SET last_activity_action = 'Offer accepted', last_activity_at = '2026-03-11T09:45:00Z',
+work_history = '[
+  {"company":"Oracle","title":"Senior Account Executive","location":"New York, NY","start_date":"2021-01","end_date":null,"description":"Manage strategic relationships with 12 Fortune 500 accounts across financial services. Drove $8.5M in new ARR in FY25 through multi-year cloud migration deals."},
+  {"company":"SAP","title":"Account Executive","location":"New York, NY","start_date":"2018-03","end_date":"2020-12","description":"Sold S/4HANA and cloud ERP solutions to enterprise manufacturing and retail accounts. Consistently in top 10% of global AE rankings."},
+  {"company":"Dell Technologies","title":"Inside Sales Manager","location":"New York, NY","start_date":"2015-06","end_date":"2018-02","description":"Led a team of 8 ISRs covering the Northeast enterprise segment. Grew team revenue from $5M to $9M annually."}
+]'::jsonb,
+education = '[
+  {"school":"Columbia Business School","degree":"M.B.A.","field":"Management","start_year":2013,"end_year":2015},
+  {"school":"Boston University","degree":"B.A.","field":"Communications","start_year":2009,"end_year":2013}
+]'::jsonb
+WHERE id = 'c0000000-0000-0000-0000-000000000012';
+
+-- 13. Jessica Park – Account Executive at Gong
+UPDATE candidates SET last_activity_action = 'Moved to recruiter screen', last_activity_at = '2026-03-09T16:30:00Z',
+work_history = '[
+  {"company":"Gong","title":"Account Executive","location":"Chicago, IL","start_date":"2024-01","end_date":null,"description":"Sell revenue intelligence platform to mid-market sales organizations. Built $1.5M pipeline in first quarter through creative outbound and event-based strategies."},
+  {"company":"Gong","title":"Senior SDR","location":"Chicago, IL","start_date":"2022-09","end_date":"2023-12","description":"Top-performing SDR generating 45+ qualified meetings per quarter. Developed an ABM playbook adopted by the entire Central SDR team."},
+  {"company":"ZoomInfo","title":"SDR","location":"Chicago, IL","start_date":"2021-07","end_date":"2022-08","description":"Sourced and qualified leads for enterprise AEs through cold calling, email sequences, and social selling."}
+]'::jsonb,
+education = '[
+  {"school":"Northwestern University","degree":"M.S.","field":"Integrated Marketing Communications","start_year":2021,"end_year":2022},
+  {"school":"DePaul University","degree":"B.S.","field":"Marketing","start_year":2017,"end_year":2021}
+]'::jsonb
+WHERE id = 'c0000000-0000-0000-0000-000000000013';
+
+-- 14. Chris Morgan – VP of Sales at Goldman Sachs
+UPDATE candidates SET last_activity_action = 'Withdrew application', last_activity_at = '2026-03-08T12:00:00Z',
+work_history = '[
+  {"company":"Goldman Sachs","title":"VP, Institutional Sales","location":"Dallas, TX","start_date":"2021-06","end_date":null,"description":"Lead a 6-person team selling structured products to institutional investors across the Southwest. Grew regional AUM by $400M in two years through relationship-driven strategies."},
+  {"company":"J.P. Morgan","title":"Associate, Sales & Trading","location":"New York, NY","start_date":"2018-07","end_date":"2021-05","description":"Covered hedge fund and asset manager clients for equity derivatives. Generated $12M in annual trading revenue through market intelligence and client advisory."},
+  {"company":"Bank of America","title":"Analyst, Global Markets","location":"New York, NY","start_date":"2016-07","end_date":"2018-06","description":"Supported senior traders with market analysis, client pitches, and trade execution for fixed income products."}
+]'::jsonb,
+education = '[
+  {"school":"Wharton School of Business","degree":"M.B.A.","field":"Finance","start_year":2016,"end_year":2018},
+  {"school":"University of Texas at Austin","degree":"B.B.A.","field":"Finance","start_year":2012,"end_year":2016}
+]'::jsonb
+WHERE id = 'c0000000-0000-0000-0000-000000000014';
+
+-- 15. Priya Sharma – Senior Product Designer at Figma
+UPDATE candidates SET last_activity_action = 'Portfolio review completed', last_activity_at = '2026-03-13T10:00:00Z',
+work_history = '[
+  {"company":"Figma","title":"Senior Product Designer","location":"New York, NY","start_date":"2023-03","end_date":null,"description":"Lead design for Figma''s collaboration features including comments, sharing, and permissions. Shipped a redesigned sharing flow that increased team invitations by 28%."},
+  {"company":"Notion","title":"Product Designer","location":"New York, NY","start_date":"2021-01","end_date":"2023-02","description":"Designed the databases and views experience used by millions of teams. Led user research studies that informed the rollout of Notion Projects."},
+  {"company":"InVision","title":"Junior Product Designer","location":"Remote","start_date":"2020-01","end_date":"2020-12","description":"Designed prototyping and handoff workflows. Contributed to the design system used across InVision Studio and Cloud products."}
+]'::jsonb,
+education = '[
+  {"school":"NYU Tisch School of the Arts","degree":"M.F.A.","field":"Design & Technology","start_year":2020,"end_year":2022},
+  {"school":"Parsons School of Design","degree":"B.F.A.","field":"Communication Design","start_year":2016,"end_year":2020}
+]'::jsonb
+WHERE id = 'c0000000-0000-0000-0000-000000000015';
+
+-- 16. Kai Nakamura – Lead Product Designer at Spotify
+UPDATE candidates SET last_activity_action = 'Offer extended', last_activity_at = '2026-03-12T11:30:00Z',
+work_history = '[
+  {"company":"Spotify","title":"Lead Product Designer","location":"New York, NY","start_date":"2022-01","end_date":null,"description":"Lead a team of 4 designers on Spotify''s creator tools platform. Defined the design vision for podcast analytics and Spotify for Podcasters, serving 5M+ creators."},
+  {"company":"Spotify","title":"Senior Product Designer","location":"New York, NY","start_date":"2019-06","end_date":"2021-12","description":"Designed the listening activity and social features for Spotify mobile. Shipped Blend and Group Session features used by 50M+ users monthly."},
+  {"company":"IDEO","title":"Interaction Designer","location":"San Francisco, CA","start_date":"2017-08","end_date":"2019-05","description":"Led design sprints and prototyping for Fortune 500 clients across healthcare, finance, and consumer electronics. Specialized in systems thinking and service design."}
+]'::jsonb,
+education = '[
+  {"school":"Rhode Island School of Design","degree":"M.F.A.","field":"Graphic Design","start_year":2015,"end_year":2017},
+  {"school":"Keio University","degree":"B.A.","field":"Media and Governance","start_year":2010,"end_year":2014}
+]'::jsonb
+WHERE id = 'c0000000-0000-0000-0000-000000000016';
+
+-- 17. Olivia Hart – Product Designer at Square
+UPDATE candidates SET last_activity_action = 'Reference check initiated', last_activity_at = '2026-03-07T09:15:00Z',
+work_history = '[
+  {"company":"Square","title":"Product Designer","location":"San Francisco, CA","start_date":"2023-09","end_date":null,"description":"Design onboarding and activation flows for Square''s point-of-sale product. Increased new merchant activation rate by 18% through simplified setup wizard."},
+  {"company":"Asana","title":"Product Designer","location":"San Francisco, CA","start_date":"2022-01","end_date":"2023-08","description":"Owned the task detail and project views experience. Conducted 40+ usability tests to validate interaction patterns for the new board view."}
+]'::jsonb,
+education = '[
+  {"school":"Royal College of Art","degree":"M.A.","field":"Service Design","start_year":2022,"end_year":2023},
+  {"school":"California College of the Arts","degree":"B.F.A.","field":"Interaction Design","start_year":2018,"end_year":2022}
+]'::jsonb
+WHERE id = 'c0000000-0000-0000-0000-000000000017';
+
+-- 18. Sam Adeyemi – Senior Visual Designer at R/GA
+UPDATE candidates SET last_activity_action = 'Emailed candidate', last_activity_at = '2026-03-06T14:20:00Z',
+work_history = '[
+  {"company":"R/GA","title":"Senior Visual Designer","location":"New York, NY","start_date":"2023-06","end_date":null,"description":"Lead visual design for brand campaigns across Nike, Samsung, and Google accounts. Developed motion design systems for cross-platform digital experiences."},
+  {"company":"Pentagram","title":"Junior Designer","location":"New York, NY","start_date":"2022-01","end_date":"2023-05","description":"Supported identity and brand design projects for cultural institutions and tech companies. Designed a visual identity system for a major museum rebrand."}
+]'::jsonb,
+education = '[
+  {"school":"Yale School of Art","degree":"M.F.A.","field":"Graphic Design","start_year":2022,"end_year":2024},
+  {"school":"School of Visual Arts","degree":"B.F.A.","field":"Graphic Design","start_year":2018,"end_year":2022}
+]'::jsonb
+WHERE id = 'c0000000-0000-0000-0000-000000000018';
+
+-- 19. Grace Liu – Senior Product Designer at Microsoft
+UPDATE candidates SET last_activity_action = 'Recruiter screen scheduled', last_activity_at = '2026-03-11T13:45:00Z',
+work_history = '[
+  {"company":"Microsoft","title":"Senior Product Designer","location":"Seattle, WA","start_date":"2022-04","end_date":null,"description":"Lead the Fluent 2 design system team, defining component standards used across Microsoft 365 products. Built token architecture enabling seamless theming across light, dark, and high-contrast modes."},
+  {"company":"Shopify","title":"Product Designer","location":"Remote","start_date":"2020-06","end_date":"2022-03","description":"Designed the Polaris design system''s accessibility patterns. Led the initiative to achieve WCAG 2.1 AA compliance across all Shopify admin components."},
+  {"company":"Etsy","title":"Product Designer","location":"Brooklyn, NY","start_date":"2019-01","end_date":"2020-05","description":"Designed search and discovery features for Etsy''s marketplace. Shipped a redesigned search results page that increased click-through rates by 12%."}
+]'::jsonb,
+education = '[
+  {"school":"Carnegie Mellon University","degree":"M.Des.","field":"Interaction Design","start_year":2017,"end_year":2019},
+  {"school":"University of Washington","degree":"B.S.","field":"Informatics","start_year":2013,"end_year":2017}
+]'::jsonb
+WHERE id = 'c0000000-0000-0000-0000-000000000019';
+
+-- 20. Sophie Chen – Marketing Manager at HubSpot
+UPDATE candidates SET last_activity_action = 'Take-home submitted', last_activity_at = '2026-03-10T08:30:00Z',
+work_history = '[
+  {"company":"HubSpot","title":"Marketing Manager, Growth","location":"San Francisco, CA","start_date":"2022-09","end_date":null,"description":"Own organic growth strategy driving 2M+ monthly blog visits. Launched a content-led SEO program that increased signups from organic search by 45% YoY."},
+  {"company":"Mixpanel","title":"Content Marketing Manager","location":"San Francisco, CA","start_date":"2020-03","end_date":"2022-08","description":"Built the content marketing function from scratch. Grew the blog from 50K to 400K monthly visits through technical tutorials and data-driven content strategy."},
+  {"company":"Buffer","title":"Marketing Coordinator","location":"Remote","start_date":"2018-06","end_date":"2020-02","description":"Managed social media scheduling and email campaigns. Wrote weekly blog posts on social media marketing best practices reaching 200K+ subscribers."}
+]'::jsonb,
+education = '[
+  {"school":"Stanford University","degree":"M.A.","field":"Communication","start_year":2018,"end_year":2020},
+  {"school":"UCLA","degree":"B.A.","field":"Communications","start_year":2014,"end_year":2018}
+]'::jsonb
+WHERE id = 'c0000000-0000-0000-0000-000000000020';
+
+-- 21. Ethan Brooks – Content Marketing Manager at Contentful
+UPDATE candidates SET last_activity_action = 'Submitted application', last_activity_at = '2026-03-09T12:00:00Z',
+work_history = '[
+  {"company":"Contentful","title":"Content Marketing Manager","location":"Denver, CO","start_date":"2023-04","end_date":null,"description":"Lead content strategy for developer-focused marketing. Produce technical blog posts, API tutorials, and case studies that generate 30% of marketing-qualified leads."},
+  {"company":"Twilio","title":"Content Strategist","location":"Denver, CO","start_date":"2021-06","end_date":"2023-03","description":"Created technical content for Twilio''s developer audience including API documentation, quickstart guides, and blog posts. Managed a team of 3 freelance writers."}
+]'::jsonb,
+education = '[
+  {"school":"Columbia University","degree":"M.A.","field":"Digital Media","start_year":2021,"end_year":2023},
+  {"school":"University of Colorado Boulder","degree":"B.A.","field":"English Literature","start_year":2017,"end_year":2021}
+]'::jsonb
+WHERE id = 'c0000000-0000-0000-0000-000000000021';
+
+-- 22. Hannah Wells – Senior Content Lead at Marketo
+UPDATE candidates SET last_activity_action = 'Interview completed', last_activity_at = '2026-03-08T15:00:00Z',
+work_history = '[
+  {"company":"Marketo (Adobe)","title":"Senior Content Lead","location":"Austin, TX","start_date":"2022-01","end_date":null,"description":"Lead a team of 4 content marketers producing thought leadership, webinars, and gated assets. Content programs directly influenced $12M in pipeline in FY25."},
+  {"company":"Drift","title":"Content Marketing Manager","location":"Boston, MA","start_date":"2019-08","end_date":"2021-12","description":"Built Drift''s conversational marketing content library. Launched a podcast that reached 50K monthly downloads within 6 months."},
+  {"company":"Constant Contact","title":"Marketing Specialist","location":"Boston, MA","start_date":"2017-06","end_date":"2019-07","description":"Created email marketing campaigns and landing pages for SMB customers. Managed the editorial calendar for the company blog."}
+]'::jsonb,
+education = '[
+  {"school":"Boston University","degree":"M.S.","field":"Journalism","start_year":2015,"end_year":2017},
+  {"school":"University of Virginia","degree":"B.A.","field":"English","start_year":2011,"end_year":2015}
+]'::jsonb
+WHERE id = 'c0000000-0000-0000-0000-000000000022';
+
+-- 23. Ryan O'Connor – Staff Writer at The Verge
+UPDATE candidates SET last_activity_action = 'Scorecard submitted', last_activity_at = '2026-03-07T11:30:00Z',
+work_history = '[
+  {"company":"The Verge","title":"Staff Writer","location":"New York, NY","start_date":"2023-02","end_date":null,"description":"Cover enterprise technology, developer tools, and AI for The Verge. Published 150+ articles with an average of 80K pageviews each. Break news on product launches and industry trends."},
+  {"company":"TechCrunch","title":"Contributing Writer","location":"New York, NY","start_date":"2021-09","end_date":"2023-01","description":"Wrote weekly columns on startup fundraising and SaaS trends. Conducted in-depth interviews with founders and VCs for feature stories."}
+]'::jsonb,
+education = '[
+  {"school":"Columbia University","degree":"M.S.","field":"Journalism","start_year":2019,"end_year":2021},
+  {"school":"NYU","degree":"B.A.","field":"English & Creative Writing","start_year":2015,"end_year":2019}
+]'::jsonb
+WHERE id = 'c0000000-0000-0000-0000-000000000023';
+
+-- 24. Zoe Martinez – Head of Content at Notion
+UPDATE candidates SET last_activity_action = 'Moved to final round', last_activity_at = '2026-03-06T16:00:00Z',
+work_history = '[
+  {"company":"Notion","title":"Head of Content","location":"San Francisco, CA","start_date":"2022-05","end_date":null,"description":"Built and lead a 6-person content team spanning blog, video, and community. Grew Notion''s YouTube channel from 20K to 350K subscribers. Content programs drove 25% of new user signups."},
+  {"company":"Stripe","title":"Senior Content Strategist","location":"San Francisco, CA","start_date":"2020-01","end_date":"2022-04","description":"Led content strategy for Stripe Press and the company blog. Managed the production of long-form guides on internet economics read by 500K+ people annually."},
+  {"company":"Medium","title":"Editorial Lead","location":"San Francisco, CA","start_date":"2018-03","end_date":"2019-12","description":"Curated and edited featured stories across technology and business verticals. Grew the technology section readership by 60%."}
+]'::jsonb,
+education = '[
+  {"school":"Harvard University","degree":"M.A.","field":"Education Technology","start_year":2018,"end_year":2020},
+  {"school":"UC Berkeley","degree":"B.A.","field":"Media Studies","start_year":2014,"end_year":2018}
+]'::jsonb
+WHERE id = 'c0000000-0000-0000-0000-000000000024';
+
+-- 25. Isaac Lee – Technical Writer at Vercel
+UPDATE candidates SET last_activity_action = 'Rejected', last_activity_at = '2026-03-05T09:45:00Z',
+work_history = '[
+  {"company":"Vercel","title":"Technical Writer","location":"Seattle, WA","start_date":"2024-01","end_date":null,"description":"Author and maintain Next.js documentation used by 1M+ developers monthly. Write migration guides, API references, and tutorials for new framework features."},
+  {"company":"Stripe","title":"Technical Writer","location":"Seattle, WA","start_date":"2022-08","end_date":"2023-12","description":"Wrote API documentation and integration guides for Stripe Connect. Developed interactive code samples that reduced support tickets by 15%."}
+]'::jsonb,
+education = '[
+  {"school":"MIT","degree":"M.S.","field":"Comparative Media Studies","start_year":2022,"end_year":2024},
+  {"school":"University of Washington","degree":"B.A.","field":"Technical Communication","start_year":2019,"end_year":2022}
+]'::jsonb
+WHERE id = 'c0000000-0000-0000-0000-000000000025';
+
+-- ============================================================
 -- Requisitions (5 reqs with stable UUIDs)
 -- ============================================================
 INSERT INTO requisitions (id, title, department, location, employment_type, recruiter_name, hiring_manager_name, status, description, requirements, salary_min, salary_max, headcount, location_pay_ranges) VALUES
@@ -438,3 +757,192 @@ INSERT INTO hc_approval_requests (request_id, position, department, requested_by
   ('REQ-105', 'UX Researcher', 'Design', 'James Ortiz', '2026-03-05', 'pending'),
   ('REQ-106', 'Infrastructure Engineer', 'Engineering', 'Sarah Chen', '2026-03-06', 'pending'),
   ('REQ-107', 'Onboarding Specialist', 'Customer Success', 'Lena Torres', '2026-03-07', 'approved');
+
+-- ============================================================
+-- Assessment criteria for all requisitions
+-- ============================================================
+UPDATE requisitions SET assessment_criteria = ARRAY[
+  '5+ years of professional frontend development experience',
+  'Deep expertise in React, TypeScript, and modern CSS',
+  'Experience building design systems or component libraries',
+  'Strong understanding of web performance and accessibility',
+  'Experience mentoring engineers or leading technical initiatives'
+] WHERE id = 'b0000000-0000-0000-0000-000000000001';
+
+UPDATE requisitions SET assessment_criteria = ARRAY[
+  '3+ years of B2B SaaS sales experience selling to technical buyers',
+  'Proven track record of meeting or exceeding quota',
+  'Experience with consultative selling and complex deal cycles',
+  'Familiarity with developer tools or infrastructure products',
+  'Self-starter comfortable in an early-stage environment'
+] WHERE id = 'b0000000-0000-0000-0000-000000000002';
+
+UPDATE requisitions SET assessment_criteria = ARRAY[
+  '5+ years of product design experience with end-to-end portfolio',
+  'Deep proficiency in Figma including prototyping and components',
+  'Experience designing for developer tools or B2B SaaS platforms',
+  'Strong systems thinking for design system work',
+  'Experience with user research methods and data-informed design'
+] WHERE id = 'b0000000-0000-0000-0000-000000000003';
+
+UPDATE requisitions SET assessment_criteria = ARRAY[
+  '3+ years of ML engineering or applied ML research experience',
+  'Hands-on experience with LLMs including fine-tuning or inference optimization',
+  'Proficiency in Python, PyTorch, and distributed training frameworks',
+  'Experience building production ML systems with monitoring',
+  'Strong fundamentals in statistics and optimization'
+] WHERE id = 'b0000000-0000-0000-0000-000000000004';
+
+UPDATE requisitions SET assessment_criteria = ARRAY[
+  '4+ years of content marketing experience in developer tools or B2B SaaS',
+  'Exceptional writing skills with published technical content portfolio',
+  'Ability to distill complex technical concepts into clear narratives',
+  'Familiarity with SEO, content analytics, and distribution strategies',
+  'Experience marketing to software developers'
+] WHERE id = 'b0000000-0000-0000-0000-000000000005';
+
+-- ============================================================
+-- Criteria evaluations (seeded for all reqs with active candidates)
+-- ============================================================
+INSERT INTO criteria_evaluations (req_id, candidate_id, criterion, met, reasoning) VALUES
+  -- ── Senior Frontend Engineer (b001) ──
+  -- c001: Liam Chen – Senior Frontend Engineer at Vercel
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000001', '5+ years of professional frontend development experience', true, 'Has 8 years of frontend experience across Vercel, Stripe, and Airbnb.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000001', 'Deep expertise in React, TypeScript, and modern CSS', true, 'Core stack at Vercel and Stripe. Built with React, TypeScript, and Tailwind daily.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000001', 'Experience building design systems or component libraries', true, 'Built and maintained Vercel''s shared component library used across multiple products.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000001', 'Strong understanding of web performance and accessibility', true, 'Led performance optimization initiatives and implemented WCAG 2.1 compliance at Stripe.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000001', 'Experience mentoring engineers or leading technical initiatives', true, 'Mentored 3 junior engineers and led frontend architecture reviews at Vercel.'),
+  -- c003: Priya Sharma – Full-Stack Engineer at Notion
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000003', '5+ years of professional frontend development experience', true, 'Has 6 years of full-stack experience with significant frontend focus at Notion and Figma.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000003', 'Deep expertise in React, TypeScript, and modern CSS', true, 'Primary stack at Notion. Extensive React and TypeScript experience.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000003', 'Experience building design systems or component libraries', false, 'No direct design system or component library ownership mentioned.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000003', 'Strong understanding of web performance and accessibility', true, 'Optimized Notion editor performance, reducing load times by 40%.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000003', 'Experience mentoring engineers or leading technical initiatives', false, 'No explicit mentoring or tech lead experience in profile.'),
+  -- c004: Marcus Johnson – Staff Engineer at Linear
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000004', '5+ years of professional frontend development experience', true, 'Over 9 years of engineering experience, primarily frontend at Linear and Shopify.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000004', 'Deep expertise in React, TypeScript, and modern CSS', true, 'Core stack at Linear. Known for TypeScript expertise and CSS architecture.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000004', 'Experience building design systems or component libraries', true, 'Developed Linear''s design system and Shopify''s Polaris component contributions.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000004', 'Strong understanding of web performance and accessibility', true, 'Architected Linear''s real-time sync engine with sub-50ms render targets.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000004', 'Experience mentoring engineers or leading technical initiatives', true, 'Staff-level engineer leading technical direction for Linear''s frontend platform.'),
+  -- c005: Aisha Patel – Software Engineer at Figma
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000005', '5+ years of professional frontend development experience', false, 'Has 3 years of professional experience at Figma. Below the 5-year threshold.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000005', 'Deep expertise in React, TypeScript, and modern CSS', true, 'Strong React and TypeScript skills demonstrated at Figma. Uses Tailwind CSS.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000005', 'Experience building design systems or component libraries', false, 'Contributed to Figma''s internal tools but did not own a component library.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000005', 'Strong understanding of web performance and accessibility', true, 'Implemented performance monitoring for Figma''s canvas rendering pipeline.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000005', 'Experience mentoring engineers or leading technical initiatives', false, 'Still early career; no mentoring experience documented.'),
+  -- c009: Sofia Martinez – UX Engineer at Google
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000009', '5+ years of professional frontend development experience', true, 'Has 5 years of UX engineering experience at Google and Meta.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000009', 'Deep expertise in React, TypeScript, and modern CSS', false, 'Primarily uses Angular at Google. React experience is limited to side projects.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000009', 'Experience building design systems or component libraries', true, 'Contributed to Google''s Material Design component library.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000009', 'Strong understanding of web performance and accessibility', true, 'Strong accessibility focus at Google; led WCAG compliance audits.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000009', 'Experience mentoring engineers or leading technical initiatives', false, 'IC contributor; no documented mentoring or leadership scope.'),
+
+  -- ── Account Executive (b002) ──
+  -- c010: James O''Brien – Enterprise AE at Datadog
+  ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000010', '3+ years of B2B SaaS sales experience selling to technical buyers', true, 'Has 6 years of enterprise sales at Datadog and New Relic, selling to engineering leaders.'),
+  ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000010', 'Proven track record of meeting or exceeding quota', true, 'Consistently at 120%+ quota attainment over the past 3 years at Datadog.'),
+  ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000010', 'Experience with consultative selling and complex deal cycles', true, 'Manages 6-9 month enterprise deal cycles with multi-stakeholder procurement.'),
+  ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000010', 'Familiarity with developer tools or infrastructure products', true, 'Deep domain expertise from selling observability and APM products.'),
+  ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000010', 'Self-starter comfortable in an early-stage environment', false, 'Has only worked at large, established companies (500+ employees).'),
+  -- c011: Rachel Kim – Account Executive at HashiCorp
+  ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000011', '3+ years of B2B SaaS sales experience selling to technical buyers', true, 'Has 4 years selling infrastructure software to DevOps and platform teams.'),
+  ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000011', 'Proven track record of meeting or exceeding quota', true, 'President''s Club winner at HashiCorp for two consecutive years.'),
+  ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000011', 'Experience with consultative selling and complex deal cycles', true, 'Runs consultative sales motions with proof-of-value engagements.'),
+  ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000011', 'Familiarity with developer tools or infrastructure products', true, 'Sells Terraform and Vault directly to engineering organizations.'),
+  ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000011', 'Self-starter comfortable in an early-stage environment', true, 'Joined HashiCorp pre-IPO and helped build the mid-market playbook.'),
+  -- c012: David Park – Senior AE at Twilio
+  ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000012', '3+ years of B2B SaaS sales experience selling to technical buyers', true, 'Has 5 years of sales experience at Twilio and Segment selling API products.'),
+  ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000012', 'Proven track record of meeting or exceeding quota', true, 'Exceeded quota by 15-30% in each of the past 4 quarters.'),
+  ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000012', 'Experience with consultative selling and complex deal cycles', true, 'Manages complex, multi-product deals across Twilio''s communications suite.'),
+  ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000012', 'Familiarity with developer tools or infrastructure products', true, 'Sells developer APIs; regularly demos to engineering teams.'),
+  ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000012', 'Self-starter comfortable in an early-stage environment', false, 'Career has been at established, publicly-traded companies.'),
+  -- c013: Emily Tanaka – SDR Manager at Confluent
+  ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000013', '3+ years of B2B SaaS sales experience selling to technical buyers', false, 'Has SDR management experience but limited full-cycle closing experience.'),
+  ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000013', 'Proven track record of meeting or exceeding quota', true, 'Team consistently exceeded pipeline generation targets under her leadership.'),
+  ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000013', 'Experience with consultative selling and complex deal cycles', false, 'Focused on top-of-funnel outbound rather than deal management.'),
+  ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000013', 'Familiarity with developer tools or infrastructure products', true, 'Managed SDR team selling Kafka-based data streaming to engineering orgs.'),
+  ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000013', 'Self-starter comfortable in an early-stage environment', true, 'Built the SDR function at Confluent from scratch when team was under 50.'),
+
+  -- ── Senior Product Designer (b003) ──
+  -- c015: Mia Rodriguez – Lead Product Designer at Canva
+  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000015', '5+ years of product design experience with end-to-end portfolio', true, 'Over 7 years of product design experience at Canva, Spotify, and freelance.'),
+  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000015', 'Deep proficiency in Figma including prototyping and components', true, 'Expert Figma user; built Canva''s internal design system with variables and auto-layout.'),
+  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000015', 'Experience designing for developer tools or B2B SaaS platforms', false, 'Experience is primarily in consumer design tools, not developer-facing products.'),
+  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000015', 'Strong systems thinking for design system work', true, 'Led design system initiatives at Canva; created a component library used by 40+ designers.'),
+  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000015', 'Experience with user research methods and data-informed design', true, 'Runs regular usability studies and uses analytics to validate design decisions.'),
+  -- c016: Noah Williams – Senior Designer at Figma
+  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000016', '5+ years of product design experience with end-to-end portfolio', true, 'Has 6 years of product design experience with end-to-end case studies at Figma and InVision.'),
+  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000016', 'Deep proficiency in Figma including prototyping and components', true, 'Designs Figma''s own product — deeply proficient with advanced Figma features.'),
+  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000016', 'Experience designing for developer tools or B2B SaaS platforms', true, 'Designed developer-facing features at Figma including Dev Mode and API documentation.'),
+  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000016', 'Strong systems thinking for design system work', true, 'Built a cross-platform design system at Figma used by 50+ designers.'),
+  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000016', 'Experience with user research methods and data-informed design', true, 'Led research sprints with developer users and iterated designs based on session recordings.'),
+  -- c017: Isabella Garcia – Product Designer at Airbnb
+  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000017', '5+ years of product design experience with end-to-end portfolio', true, 'Has 5 years of design experience at Airbnb with a strong public portfolio.'),
+  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000017', 'Deep proficiency in Figma including prototyping and components', true, 'Uses Figma as primary tool; proficient in components, variables, and prototyping.'),
+  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000017', 'Experience designing for developer tools or B2B SaaS platforms', false, 'Consumer product focus at Airbnb; no B2B or developer tool experience.'),
+  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000017', 'Strong systems thinking for design system work', true, 'Contributed to Airbnb''s DLS (Design Language System).'),
+  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000017', 'Experience with user research methods and data-informed design', true, 'Regularly conducts usability testing and A/B test analysis.'),
+  -- c018: Alexander Brown – UX Designer at Shopify
+  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000018', '5+ years of product design experience with end-to-end portfolio', false, 'Has 3 years of professional UX design experience. Below the 5-year bar.'),
+  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000018', 'Deep proficiency in Figma including prototyping and components', true, 'Strong Figma skills demonstrated through component creation at Shopify.'),
+  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000018', 'Experience designing for developer tools or B2B SaaS platforms', true, 'Designed Shopify''s developer portal and API documentation experience.'),
+  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000018', 'Strong systems thinking for design system work', false, 'Used Polaris but did not lead or significantly contribute to design system work.'),
+  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000018', 'Experience with user research methods and data-informed design', true, 'Conducted user interviews and card sorting for the merchant admin redesign.'),
+
+  -- ── Machine Learning Engineer (b004) ──
+  -- c002: Ethan Brooks – ML Engineer at OpenAI
+  ('b0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000002', '3+ years of ML engineering or applied ML research experience', true, 'Has 5 years of ML experience at OpenAI and DeepMind.'),
+  ('b0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000002', 'Hands-on experience with LLMs including fine-tuning or inference optimization', true, 'Works directly on LLM fine-tuning and RLHF at OpenAI.'),
+  ('b0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000002', 'Proficiency in Python, PyTorch, and distributed training frameworks', true, 'Expert in PyTorch and distributed training at scale. Uses JAX and PyTorch daily.'),
+  ('b0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000002', 'Experience building production ML systems with monitoring', true, 'Built production inference pipelines with latency monitoring and auto-scaling.'),
+  ('b0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000002', 'Strong fundamentals in statistics and optimization', true, 'PhD coursework in statistical learning theory; published optimization research.'),
+  -- c006: Daniel Kim – Data Scientist at Netflix
+  ('b0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000006', '3+ years of ML engineering or applied ML research experience', true, 'Has 4 years of data science and ML experience at Netflix and Uber.'),
+  ('b0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000006', 'Hands-on experience with LLMs including fine-tuning or inference optimization', false, 'Focused on recommendation systems and A/B testing, not LLM work.'),
+  ('b0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000006', 'Proficiency in Python, PyTorch, and distributed training frameworks', true, 'Strong Python skills; uses PyTorch for model development.'),
+  ('b0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000006', 'Experience building production ML systems with monitoring', true, 'Built production recommendation pipelines serving millions of users.'),
+  ('b0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000006', 'Strong fundamentals in statistics and optimization', true, 'MS in Statistics; strong experimental design and causal inference skills.'),
+  -- c007: Olivia Wang – Research Engineer at Anthropic
+  ('b0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000007', '3+ years of ML engineering or applied ML research experience', true, 'Has 4 years of ML research and engineering at Anthropic and Google Brain.'),
+  ('b0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000007', 'Hands-on experience with LLMs including fine-tuning or inference optimization', true, 'Works on constitutional AI and RLHF for large language models at Anthropic.'),
+  ('b0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000007', 'Proficiency in Python, PyTorch, and distributed training frameworks', true, 'Expert in JAX and PyTorch; trains models across large GPU clusters.'),
+  ('b0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000007', 'Experience building production ML systems with monitoring', false, 'Research-focused role; limited production deployment experience.'),
+  ('b0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000007', 'Strong fundamentals in statistics and optimization', true, 'Published at NeurIPS and ICML on optimization methods for LLM training.'),
+  -- c008: William Taylor – Backend Engineer at Databricks
+  ('b0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000008', '3+ years of ML engineering or applied ML research experience', false, 'Backend engineering focus. ML experience limited to platform tooling, not model development.'),
+  ('b0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000008', 'Hands-on experience with LLMs including fine-tuning or inference optimization', false, 'No direct LLM training or fine-tuning experience.'),
+  ('b0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000008', 'Proficiency in Python, PyTorch, and distributed training frameworks', true, 'Strong Python skills and familiarity with Spark ML and distributed systems.'),
+  ('b0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000008', 'Experience building production ML systems with monitoring', true, 'Built MLflow-based model serving infrastructure at Databricks.'),
+  ('b0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000008', 'Strong fundamentals in statistics and optimization', false, 'Engineering background; statistics knowledge is practical, not formal.'),
+
+  -- ── Content Marketing Lead (b005) ──
+  -- c020: Hannah Foster – Content Strategist at HubSpot
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000020', '4+ years of content marketing experience in developer tools or B2B SaaS', true, 'Has 6 years of content strategy at HubSpot and Mailchimp in B2B SaaS.'),
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000020', 'Exceptional writing skills with published technical content portfolio', true, 'Published over 100 blog posts and 12 long-form guides at HubSpot.'),
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000020', 'Ability to distill complex technical concepts into clear narratives', true, 'Known for making API and integration topics accessible to non-technical readers.'),
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000020', 'Familiarity with SEO, content analytics, and distribution strategies', true, 'Led SEO strategy that grew organic traffic 3x over 18 months.'),
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000020', 'Experience marketing to software developers', false, 'Primarily marketed to marketers and sales professionals, not developers.'),
+  -- c021: Tyler Reed – Marketing Manager at Cloudflare
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000021', '4+ years of content marketing experience in developer tools or B2B SaaS', true, 'Has 5 years of marketing experience at Cloudflare and Fastly, developer-focused companies.'),
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000021', 'Exceptional writing skills with published technical content portfolio', true, 'Wrote technical blog posts about Workers, R2, and edge computing.'),
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000021', 'Ability to distill complex technical concepts into clear narratives', true, 'Effectively communicated complex CDN and security concepts to broad audiences.'),
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000021', 'Familiarity with SEO, content analytics, and distribution strategies', true, 'Managed Cloudflare''s blog SEO and content distribution across social and Hacker News.'),
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000021', 'Experience marketing to software developers', true, 'Core audience is developers; regularly writes for Cloudflare''s developer blog.'),
+  -- c022: Jessica Chen – Content Lead at Notion
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000022', '4+ years of content marketing experience in developer tools or B2B SaaS', true, 'Has 5 years of content marketing at Notion and Airtable.'),
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000022', 'Exceptional writing skills with published technical content portfolio', true, 'Led Notion''s content program; multiple pieces featured in major publications.'),
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000022', 'Ability to distill complex technical concepts into clear narratives', true, 'Turned complex product features into compelling customer stories and tutorials.'),
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000022', 'Familiarity with SEO, content analytics, and distribution strategies', true, 'Built Notion''s SEO-driven content strategy from scratch.'),
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000022', 'Experience marketing to software developers', false, 'Notion audience is broad (project managers, designers); not specifically developers.'),
+  -- c023: Ryan Mitchell – Copywriter at Atlassian
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000023', '4+ years of content marketing experience in developer tools or B2B SaaS', true, 'Has 4 years of content work at Atlassian, a B2B SaaS company.'),
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000023', 'Exceptional writing skills with published technical content portfolio', false, 'Primarily writes UX copy and short-form content, not long-form technical pieces.'),
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000023', 'Ability to distill complex technical concepts into clear narratives', true, 'Simplifies Jira and Confluence workflows into user-friendly documentation.'),
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000023', 'Familiarity with SEO, content analytics, and distribution strategies', false, 'No SEO or analytics responsibilities in current role.'),
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000023', 'Experience marketing to software developers', true, 'Atlassian''s core audience includes developers using Jira and Bitbucket.'),
+  -- c025: Isaac Lee – Technical Writer at Vercel
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000025', '4+ years of content marketing experience in developer tools or B2B SaaS', false, 'Has 2 years of technical writing experience. Below the 4-year threshold.'),
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000025', 'Exceptional writing skills with published technical content portfolio', true, 'Authors Next.js documentation used by 1M+ developers monthly.'),
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000025', 'Ability to distill complex technical concepts into clear narratives', true, 'Excels at making framework concepts accessible through migration guides and tutorials.'),
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000025', 'Familiarity with SEO, content analytics, and distribution strategies', false, 'Technical documentation focus; no marketing distribution or SEO experience.'),
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000025', 'Experience marketing to software developers', true, 'Writes exclusively for a developer audience at Vercel.');

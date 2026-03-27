@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ViewToggle, type View } from "@/components/custom/view-toggle";
+import type { View } from "@/components/custom/view-toggle";
 import { useHcPositions } from "@/features/headcount-planning/api/use-hc-positions";
 import { useHcPlanSettings } from "@/features/headcount-planning/api/use-hc-plan-settings";
 import type { HcPositionType } from "@/types/database";
@@ -92,12 +92,11 @@ export function RosterPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Roster</h1>
+          <h1 className="text-2xl font-semibold ">Roster</h1>
           <p className="text-sm text-muted-foreground">
             {totalCount} positions across all departments
           </p>
         </div>
-        <ViewToggle view={view} onViewChange={setView} />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-4">
@@ -108,7 +107,7 @@ export function RosterPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalCount}</div>
+            <div className="text-2xl font-semibold">{totalCount}</div>
           </CardContent>
         </Card>
         <Card>
@@ -118,7 +117,7 @@ export function RosterPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{openCount}</div>
+            <div className="text-2xl font-semibold">{openCount}</div>
           </CardContent>
         </Card>
         <Card>
@@ -128,7 +127,7 @@ export function RosterPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{inProgressCount}</div>
+            <div className="text-2xl font-semibold">{inProgressCount}</div>
           </CardContent>
         </Card>
         <Card>
@@ -138,7 +137,7 @@ export function RosterPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{filledCount}</div>
+            <div className="text-2xl font-semibold">{filledCount}</div>
           </CardContent>
         </Card>
       </div>

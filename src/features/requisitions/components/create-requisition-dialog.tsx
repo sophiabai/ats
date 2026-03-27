@@ -2,6 +2,7 @@ import * as React from "react";
 import { useMutation } from "@tanstack/react-query";
 import OpenAI from "openai";
 import { apiClient } from "@/lib/api-client";
+import { cn } from "@/lib/utils";
 import { marked } from "marked";
 import {
   Briefcase,
@@ -10,7 +11,8 @@ import {
   Loader2,
   Plus,
   Sparkles,
-  X,
+  Trash2,
+  Users,
 } from "lucide-react";
 import { StepNav } from "@/components/custom/step-nav";
 import { API_ENDPOINTS, DEFAULT_MODEL } from "@/lib/constants";
@@ -32,8 +34,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { RichTextEditor } from "@/components/custom/rich-text-editor";
 import { useCreateRequisition } from "@/features/requisitions/api/use-create-requisition";
+import { useLinkPoolsToReq } from "@/features/requisitions/api/use-req-candidate-pools";
+import { useCandidatePools } from "@/features/candidates/api/use-candidate-pools";
 
 interface CreateRequisitionDialogProps {
   open: boolean;
@@ -58,6 +63,7 @@ const STEPS = [
   { label: "Basic info", subtitle: "Role & hiring team", icon: Briefcase },
   { label: "Job description", subtitle: "Write or generate with AI", icon: FileText },
   { label: "Assessment criteria", subtitle: "Evaluation criteria", icon: ListChecks },
+  { label: "Candidate pools", subtitle: "Link sourcing pools", icon: Users },
 ] as const;
 
 export interface FormState {
@@ -73,6 +79,7 @@ export interface FormState {
   sourcer_name: string;
   description: string;
   assessment_criteria: string[];
+  linked_pool_ids: string[];
 }
 
 const INITIAL_FORM: FormState = {
@@ -88,6 +95,7 @@ const INITIAL_FORM: FormState = {
   sourcer_name: "",
   description: "",
   assessment_criteria: [],
+  linked_pool_ids: [],
 };
 
 async function aiGenerateViaApi(prompt: string): Promise<string> {
@@ -123,6 +131,8 @@ export function CreateRequisitionDialog({
   onCreated,
 }: CreateRequisitionDialogProps) {
   const createReq = useCreateRequisition();
+  const linkPoolsMutation = useLinkPoolsToReq();
+  const isEditing = !!initialData?.title && !autoGenerate;
   const [step, setStep] = React.useState(1);
   const [form, setForm] = React.useState<FormState>({
     ...INITIAL_FORM,
@@ -247,6 +257,12 @@ Return ONLY a valid JSON array of strings, no other text. Example: ["Technical d
       description: form.description,
       assessment_criteria: form.assessment_criteria.filter(Boolean),
     });
+    if (form.linked_pool_ids.length > 0) {
+      await linkPoolsMutation.mutateAsync({
+        reqId: result.id,
+        poolIds: form.linked_pool_ids,
+      });
+    }
     reset();
     onOpenChange(false);
     onCreated?.(result.id);
@@ -266,11 +282,11 @@ Return ONLY a valid JSON array of strings, no other text. Example: ["Technical d
         onOpenChange(v);
       }}
     >
-      <DialogContent className="sm:max-w-4xl p-0 gap-0">
+      <DialogContent className="sm:max-w-4xl p-0 gap-0" showCloseButton={false}>
         <div className="flex h-[75vh]">
           <div className="flex flex-col border-r bg-muted/30 p-5">
             <DialogHeader className="mb-4 pl-3">
-              <DialogTitle className="text-base">New requisition</DialogTitle>
+              <DialogTitle className="text-base">{isEditing ? "Edit requisition" : "New requisition"}</DialogTitle>
               <DialogDescription className="sr-only">
                 Step {step} of {STEPS.length}
               </DialogDescription>
@@ -284,7 +300,7 @@ Return ONLY a valid JSON array of strings, no other text. Example: ["Technical d
           </div>
 
           <div className="flex flex-1 flex-col">
-            <div className="flex-1 overflow-y-auto p-10">
+            <div className={cn("flex-1 overflow-y-auto p-10", step === 2 && "flex flex-col overflow-hidden")}>
               {step === 1 && <Step1 form={form} updateField={updateField} />}
               {step === 2 && (
                 <Step2
@@ -299,6 +315,9 @@ Return ONLY a valid JSON array of strings, no other text. Example: ["Technical d
                   updateField={updateField}
                   generateCriteria={generateCriteria}
                 />
+              )}
+              {step === 4 && (
+                <Step4 form={form} updateField={updateField} />
               )}
             </div>
 
@@ -334,10 +353,12 @@ Return ONLY a valid JSON array of strings, no other text. Example: ["Technical d
               ) : (
                 <Button
                   type="button"
-                  disabled={createReq.isPending || !canAdvance()}
+                  disabled={createReq.isPending || linkPoolsMutation.isPending || !canAdvance()}
                   onClick={handleSubmit}
                 >
-                  {createReq.isPending ? "Creating..." : "Create requisition"}
+                  {createReq.isPending
+                    ? isEditing ? "Saving..." : "Creating..."
+                    : isEditing ? "Save" : "Create requisition"}
                 </Button>
               )}
             </div>
@@ -357,6 +378,10 @@ function Step1({
 }) {
   return (
     <div className="grid gap-4">
+      <p className="text-sm text-muted-foreground">
+        Define the role basics and assign your hiring team. This information
+        will be used to generate the job description and assessment criteria.
+      </p>
       <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
           <Label htmlFor="req-title">Job title</Label>
@@ -495,37 +520,37 @@ function Step2({
   generateDescription: ReturnType<typeof useMutation<string, Error, void>>;
 }) {
   return (
-    <div className="grid gap-8">
-      <div className="flex items-center justify-between">
-        <Label>Job description</Label>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="gap-1.5"
-          disabled={generateDescription.isPending || !form.title}
-          onClick={() => generateDescription.mutate()}
-        >
-          {generateDescription.isPending ? (
-            <Loader2 className="size-3.5 animate-spin" />
-          ) : (
-            <Sparkles className="size-3.5" />
-          )}
-          {generateDescription.isPending
-            ? "Generating..."
-            : "Generate with AI"}
-        </Button>
-      </div>
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
+      <p className="shrink-0 text-sm text-muted-foreground">
+        Write a job description or generate one with AI based on the role
+        details from the previous step.
+      </p>
       <RichTextEditor
+        className="min-h-0 flex-1"
         content={form.description}
         onChange={(html) => updateField("description", html)}
         placeholder="Write or generate a job description..."
       />
       {generateDescription.isError && (
-        <p className="text-sm text-destructive">
+        <p className="shrink-0 text-sm text-destructive">
           Failed to generate: {generateDescription.error.message}
         </p>
       )}
+      <Button
+        type="button"
+        variant="link"
+        size="sm"
+        className="h-auto w-fit shrink-0 gap-1.5 px-0"
+        disabled={generateDescription.isPending || !form.title}
+        onClick={() => generateDescription.mutate()}
+      >
+        {generateDescription.isPending ? (
+          <Loader2 className="size-3.5 animate-spin" />
+        ) : (
+          <Sparkles className="size-3.5" />
+        )}
+        {generateDescription.isPending ? "Generating..." : "Generate with AI"}
+      </Button>
     </div>
   );
 }
@@ -540,6 +565,12 @@ function Step3({
   generateCriteria: ReturnType<typeof useMutation<string[], Error, void>>;
 }) {
   const criteria = form.assessment_criteria;
+
+  React.useEffect(() => {
+    if (criteria.length === 0 && !generateCriteria.isPending) {
+      updateField("assessment_criteria", [""]);
+    }
+  }, [criteria.length, generateCriteria.isPending]);
 
   function updateCriterion(index: number, value: string) {
     const next = [...criteria];
@@ -559,37 +590,26 @@ function Step3({
   }
 
   return (
-    <div className="grid gap-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <Label>Assessment criteria</Label>
-          <p className="text-sm text-muted-foreground">
-            Criteria interviewers will evaluate candidates on
-          </p>
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="gap-1.5"
-          disabled={generateCriteria.isPending || !form.description}
-          onClick={() => generateCriteria.mutate()}
-        >
-          {generateCriteria.isPending ? (
-            <Loader2 className="size-3.5 animate-spin" />
-          ) : (
-            <Sparkles className="size-3.5" />
-          )}
-          {generateCriteria.isPending ? "Generating..." : "Generate with AI"}
-        </Button>
-      </div>
-
-      {criteria.length === 0 && !generateCriteria.isPending && (
-        <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-8 text-center text-sm text-muted-foreground">
-          <p>No criteria yet</p>
-          <p>Generate from your job description or add manually</p>
-        </div>
-      )}
+    <div className="grid gap-4">
+      <p className="text-sm text-muted-foreground">
+        Add criteria that interviewers will use to evaluate candidates. Generate
+        them from your job description or add your own.
+      </p>
+      <Button
+        type="button"
+        variant="link"
+        size="sm"
+        className="h-auto w-fit gap-1.5 px-0"
+        disabled={generateCriteria.isPending || !form.description}
+        onClick={() => generateCriteria.mutate()}
+      >
+        {generateCriteria.isPending ? (
+          <Loader2 className="size-3.5 animate-spin" />
+        ) : (
+          <Sparkles className="size-3.5" />
+        )}
+        {generateCriteria.isPending ? "Generating..." : "Generate with AI"}
+      </Button>
 
       {generateCriteria.isPending && (
         <div className="flex items-center justify-center gap-2 rounded-lg border border-dashed py-8 text-sm text-muted-foreground">
@@ -608,7 +628,6 @@ function Step3({
               <Input
                 value={c}
                 onChange={(e) => updateCriterion(i, e.target.value)}
-                placeholder="e.g. Technical depth in React"
               />
               <Button
                 type="button"
@@ -617,7 +636,7 @@ function Step3({
                 className="size-8 shrink-0 text-muted-foreground hover:text-destructive"
                 onClick={() => removeCriterion(i)}
               >
-                <X className="size-3.5" />
+                <Trash2 className="size-4" />
               </Button>
             </div>
           ))}
@@ -640,6 +659,71 @@ function Step3({
           Failed to generate: {generateCriteria.error.message}
         </p>
       )}
+    </div>
+  );
+}
+
+function Step4({
+  form,
+  updateField,
+}: {
+  form: FormState;
+  updateField: <K extends keyof FormState>(field: K, value: FormState[K]) => void;
+}) {
+  const { data: pools, isLoading } = useCandidatePools();
+  const selected = new Set(form.linked_pool_ids);
+
+  function toggle(id: string) {
+    const next = new Set(selected);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    updateField("linked_pool_ids", Array.from(next));
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
+        Loading pools...
+      </div>
+    );
+  }
+
+  if (!pools || pools.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-12 text-muted-foreground">
+        <Users className="size-8" />
+        <p className="text-sm">No candidate pools available</p>
+        <p className="text-xs">Create pools from the candidate pools page first.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-4">
+      <p className="text-sm text-muted-foreground">
+        Select candidate pools to link to this requisition. Candidates in linked
+        pools will be automatically evaluated against your assessment criteria.
+      </p>
+      <div className="space-y-1">
+        {pools.map((pool) => (
+          <label
+            key={pool.id}
+            className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 hover:bg-muted/50"
+          >
+            <Checkbox
+              checked={selected.has(pool.id)}
+              onCheckedChange={() => toggle(pool.id)}
+            />
+            <div className="flex-1">
+              <div className="text-sm font-medium">{pool.name}</div>
+              <div className="text-xs text-muted-foreground">
+                {pool.member_count} candidate
+                {pool.member_count !== 1 ? "s" : ""}
+              </div>
+            </div>
+          </label>
+        ))}
+      </div>
     </div>
   );
 }

@@ -1,7 +1,13 @@
 import { useState } from "react";
-import { Link } from "react-router";
-import { Users, ExternalLink, FolderPlus } from "lucide-react";
+import { Link, useNavigate } from "react-router";
+import { formatDistanceToNow } from "date-fns";
+import { Users, FolderPlus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -14,7 +20,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ViewToggle, type View } from "@/components/custom/view-toggle";
+import type { View } from "@/components/custom/view-toggle";
 import { useCandidates } from "@/features/candidates/api/use-candidates";
 import { AddToPoolDialog } from "@/features/candidates/components/add-to-pool-dialog";
 import type { BreadcrumbState } from "@/app/layout";
@@ -54,6 +60,7 @@ function CandidatesSkeleton() {
 
 export function CandidatesPage() {
   const { data, isLoading, error } = useCandidates();
+  const navigate = useNavigate();
   const [view, setView] = useState<View>("table");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [poolDialogOpen, setPoolDialogOpen] = useState(false);
@@ -110,7 +117,7 @@ export function CandidatesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">All candidates</h1>
+          <h1 className="text-2xl font-semibold ">All candidates</h1>
           <p className="text-sm text-muted-foreground">
             {data.length} candidate{data.length !== 1 ? "s" : ""}
           </p>
@@ -126,7 +133,6 @@ export function CandidatesPage() {
               Add to pool ({selectedIds.size})
             </Button>
           )}
-          <ViewToggle view={view} onViewChange={setView} />
         </div>
       </div>
 
@@ -176,16 +182,27 @@ export function CandidatesPage() {
                           <div>{c.years_experience} yrs experience</div>
                         )}
                         {c.skills && c.skills.length > 0 && (
-                          <div className="flex flex-wrap gap-1">
+                          <div className="flex flex-nowrap gap-1 items-center overflow-hidden">
                             {c.skills.slice(0, 3).map((s) => (
-                              <Badge key={s} variant="secondary" className="text-xs">
+                              <Badge key={s} variant="secondary" className="shrink-0 text-xs max-w-28 truncate">
                                 {s}
                               </Badge>
                             ))}
                             {c.skills.length > 3 && (
-                              <Badge variant="outline" className="text-xs">
-                                +{c.skills.length - 3}
-                              </Badge>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Badge variant="secondary" className="shrink-0 text-xs cursor-default">
+                                    +{c.skills.length - 3}
+                                  </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <div className="flex flex-col gap-1">
+                                    {c.skills.map((s) => (
+                                      <span key={s}>{s}</span>
+                                    ))}
+                                  </div>
+                                </TooltipContent>
+                              </Tooltip>
                             )}
                           </div>
                         )}
@@ -213,9 +230,6 @@ export function CandidatesPage() {
                 <TableHead>Current role</TableHead>
                 <TableHead>Location</TableHead>
                 <TableHead>Experience</TableHead>
-                <TableHead>Skills</TableHead>
-                <TableHead className="text-right">Applications</TableHead>
-                <TableHead className="w-10" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -223,32 +237,26 @@ export function CandidatesPage() {
                 const fullName = `${c.first_name} ${c.last_name}`;
                 const checked = selectedIds.has(c.id);
                 return (
-                <TableRow key={c.id} data-state={checked ? "selected" : undefined}>
-                  <TableCell>
+                <TableRow
+                  key={c.id}
+                  data-state={checked ? "selected" : undefined}
+                  className="cursor-pointer"
+                  onClick={() => navigate(`/candidates/${c.id}`, { state: candidateBreadcrumb(fullName) })}
+                >
+                  <TableCell onClick={(e) => e.stopPropagation()}>
                     <Checkbox
                       checked={checked}
                       onCheckedChange={() => toggleOne(c.id)}
                     />
                   </TableCell>
                   <TableCell>
-                    <Link
-                      to={`/candidates/${c.id}`}
-                      state={candidateBreadcrumb(fullName)}
-                      className="flex items-center gap-2 font-medium hover:underline"
-                    >
-                      <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold uppercase">
-                        {c.first_name[0]}
-                        {c.last_name[0]}
+                    <div className="font-medium">{c.first_name} {c.last_name}</div>
+                    {c.last_activity_action && (
+                      <div className="text-xs text-muted-foreground">
+                        {c.last_activity_action}
+                        {c.last_activity_at && ` · ${formatDistanceToNow(new Date(c.last_activity_at), { addSuffix: true })}`}
                       </div>
-                      <div>
-                        <div>
-                          {c.first_name} {c.last_name}
-                        </div>
-                        <div className="text-xs font-normal text-muted-foreground">
-                          {c.email}
-                        </div>
-                      </div>
-                    </Link>
+                    )}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {c.current_title && c.current_company
@@ -262,36 +270,6 @@ export function CandidatesPage() {
                     {c.years_experience != null
                       ? `${c.years_experience} yrs`
                       : "—"}
-                  </TableCell>
-                  <TableCell>
-                    {c.skills && c.skills.length > 0 ? (
-                      <div className="flex flex-wrap gap-1">
-                        {c.skills.slice(0, 3).map((s) => (
-                          <Badge key={s} variant="secondary" className="text-xs">
-                            {s}
-                          </Badge>
-                        ))}
-                        {c.skills.length > 3 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{c.skills.length - 3}
-                          </Badge>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground/50">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right text-muted-foreground">
-                    {c.application_count}
-                  </TableCell>
-                  <TableCell>
-                    <Link
-                      to={`/candidates/${c.id}`}
-                      state={candidateBreadcrumb(fullName)}
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      <ExternalLink className="size-4" />
-                    </Link>
                   </TableCell>
                 </TableRow>
                 );

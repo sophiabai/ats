@@ -14,6 +14,7 @@ import {
 import type { ApplicationWithCandidate } from "@/features/requisitions/api/use-requisition-detail";
 import type { BreadcrumbState } from "@/app/layout";
 import type { View } from "@/components/custom/view-toggle";
+import type { EvaluationMap } from "@/features/requisitions/api/use-criteria-evaluations";
 
 const SOURCE_LABELS: Record<string, string> = {
   linkedin: "LinkedIn",
@@ -32,6 +33,7 @@ interface CandidateListProps {
   reqId?: string;
   reqTitle?: string;
   view?: View;
+  evaluations?: EvaluationMap;
 }
 
 function buildLinkState(
@@ -68,11 +70,31 @@ function StatusBadgeInline({ status }: { status: string }) {
   );
 }
 
+function CriteriaBadge({
+  evaluations,
+}: {
+  evaluations: { criterion: string; met: boolean }[] | undefined;
+}) {
+  if (!evaluations || evaluations.length === 0) {
+    return <span className="text-muted-foreground/50">—</span>;
+  }
+  const metCount = evaluations.filter((e) => e.met).length;
+  return (
+    <Badge
+      variant="outline"
+      className="bg-orange-50 text-orange-700 dark:bg-orange-950/30 dark:text-orange-400"
+    >
+      {metCount} met
+    </Badge>
+  );
+}
+
 export function CandidateList({
   applications,
   reqId,
   reqTitle,
   view = "table",
+  evaluations,
 }: CandidateListProps) {
   if (applications.length === 0) {
     return (
@@ -150,6 +172,7 @@ export function CandidateList({
           <TableHead>Current title</TableHead>
           <TableHead>Source</TableHead>
           <TableHead>Status</TableHead>
+          <TableHead>Criteria</TableHead>
           <TableHead>Applied</TableHead>
           <TableHead className="w-10" />
         </TableRow>
@@ -165,20 +188,9 @@ export function CandidateList({
                 <Link
                   to={`/candidates/${c.id}?app=${app.id}`}
                   state={state}
-                  className="group flex items-center gap-2 font-medium hover:underline"
+                  className="font-medium hover:underline"
                 >
-                  <div className="flex size-8 items-center justify-center rounded-full bg-muted text-xs font-semibold uppercase">
-                    {c.first_name[0]}
-                    {c.last_name[0]}
-                  </div>
-                  <div>
-                    <div>
-                      {c.first_name} {c.last_name}
-                    </div>
-                    <div className="text-xs font-normal text-muted-foreground">
-                      {c.email}
-                    </div>
-                  </div>
+                  {c.first_name} {c.last_name}
                 </Link>
               </TableCell>
               <TableCell className="text-muted-foreground">
@@ -197,6 +209,9 @@ export function CandidateList({
               </TableCell>
               <TableCell>
                 <StatusBadgeInline status={app.status} />
+              </TableCell>
+              <TableCell>
+                <CriteriaBadge evaluations={evaluations?.get(c.id)} />
               </TableCell>
               <TableCell className="text-muted-foreground">
                 {formatDistanceToNow(new Date(app.applied_date), {

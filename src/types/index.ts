@@ -25,4 +25,5 @@ export type {
   Scorecard,
   StageDecision,
   Email,
+  CriteriaEvaluation,
 } from "@/types/database";

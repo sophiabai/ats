@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ViewToggle, type View } from "@/components/custom/view-toggle";
+import type { View } from "@/components/custom/view-toggle";
 import { useHcScenarios } from "@/features/headcount-planning/api/use-hc-scenarios";
 import { useHcPlanSettings } from "@/features/headcount-planning/api/use-hc-plan-settings";
 import { ScenarioList } from "@/features/headcount-planning/components/scenario-list";
@@ -57,12 +57,11 @@ export function ScenariosPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Scenarios</h1>
+          <h1 className="text-2xl font-semibold ">Scenarios</h1>
           <p className="text-sm text-muted-foreground">
             Group requests with multiple open headcount positions.
           </p>
         </div>
-        <ViewToggle view={view} onViewChange={setView} />
       </div>
 
       <ScenarioList

@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const inputWrapperBaseClass = cn(
-  "flex items-end gap-2 rounded-3xl border px-5 py-4 shadow-2xl",
+  "flex items-center gap-2 rounded-2xl border px-4 py-4 shadow-2xl",
   "focus-within:ring-2 focus-within:ring-ring/50",
 );
 
@@ -188,7 +188,7 @@ export function ChatInput({
             <div
               ref={mirrorRef}
               aria-hidden
-              className="pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap break-words py-1.5 text-sm"
+              className="pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap break-words py-1 text-sm"
             >
               <span className="text-berry-500">
                 {commandPrefix}
