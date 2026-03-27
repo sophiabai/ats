@@ -23,7 +23,7 @@ function formatCurrency(amount: number) {
 
 export function BudgetPage() {
   const { data: departments, isLoading, error } = useHcDepartments();
-  const [view, setView] = useState<View>("table");
+  const [view] = useState<View>("table");
 
   if (isLoading) {
     return (

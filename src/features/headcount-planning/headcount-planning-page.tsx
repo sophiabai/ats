@@ -68,7 +68,7 @@ export function HeadcountPlanningPage() {
   const { data: departments, isLoading: deptsLoading, error: deptsError } = useHcDepartments();
   const { data: positions, isLoading: posLoading, error: posError } = useHcPositions();
   const { data: planSettings } = useHcPlanSettings();
-  const [view, setView] = useState<View>("table");
+  const [view] = useState<View>("table");
   const isLocked = planSettings?.plan_status === "locked";
 
   const isLoading = deptsLoading || posLoading;

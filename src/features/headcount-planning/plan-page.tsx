@@ -110,7 +110,7 @@ export function PlanPage() {
   const [addScenarioOpen, setAddScenarioOpen] = React.useState(false);
   const [lockPlanOpen, setLockPlanOpen] = React.useState(false);
   const [editPlanOpen, setEditPlanOpen] = React.useState(false);
-  const [view, setView] = React.useState<View>("table");
+  const [view] = React.useState<View>("table");
 
   const isLoading = deptsLoading || posLoading;
   const error = deptsError || posError;

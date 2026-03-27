@@ -38,11 +38,10 @@ function isRealUrl(url: string) {
 }
 
 export function NavProjects({
-  label,
   items,
   overflow,
 }: {
-  label: string
+  label?: string
   items: NavItem[]
   overflow?: NavItem[]
 }) {

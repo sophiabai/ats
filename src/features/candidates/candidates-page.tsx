@@ -61,7 +61,7 @@ function CandidatesSkeleton() {
 export function CandidatesPage() {
   const { data, isLoading, error } = useCandidates();
   const navigate = useNavigate();
-  const [view, setView] = useState<View>("table");
+  const [view] = useState<View>("table");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [poolDialogOpen, setPoolDialogOpen] = useState(false);
 

@@ -16,10 +16,9 @@ export interface NavMainItem {
 }
 
 export function NavMain({
-  label,
   items,
 }: {
-  label: string
+  label?: string
   items: NavMainItem[]
 }) {
   return (

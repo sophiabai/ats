@@ -104,7 +104,7 @@ export function Component() {
   const { data: pools } = useReqCandidatePools(reqId!);
   const { data: evaluations } = useCriteriaEvaluations(reqId);
   const poolCandidateCount = pools?.reduce((sum, p) => sum + p.candidates.length, 0) ?? 0;
-  const [view, setView] = useState<View>("table");
+  const [view] = useState<View>("table");
   const [editOpen, setEditOpen] = useState(false);
   const [linkPoolsOpen, setLinkPoolsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("pools");
@@ -314,6 +314,7 @@ export function Component() {
           sourcer_name: req.sourcer_name ?? "",
           description: req.description ?? "",
           assessment_criteria: req.assessment_criteria ?? [],
+          linked_pool_ids: pools?.map((p) => p.id) ?? [],
         } satisfies FormState}
       />
     </div>

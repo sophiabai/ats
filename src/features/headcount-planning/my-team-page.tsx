@@ -50,7 +50,7 @@ function formatSalaryRange(min: number | null, max: number | null) {
 export function MyTeamPage() {
   const { data: positions, isLoading, error } = useHcPositions();
   const { data: planSettings } = useHcPlanSettings();
-  const [view, setView] = useState<View>("table");
+  const [view] = useState<View>("table");
   const isLocked = planSettings?.plan_status === "locked";
 
   if (isLoading) {

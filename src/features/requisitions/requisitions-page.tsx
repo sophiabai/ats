@@ -11,7 +11,7 @@ import type { View } from "@/components/custom/view-toggle";
 export function RequisitionsPage() {
   const { data, isLoading, error } = useRequisitions();
   const navigate = useNavigate();
-  const [view, setView] = useState<View>("table");
+  const [view] = useState<View>("table");
   const [createOpen, setCreateOpen] = useState(false);
 
   if (isLoading) {

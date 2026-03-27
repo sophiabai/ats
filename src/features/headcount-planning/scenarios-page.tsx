@@ -12,7 +12,7 @@ import type { HcScenario } from "@/types/database";
 export function ScenariosPage() {
   const { data: scenarios, isLoading, error } = useHcScenarios();
   const { data: planSettings } = useHcPlanSettings();
-  const [view, setView] = useState<View>("table");
+  const [view] = useState<View>("table");
 
   if (isLoading) {
     return (
