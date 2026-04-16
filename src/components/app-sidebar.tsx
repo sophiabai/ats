@@ -15,6 +15,7 @@ import {
   UserSearch,
   Users,
   Vote,
+  Workflow,
 } from "lucide-react"
 import logoUrl from "@/assets/Logo.svg"
 
@@ -151,6 +152,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         { title: "Approvals", url: "/headcount-planning/approvals" },
         { title: "Settings", url: "/headcount-planning/settings" },
       ],
+    },
+    {
+      name: "Workflows",
+      url: "/workflows",
+      icon: Workflow,
     },
     {
       name: "Analytics",

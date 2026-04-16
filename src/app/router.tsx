@@ -3,6 +3,11 @@ import { RootLayout } from "@/app/layout";
 
 const routes: RouteObject[] = [
   {
+    path: "pipeline-automation",
+    lazy: () =>
+      import("@/features/docs/pipeline-automation-page"),
+  },
+  {
     path: "careers",
     lazy: () =>
       import("@/features/job-board/public-job-board-page"),
@@ -105,6 +110,18 @@ const routes: RouteObject[] = [
         path: "headcount-planning/settings",
         lazy: () =>
           import("@/features/headcount-planning/settings-page"),
+      },
+      {
+        path: "workflows",
+        lazy: () => import("@/features/workflows/workflows-page"),
+      },
+      {
+        path: "workflows/review",
+        lazy: () => import("@/features/workflows/sop-review-page"),
+      },
+      {
+        path: "workflows/builder",
+        lazy: () => import("@/features/workflows/workflow-builder-page"),
       },
       {
         path: "job-board",
