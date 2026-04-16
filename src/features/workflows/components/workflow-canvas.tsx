@@ -7,9 +7,9 @@ import {
   useNodesState,
   useEdgesState,
   type OnNodesChange,
-  type OnEdgesChange,
   type Node,
   type Edge,
+  type EdgeChange,
   type NodeTypes,
 } from "@xyflow/react"
 import "@xyflow/react/dist/style.css"
@@ -40,22 +40,21 @@ export function WorkflowCanvas({
   onNodesChange: onNodesChangeProp,
   onEdgesChange: onEdgesChangeProp,
 }: WorkflowCanvasProps) {
-  const [nodes, , handleNodesChange] = useNodesState(initialNodes)
-  const [edges, , handleEdgesChange] = useEdgesState(initialEdges)
+  const [nodes, , handleNodesChange] = useNodesState<Node<WorkflowNodeData>>(initialNodes)
+  const [edges, , handleEdgesChange] = useEdgesState<Edge<WorkflowEdgeData>>(initialEdges)
 
-  const onNodesChange: OnNodesChange = useCallback(
+  const onNodesChange: OnNodesChange<Node<WorkflowNodeData>> = useCallback(
     (changes) => {
       handleNodesChange(changes)
       if (onNodesChangeProp) {
-        // Defer to next tick so state is updated
         setTimeout(() => onNodesChangeProp(nodes), 0)
       }
     },
     [handleNodesChange, onNodesChangeProp, nodes],
   )
 
-  const onEdgesChange: OnEdgesChange = useCallback(
-    (changes) => {
+  const onEdgesChange = useCallback(
+    (changes: EdgeChange<Edge<WorkflowEdgeData>>[]) => {
       handleEdgesChange(changes)
       if (onEdgesChangeProp) {
         setTimeout(() => onEdgesChangeProp(edges), 0)
@@ -69,7 +68,7 @@ export function WorkflowCanvas({
       nodes={nodes}
       edges={edges.map((e) => ({
         ...e,
-        label: e.data?.label,
+        label: (e.data?.label as string) ?? undefined,
       }))}
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}

@@ -14,14 +14,14 @@ export interface SopStep {
   branches?: SopBranch[]
 }
 
-export interface WorkflowNodeData {
+export interface WorkflowNodeData extends Record<string, unknown> {
   label: string
   subtitle: string
   stepType: SopStepType
   sopStepId?: string
 }
 
-export interface WorkflowEdgeData {
+export interface WorkflowEdgeData extends Record<string, unknown> {
   label?: string
 }
 
