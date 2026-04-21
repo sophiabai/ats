@@ -87,7 +87,7 @@ const AGENTS = [
 
 export function Component() {
   const [enabled, setEnabled] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(AGENTS.map((a) => [a.id, false]))
+    Object.fromEntries(AGENTS.map((a) => [a.id, true]))
   );
 
   function toggle(id: string) {
@@ -103,7 +103,7 @@ export function Component() {
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2">
         {AGENTS.map((agent) => {
           const active = enabled[agent.id];
           return (

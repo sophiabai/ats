@@ -118,7 +118,7 @@ export function RootLayout() {
   return (
     <div className="flex h-svh flex-col">
       <TopNav />
-      <SidebarProvider className="min-h-0 flex-1 rounded-t-3xl overflow-hidden">
+      <SidebarProvider defaultOpen={true} className="min-h-0 flex-1 rounded-t-3xl overflow-hidden">
         <AppSidebar />
         <SidebarInset className="relative min-w-0 min-h-0 overflow-hidden bg-white dark:bg-stone-950">
           <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-in-out-quart group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
