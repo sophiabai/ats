@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react"
 import { useNavigate } from "react-router"
-import { PanelBottomDashed } from "lucide-react"
+import { PanelBottomDashed, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { useSidebar } from "@/components/ui/sidebar"
@@ -140,17 +140,27 @@ export function DockedChatPanel() {
 
   return (
     <>
-      <div className="flex h-svh w-[380px] shrink-0 flex-col border-l bg-background">
+      <div className="flex h-full w-[380px] shrink-0 flex-col border-l bg-background">
         <div className="flex shrink-0 items-center justify-between px-4 py-3">
           <span className="text-sm font-normal text-foreground">Chat</span>
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            onClick={() => setDocked(false)}
-            title="Close side panel"
-          >
-            <PanelBottomDashed className="size-3.5" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              onClick={() => setDocked(false)}
+              title="Undock to bottom bar"
+            >
+              <PanelBottomDashed className="size-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              onClick={() => setDocked(false)}
+              title="Close"
+            >
+              <X className="size-3.5" />
+            </Button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 py-4">

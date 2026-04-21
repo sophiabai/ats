@@ -2,6 +2,7 @@ import { Link, Outlet, useLocation } from "react-router";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ChatBar } from "@/components/chat-bar";
 import { DockedChatPanel } from "@/components/docked-chat-panel";
+import { TopNav } from "@/components/top-nav";
 import { useChatBarStore } from "@/stores/chat-bar-store";
 import {
   Breadcrumb,
@@ -37,6 +38,8 @@ const SEGMENT_TITLES: Record<string, string> = {
   assessments: "Assessments",
   emails: "Emails",
   "headcount-planning": "Headcount planning",
+  inbox: "Inbox",
+  agents: "Agents",
   workflows: "Workflows",
   "job-board": "Internal job board",
   "my-team": "My team",
@@ -113,10 +116,12 @@ export function RootLayout() {
   const hideChatBar = pathname.startsWith("/workflows");
 
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset className="relative min-w-0 max-h-svh overflow-hidden">
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b border-border transition-[width,height] ease-in-out-quart group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+    <div className="flex h-svh flex-col">
+      <TopNav />
+      <SidebarProvider className="min-h-0 flex-1 rounded-t-3xl overflow-hidden">
+        <AppSidebar />
+        <SidebarInset className="relative min-w-0 min-h-0 overflow-hidden bg-white dark:bg-stone-950">
+          <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-in-out-quart group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
             <div className="flex items-center gap-2 px-4">
               <SidebarTrigger className="-ml-1" />
               <Separator
@@ -152,5 +157,6 @@ export function RootLayout() {
         </SidebarInset>
         {docked && <DockedChatPanel />}
       </SidebarProvider>
+    </div>
   );
 }

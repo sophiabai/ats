@@ -112,6 +112,14 @@ const routes: RouteObject[] = [
           import("@/features/headcount-planning/settings-page"),
       },
       {
+        path: "inbox",
+        lazy: () => import("@/features/inbox/inbox-page"),
+      },
+      {
+        path: "agents",
+        lazy: () => import("@/features/agents/agents-page"),
+      },
+      {
         path: "workflows",
         lazy: () => import("@/features/workflows/workflows-page"),
       },

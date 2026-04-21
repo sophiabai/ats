@@ -13,7 +13,7 @@ export const useChatBarStore = create<ChatBarState>((set) => ({
   open: false,
   setOpen: (open) => set({ open }),
   toggle: () => set((s) => ({ open: !s.open })),
-  docked: false,
+  docked: true,
   setDocked: (docked) => set({ docked }),
   toggleDocked: () => set((s) => ({ docked: !s.docked })),
 }))

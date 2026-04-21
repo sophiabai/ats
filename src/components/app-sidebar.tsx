@@ -3,6 +3,7 @@
 import * as React from "react"
 import {
   BarChart3,
+  Bot,
   Briefcase,
   ClipboardList,
   FileText,
@@ -17,12 +18,9 @@ import {
   Vote,
   Workflow,
 } from "lucide-react"
-import logoUrl from "@/assets/Logo.svg"
-
 import { NavMain, type NavMainItem } from "@/components/nav-main"
 import { NavProjects } from "@/components/nav-projects"
 import { NavUser } from "@/components/nav-user"
-import { TeamSwitcher } from "@/components/team-switcher"
 import { useChatBarStore } from "@/stores/chat-bar-store"
 import { useStarredRequisitionsStore } from "@/stores/starred-requisitions-store"
 import { useCandidatePools } from "@/features/candidates/api/use-candidate-pools"
@@ -30,7 +28,6 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar"
 
@@ -40,27 +37,10 @@ const data = {
     email: "m@example.com",
     avatar: "/avatars/shadcn.jpg",
   },
-  teams: [
-    {
-      name: "Acme Inc",
-      logo: logoUrl,
-      plan: "Enterprise",
-    },
-    {
-      name: "Acme Corp.",
-      logo: logoUrl,
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: logoUrl,
-      plan: "Free",
-    },
-  ],
   quickAccess: [
     {
       title: "Inbox",
-      url: "#",
+      url: "/inbox",
       icon: Inbox,
     },
     {
@@ -80,6 +60,11 @@ const data = {
     },
   ],
   recruitingOverflow: [
+    {
+      name: "Workflows",
+      url: "/workflows",
+      icon: Workflow,
+    },
     {
       name: "My Referral",
       url: "#",
@@ -104,12 +89,12 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { setOpen } = useChatBarStore()
+  const { setOpen, setDocked } = useChatBarStore()
   const starred = useStarredRequisitionsStore((s) => s.starred)
   const { data: pools } = useCandidatePools()
 
   const quickAccess: NavMainItem[] = data.quickAccess.map((item) =>
-    item.title === "Search" ? { ...item, onClick: () => setOpen(true) } : item
+    item.title === "Search" ? { ...item, onClick: () => { setDocked(false); setOpen(true) } } : item
   )
 
   const poolSubItems = [
@@ -154,9 +139,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       ],
     },
     {
-      name: "Workflows",
-      url: "/workflows",
-      icon: Workflow,
+      name: "Agents",
+      url: "/agents",
+      icon: Bot,
     },
     {
       name: "Analytics",
@@ -167,10 +152,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
-      </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="pt-2">
         <NavMain label="Quick Access" items={quickAccess} />
         <NavProjects
           label="Recruiting"
