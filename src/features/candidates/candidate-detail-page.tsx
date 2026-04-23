@@ -325,30 +325,15 @@ function ApplicationDetailPanel({ app }: { app: ApplicationDetail }) {
       onValueChange={setSubTab}
       className="flex flex-1 flex-col overflow-hidden"
     >
-      <div className="flex items-center gap-6 px-5 pt-5">
-        <TabsList className="h-[34px]">
-          <TabsTrigger value="application" className="text-xs">
-            Application
-          </TabsTrigger>
-          <TabsTrigger value="interviews" className="text-xs">
-            Interview stages
-          </TabsTrigger>
-          <TabsTrigger value="documents" className="text-xs">
-            Documents
-          </TabsTrigger>
-          <TabsTrigger value="feedback" className="text-xs">
-            All feedback
-          </TabsTrigger>
-          <TabsTrigger value="messages" className="text-xs">
-            Messages
-          </TabsTrigger>
-          <TabsTrigger value="activity" className="text-xs">
-            Activity
-          </TabsTrigger>
+      <div className="px-5 pt-5">
+        <TabsList>
+          <TabsTrigger value="application">Interview stages</TabsTrigger>
+          <TabsTrigger value="interviews">Application info</TabsTrigger>
+          <TabsTrigger value="documents">Documents</TabsTrigger>
+          <TabsTrigger value="feedback">All feedback</TabsTrigger>
+          <TabsTrigger value="messages">Messages</TabsTrigger>
+          <TabsTrigger value="activity">Activity</TabsTrigger>
         </TabsList>
-        <Button variant="outline" size="sm">
-          View application
-        </Button>
       </div>
 
       <TabsContent

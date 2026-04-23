@@ -10,7 +10,7 @@ const protos = [
   {
     title: "Candidate provides availability",
     description: "Candidate-facing scheduling flow",
-    href: "/candidate-availability",
+    href: "/candidate-email/next-steps-with-acme-ai",
   },
 ]
 

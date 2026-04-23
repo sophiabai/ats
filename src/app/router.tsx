@@ -12,9 +12,19 @@ const routes: RouteObject[] = [
     lazy: () => import("@/features/proto-hub/proto-hub-page"),
   },
   {
-    path: "candidate-availability",
+    path: "candidate-email",
     lazy: () =>
       import("@/features/scheduling/candidate-availability-page"),
+  },
+  {
+    path: "candidate-email/:slug",
+    lazy: () =>
+      import("@/features/scheduling/candidate-availability-page"),
+  },
+  {
+    path: "candidate-availability-acme-ai",
+    lazy: () =>
+      import("@/features/scheduling/candidate-availability-acme-ai-page"),
   },
   {
     path: "careers",

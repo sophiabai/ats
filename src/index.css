@@ -1,13 +1,20 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "geist/dist/fonts/geist-sans/style.css";
 @plugin "@tailwindcss/typography";
+
+@font-face {
+  font-family: "Geist";
+  src: url("../node_modules/geist/dist/fonts/geist-sans/Geist-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-    --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+    --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
     --ease-out-quint: cubic-bezier(0.23, 1, 0.32, 1);
     --ease-in-out-quart: cubic-bezier(0.77, 0, 0.175, 1);
     --radius-sm: calc(var(--radius) - 4px);
@@ -163,7 +170,8 @@
     }
   body {
     @apply bg-top-nav text-foreground;
-    }
+    font-family: "Geist", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  }
 
   .animate-in,
   .animate-out {
