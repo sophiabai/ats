@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { formatDistanceToNow } from "date-fns";
-import { Users, Trash2 } from "lucide-react";
+import { Users, Trash2, Plus, MoreHorizontal, Pencil, UserMinus } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -10,6 +10,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +34,9 @@ import {
   usePoolCandidates,
   useRemoveCandidateFromPool,
 } from "@/features/candidates/api/use-candidate-pools";
+import { useDeleteCandidate } from "@/features/candidates/api/use-candidate-mutations";
+import { CandidateFormDialog } from "@/features/candidates/components/candidate-form-dialog";
+import type { Candidate } from "@/types/database";
 import type { BreadcrumbState } from "@/app/layout";
 import { useSetPageTitle } from "@/stores/page-title-store";
 
@@ -64,7 +84,11 @@ export function CandidatePoolPage() {
     poolId!
   );
   const removeMutation = useRemoveCandidateFromPool();
+  const deleteCandidate = useDeleteCandidate();
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [formDialogOpen, setFormDialogOpen] = useState(false);
+  const [editingCandidate, setEditingCandidate] = useState<Candidate | null>(null);
+  const [deletingCandidate, setDeletingCandidate] = useState<Candidate | null>(null);
 
   const pool = pools?.find((p) => p.id === poolId);
   useSetPageTitle(pool?.name ?? null);
@@ -92,14 +116,36 @@ export function CandidatePoolPage() {
     setRemovingId(null);
   }
 
+  function openAdd() {
+    setEditingCandidate(null);
+    setFormDialogOpen(true);
+  }
+
+  function openEdit(c: Candidate) {
+    setEditingCandidate(c);
+    setFormDialogOpen(true);
+  }
+
+  async function confirmDelete() {
+    if (!deletingCandidate) return;
+    await deleteCandidate.mutateAsync(deletingCandidate.id);
+    setDeletingCandidate(null);
+  }
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold ">{pool.name}</h1>
-        <p className="text-sm text-muted-foreground">
-          {candidates?.length ?? 0} candidate
-          {candidates?.length !== 1 ? "s" : ""} in this pool
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold ">{pool.name}</h1>
+          <p className="text-sm text-muted-foreground">
+            {candidates?.length ?? 0} candidate
+            {candidates?.length !== 1 ? "s" : ""} in this pool
+          </p>
+        </div>
+        <Button size="sm" onClick={openAdd}>
+          <Plus className="mr-1.5 size-4" />
+          Add candidate
+        </Button>
       </div>
 
       {!candidates || candidates.length === 0 ? (
@@ -160,15 +206,34 @@ export function CandidatePoolPage() {
                         : "—"}
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-8 text-muted-foreground hover:text-destructive"
-                        disabled={removingId === c.id}
-                        onClick={() => handleRemove(c.id)}
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="size-8">
+                            <MoreHorizontal className="size-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => openEdit(c)}>
+                            <Pencil className="mr-2 size-4" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            disabled={removingId === c.id}
+                            onClick={() => handleRemove(c.id)}
+                          >
+                            <UserMinus className="mr-2 size-4" />
+                            Remove from this pool
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onClick={() => setDeletingCandidate(c)}
+                          >
+                            <Trash2 className="mr-2 size-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 );
@@ -177,6 +242,41 @@ export function CandidatePoolPage() {
           </Table>
         </div>
       )}
+
+      <CandidateFormDialog
+        open={formDialogOpen}
+        onOpenChange={setFormDialogOpen}
+        candidate={editingCandidate}
+      />
+
+      <AlertDialog
+        open={!!deletingCandidate}
+        onOpenChange={(open) => {
+          if (!open) setDeletingCandidate(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete candidate</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete{" "}
+              <span className="font-medium text-foreground">
+                {deletingCandidate?.first_name} {deletingCandidate?.last_name}
+              </span>{" "}
+              and all associated data. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteCandidate.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

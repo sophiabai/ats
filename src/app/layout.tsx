@@ -150,7 +150,7 @@ export function RootLayout() {
               </Breadcrumb>
             </div>
           </header>
-          <div className="flex w-full flex-1 flex-col gap-6 overflow-y-auto px-17 pt-6">
+          <div className="flex w-full flex-1 flex-col gap-6 overflow-y-auto px-17 pt-6 pb-20">
             <Outlet />
           </div>
           {!hideChatBar && <ChatBar />}

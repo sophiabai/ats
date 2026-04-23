@@ -33,10 +33,14 @@ create table candidates (
 create index idx_candidates_name on candidates(last_name, first_name);
 create index idx_candidates_email on candidates(email);
 
+-- sequence for human-readable requisition numbers starting at 1000
+create sequence req_number_seq start 1000;
+
 -- 2. requisitions
 create table requisitions (
   id uuid default gen_random_uuid() primary key,
   created_at timestamptz default now(),
+  req_number int not null unique default nextval('req_number_seq'),
 
   title text not null,
   department text,

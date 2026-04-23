@@ -10,6 +10,7 @@ import {
 import logoUrl from "@/assets/Logo.svg";
 import { useJobPost } from "@/features/job-board/api/use-job-posts";
 import type { LocationPayRange } from "@/types/database";
+import { formatReqTitle } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -178,8 +179,8 @@ export function Component() {
 
               <div>
                 <div className="flex flex-wrap items-center gap-3">
-                  <h1 className="text-2xl font-semibold ">
-                    {job.title}
+                  <h1 className="text-2xl font-semibold">
+                    {formatReqTitle(job.req_number, job.title)}
                   </h1>
                   <Badge variant="outline">
                     {EMPLOYMENT_LABELS[job.employment_type] ??

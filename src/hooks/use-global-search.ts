@@ -12,6 +12,7 @@ interface CandidateResult {
 
 interface RequisitionResult {
   id: string;
+  req_number: number;
   title: string;
   department: string | null;
   location: string | null;
@@ -52,7 +53,7 @@ export function useGlobalSearch(query: string) {
           .limit(5),
         supabase
           .from("requisitions")
-          .select("id, title, department, location, status")
+          .select("id, req_number, title, department, location, status")
           .or(`title.ilike."%${escaped}%",department.ilike."%${escaped}%"`)
           .limit(5),
       ]);

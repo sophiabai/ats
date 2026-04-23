@@ -27,7 +27,7 @@ import type { FormState } from "@/features/requisitions/components/create-requis
 import type { ChatMessage, ReqDraftFormData } from "@/types"
 import { useGlobalSearch } from "@/hooks/use-global-search"
 import { useChatBarStore } from "@/stores/chat-bar-store"
-import { cn } from "@/lib/utils"
+import { cn, formatReqTitle } from "@/lib/utils"
 
 const quickActions = [
   "Create req",
@@ -121,7 +121,7 @@ export function ChatBar() {
       items.push({
         id: `req-${r.id}`,
         type: "requisition",
-        label: r.title,
+        label: formatReqTitle(r.req_number, r.title),
         sublabel: r.department ?? undefined,
         badge: r.status,
         to: `/requisitions/${r.id}`,

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router";
 import { formatDistanceToNow } from "date-fns";
-import { Folder, FolderOpen, Plus, Unlink, Users } from "lucide-react";
+import { Folder, FolderOpen, Plus, Unlink, Users, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -11,6 +11,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -18,7 +34,9 @@ import {
   useUnlinkPoolFromReq,
   type PoolWithCandidates,
 } from "@/features/requisitions/api/use-req-candidate-pools";
+import { useDeleteCandidate } from "@/features/candidates/api/use-candidate-mutations";
 import { LinkPoolsDialog } from "@/features/requisitions/components/link-pools-dialog";
+import { CandidateFormDialog } from "@/features/candidates/components/candidate-form-dialog";
 import {
   useEvaluateCandidate,
   type EvaluationMap,
@@ -75,6 +93,8 @@ function PoolSection({
   onUnlink,
   isUnlinking,
   evaluations,
+  onEdit,
+  onDelete,
 }: {
   pool: PoolWithCandidates;
   reqId: string;
@@ -82,6 +102,8 @@ function PoolSection({
   onUnlink: () => void;
   isUnlinking: boolean;
   evaluations?: EvaluationMap;
+  onEdit: (c: Candidate) => void;
+  onDelete: (c: Candidate) => void;
 }) {
   const navigate = useNavigate();
   const [expanded, setExpanded] = useState(true);
@@ -140,6 +162,7 @@ function PoolSection({
                     <TableHead>Current role</TableHead>
                     <TableHead>Location</TableHead>
                     <TableHead>Criteria</TableHead>
+                    <TableHead className="w-10" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -171,6 +194,28 @@ function PoolSection({
                         <TableCell>
                           <CriteriaBadge evaluations={evaluations?.get(c.id)} />
                         </TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="size-8">
+                                <MoreHorizontal className="size-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => onEdit(c)}>
+                                <Pencil className="mr-2 size-4" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                variant="destructive"
+                                onClick={() => onDelete(c)}
+                              >
+                                <Trash2 className="mr-2 size-4" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
                       </TableRow>
                     );
                   })}
@@ -195,11 +240,31 @@ export function ReqPoolCandidates({
   const { data: pools, isLoading } = useReqCandidatePools(reqId);
   const unlinkMutation = useUnlinkPoolFromReq();
   const evaluateMutation = useEvaluateCandidate();
+  const deleteCandidateMutation = useDeleteCandidate();
   const [internalOpen, setInternalOpen] = useState(false);
   const dialogOpen = linkDialogOpen ?? internalOpen;
   const setDialogOpen = onLinkDialogOpenChange ?? setInternalOpen;
   const [unlinkingPoolId, setUnlinkingPoolId] = useState<string | null>(null);
+  const [formDialogOpen, setFormDialogOpen] = useState(false);
+  const [editingCandidate, setEditingCandidate] = useState<Candidate | null>(null);
+  const [deletingCandidate, setDeletingCandidate] = useState<Candidate | null>(null);
   const evaluatingRef = useRef(new Set<string>());
+
+  function openAdd() {
+    setEditingCandidate(null);
+    setFormDialogOpen(true);
+  }
+
+  function openEdit(c: Candidate) {
+    setEditingCandidate(c);
+    setFormDialogOpen(true);
+  }
+
+  async function confirmDelete() {
+    if (!deletingCandidate) return;
+    await deleteCandidateMutation.mutateAsync(deletingCandidate.id);
+    setDeletingCandidate(null);
+  }
 
   const triggerEvaluations = useCallback(async () => {
     if (!pools || !assessmentCriteria?.length || !evaluations) return;
@@ -256,27 +321,49 @@ export function ReqPoolCandidates({
           <p className="text-sm">
             Link candidate pools to source candidates for this requisition.
           </p>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setDialogOpen(true)}
-          >
-            <Plus className="mr-1.5 size-4" />
-            Link pools
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setDialogOpen(true)}
+            >
+              Link pools
+            </Button>
+            <Button size="sm" onClick={openAdd}>
+              <Plus className="mr-1.5 size-4" />
+              Add candidate
+            </Button>
+          </div>
         </div>
       ) : (
-        pools.map((pool) => (
-          <PoolSection
-            key={pool.id}
-            pool={pool}
-            reqId={reqId}
-            reqTitle={reqTitle}
-            onUnlink={() => handleUnlink(pool.id)}
-            isUnlinking={unlinkingPoolId === pool.id}
-            evaluations={evaluations}
-          />
-        ))
+        <>
+          <div className="flex justify-end gap-2 pb-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setDialogOpen(true)}
+            >
+              Link pools
+            </Button>
+            <Button size="sm" onClick={openAdd}>
+              <Plus className="mr-1.5 size-4" />
+              Add candidate
+            </Button>
+          </div>
+          {pools.map((pool) => (
+            <PoolSection
+              key={pool.id}
+              pool={pool}
+              reqId={reqId}
+              reqTitle={reqTitle}
+              onUnlink={() => handleUnlink(pool.id)}
+              isUnlinking={unlinkingPoolId === pool.id}
+              evaluations={evaluations}
+              onEdit={openEdit}
+              onDelete={setDeletingCandidate}
+            />
+          ))}
+        </>
       )}
 
       <LinkPoolsDialog
@@ -285,6 +372,41 @@ export function ReqPoolCandidates({
         reqId={reqId}
         alreadyLinkedPoolIds={linkedPoolIds}
       />
+
+      <CandidateFormDialog
+        open={formDialogOpen}
+        onOpenChange={setFormDialogOpen}
+        candidate={editingCandidate}
+      />
+
+      <AlertDialog
+        open={!!deletingCandidate}
+        onOpenChange={(open) => {
+          if (!open) setDeletingCandidate(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete candidate</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete{" "}
+              <span className="font-medium text-foreground">
+                {deletingCandidate?.first_name} {deletingCandidate?.last_name}
+              </span>{" "}
+              and all associated data. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteCandidateMutation.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

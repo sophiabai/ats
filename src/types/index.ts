@@ -3,6 +3,8 @@ export type {
   ChatMessage,
   ReqDraftMetadata,
   ReqDraftFormData,
+  ScheduleMetadata,
+  ScheduleSlot,
 } from "@/features/chat/types";
 
 export type {

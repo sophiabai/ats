@@ -25,17 +25,20 @@ const sql = postgres(databaseUrl, { ssl: "require" });
 async function deploy() {
   console.log("Deploying database to cloud...\n");
 
-  // Drop all public tables
-  console.log("  Dropping all tables...");
+  // Drop all public tables and sequences
+  console.log("  Dropping all tables and sequences...");
   await sql.unsafe(`
     DO $$ DECLARE r RECORD;
     BEGIN
       FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') LOOP
         EXECUTE 'DROP TABLE IF EXISTS public.' || quote_ident(r.tablename) || ' CASCADE';
       END LOOP;
+      FOR r IN (SELECT sequencename FROM pg_sequences WHERE schemaname = 'public') LOOP
+        EXECUTE 'DROP SEQUENCE IF EXISTS public.' || quote_ident(r.sequencename) || ' CASCADE';
+      END LOOP;
     END $$;
   `);
-  console.log("  ✓ All tables dropped");
+  console.log("  ✓ All tables and sequences dropped");
 
   // Run migrations in order
   const migrationsDir = resolve(import.meta.dirname, "../supabase/migrations");

@@ -3,7 +3,6 @@ import { useNavigate } from "react-router"
 import { PanelBottomDashed, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { useSidebar } from "@/components/ui/sidebar"
 import { ChatInput } from "@/features/chat/components/chat-input"
 import { MessageBubble } from "@/features/chat/components/message-bubble"
 import { MessageSkeleton } from "@/features/chat/components/message-skeleton"
@@ -20,7 +19,7 @@ const SKIP_PHRASES = /^(empty|skip|blank|i'll fill it in|fill it myself)/i
 
 export function DockedChatPanel() {
   const { setDocked } = useChatBarStore()
-  const { setOpen: setSidebarOpen } = useSidebar()
+
   const { messages, addMessage } = useChatStore()
   const chat = useChat()
   const parseReq = useParseRequisition()
@@ -38,7 +37,6 @@ export function DockedChatPanel() {
   }, [messages, chat.isPending])
 
   useEffect(() => {
-    setSidebarOpen(false)
     requestAnimationFrame(() => inputRef.current?.focus())
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

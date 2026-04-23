@@ -13,7 +13,7 @@ import type { ApplicationDetail } from "@/features/candidates/api/use-candidate-
 import type { Milestone, ReqInterview } from "@/types/database";
 import type { ReqStageWithInterviews } from "@/features/candidates/api/use-candidate-detail";
 
-const MILESTONE_ORDER: Milestone[] = [
+export const MILESTONE_ORDER: Milestone[] = [
   "application",
   "screen",
   "final_interview",
@@ -21,7 +21,7 @@ const MILESTONE_ORDER: Milestone[] = [
   "offer_accepted",
 ];
 
-const MILESTONE_LABELS: Record<Milestone, string> = {
+export const MILESTONE_LABELS: Record<Milestone, string> = {
   application: "Application",
   screen: "Screen",
   final_interview: "Final interview",
@@ -29,9 +29,9 @@ const MILESTONE_LABELS: Record<Milestone, string> = {
   offer_accepted: "Offer accepted",
 };
 
-type StageStatus = "completed" | "current" | "upcoming";
+export type StageStatus = "completed" | "current" | "upcoming";
 
-function getStageStatus(
+export function getStageStatus(
   milestone: Milestone,
   stageId: string,
   currentMilestone: Milestone,
@@ -53,7 +53,7 @@ function getStageStatus(
   return "upcoming";
 }
 
-function StageIcon({ status }: { status: StageStatus }) {
+export function StageIcon({ status }: { status: StageStatus }) {
   if (status === "completed")
     return (
       <div className="flex size-5 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600">
@@ -73,7 +73,7 @@ function StageIcon({ status }: { status: StageStatus }) {
   );
 }
 
-function InterviewTimeline({ interviews }: { interviews: ReqInterview[] }) {
+export function InterviewTimeline({ interviews }: { interviews: ReqInterview[] }) {
   return (
     <div className="mt-2 border-t pt-2">
       {interviews.map((iv, idx) => {

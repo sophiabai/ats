@@ -18,9 +18,22 @@ export interface ReqDraftMetadata {
   formData: ReqDraftFormData;
 }
 
+export interface ScheduleSlot {
+  time: string;
+  title: string;
+  participants: string[];
+  location: string;
+}
+
+export interface ScheduleMetadata {
+  type: "schedule";
+  date: string;
+  slots: ScheduleSlot[];
+}
+
 export interface ChatMessage {
   role: MessageRole;
   content: string;
   command?: string;
-  metadata?: ReqDraftMetadata;
+  metadata?: ReqDraftMetadata | ScheduleMetadata;
 }

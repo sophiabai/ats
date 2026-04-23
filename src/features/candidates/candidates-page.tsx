@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { formatDistanceToNow } from "date-fns";
-import { Users, FolderPlus } from "lucide-react";
+import { Users, FolderPlus, Plus, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
@@ -17,12 +17,30 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { View } from "@/components/custom/view-toggle";
-import { useCandidates } from "@/features/candidates/api/use-candidates";
+import { useCandidates, type CandidateRow } from "@/features/candidates/api/use-candidates";
+import { useDeleteCandidate } from "@/features/candidates/api/use-candidate-mutations";
 import { AddToPoolDialog } from "@/features/candidates/components/add-to-pool-dialog";
+import { CandidateFormDialog } from "@/features/candidates/components/candidate-form-dialog";
 import type { BreadcrumbState } from "@/app/layout";
 
 function candidateBreadcrumb(name: string): BreadcrumbState {
@@ -61,9 +79,13 @@ function CandidatesSkeleton() {
 export function CandidatesPage() {
   const { data, isLoading, error } = useCandidates();
   const navigate = useNavigate();
+  const deleteCandidate = useDeleteCandidate();
   const [view] = useState<View>("table");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [poolDialogOpen, setPoolDialogOpen] = useState(false);
+  const [formDialogOpen, setFormDialogOpen] = useState(false);
+  const [editingCandidate, setEditingCandidate] = useState<CandidateRow | null>(null);
+  const [deletingCandidate, setDeletingCandidate] = useState<CandidateRow | null>(null);
 
   const allIds = data?.map((c) => c.id) ?? [];
   const allSelected = allIds.length > 0 && selectedIds.size === allIds.length;
@@ -86,6 +108,27 @@ export function CandidatesPage() {
     }
   }
 
+  function openAdd() {
+    setEditingCandidate(null);
+    setFormDialogOpen(true);
+  }
+
+  function openEdit(c: CandidateRow) {
+    setEditingCandidate(c);
+    setFormDialogOpen(true);
+  }
+
+  async function confirmDelete() {
+    if (!deletingCandidate) return;
+    await deleteCandidate.mutateAsync(deletingCandidate.id);
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.delete(deletingCandidate.id);
+      return next;
+    });
+    setDeletingCandidate(null);
+  }
+
   if (isLoading) return <CandidatesSkeleton />;
 
   if (error) {
@@ -103,13 +146,24 @@ export function CandidatesPage() {
 
   if (!data || data.length === 0) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-4 text-muted-foreground">
-        <Users className="size-12" />
-        <h2 className="text-xl font-semibold text-foreground">
-          No candidates yet
-        </h2>
-        <p>Candidates will appear here once added.</p>
-      </div>
+      <>
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 text-muted-foreground">
+          <Users className="size-12" />
+          <h2 className="text-xl font-semibold text-foreground">
+            No candidates yet
+          </h2>
+          <p>Candidates will appear here once added.</p>
+          <Button onClick={openAdd}>
+            <Plus className="mr-1.5 size-4" />
+            Add candidate
+          </Button>
+        </div>
+        <CandidateFormDialog
+          open={formDialogOpen}
+          onOpenChange={setFormDialogOpen}
+          candidate={editingCandidate}
+        />
+      </>
     );
   }
 
@@ -133,6 +187,10 @@ export function CandidatesPage() {
               Add to pool ({selectedIds.size})
             </Button>
           )}
+          <Button size="sm" onClick={openAdd}>
+            <Plus className="mr-1.5 size-4" />
+            Add candidate
+          </Button>
         </div>
       </div>
 
@@ -230,6 +288,7 @@ export function CandidatesPage() {
                 <TableHead>Current role</TableHead>
                 <TableHead>Location</TableHead>
                 <TableHead>Experience</TableHead>
+                <TableHead className="w-10" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -271,6 +330,28 @@ export function CandidatesPage() {
                       ? `${c.years_experience} yrs`
                       : "—"}
                   </TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="size-8">
+                          <MoreHorizontal className="size-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => openEdit(c)}>
+                          <Pencil className="mr-2 size-4" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={() => setDeletingCandidate(c)}
+                        >
+                          <Trash2 className="mr-2 size-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
                 );
               })}
@@ -285,6 +366,41 @@ export function CandidatesPage() {
         candidateIds={Array.from(selectedIds)}
         onSuccess={() => setSelectedIds(new Set())}
       />
+
+      <CandidateFormDialog
+        open={formDialogOpen}
+        onOpenChange={setFormDialogOpen}
+        candidate={editingCandidate}
+      />
+
+      <AlertDialog
+        open={!!deletingCandidate}
+        onOpenChange={(open) => {
+          if (!open) setDeletingCandidate(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete candidate</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete{" "}
+              <span className="font-medium text-foreground">
+                {deletingCandidate?.first_name} {deletingCandidate?.last_name}
+              </span>{" "}
+              and all associated data. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteCandidate.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

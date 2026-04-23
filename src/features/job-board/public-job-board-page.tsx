@@ -9,6 +9,7 @@ import {
 import logoUrl from "@/assets/Logo.svg";
 import { useJobPosts } from "@/features/job-board/api/use-job-posts";
 import type { Requisition } from "@/types/database";
+import { formatReqTitle } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -75,7 +76,7 @@ function JobCard({ job }: { job: Requisition }) {
         <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0 flex-1 space-y-2">
             <div>
-              <h3 className="truncate text-base font-semibold">{job.title}</h3>
+              <h3 className="truncate text-base font-semibold">{formatReqTitle(job.req_number, job.title)}</h3>
               {preview && (
                 <p className="mt-0.5 line-clamp-1 text-sm text-muted-foreground">
                   {preview}

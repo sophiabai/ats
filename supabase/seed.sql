@@ -357,9 +357,10 @@ WHERE id = 'c0000000-0000-0000-0000-000000000025';
 -- ============================================================
 -- Requisitions (5 reqs with stable UUIDs)
 -- ============================================================
-INSERT INTO requisitions (id, title, department, location, employment_type, recruiter_name, hiring_manager_name, status, description, requirements, salary_min, salary_max, headcount, location_pay_ranges) VALUES
+INSERT INTO requisitions (id, req_number, title, department, location, employment_type, recruiter_name, hiring_manager_name, status, description, requirements, salary_min, salary_max, headcount, location_pay_ranges) VALUES
   (
     'b0000000-0000-0000-0000-000000000001',
+    1000,
     'Senior Frontend Engineer',
     'Engineering',
     'San Francisco, New York, Remote',
@@ -374,6 +375,7 @@ INSERT INTO requisitions (id, title, department, location, employment_type, recr
   ),
   (
     'b0000000-0000-0000-0000-000000000002',
+    1001,
     'Account Executive',
     'Sales',
     'Chicago, New York, Remote',
@@ -388,6 +390,7 @@ INSERT INTO requisitions (id, title, department, location, employment_type, recr
   ),
   (
     'b0000000-0000-0000-0000-000000000003',
+    1002,
     'Senior Product Designer',
     'Design',
     'San Francisco, New York',
@@ -402,6 +405,7 @@ INSERT INTO requisitions (id, title, department, location, employment_type, recr
   ),
   (
     'b0000000-0000-0000-0000-000000000004',
+    1003,
     'Machine Learning Engineer',
     'AI Research',
     'San Francisco, Bangalore, Remote',
@@ -416,6 +420,7 @@ INSERT INTO requisitions (id, title, department, location, employment_type, recr
   ),
   (
     'b0000000-0000-0000-0000-000000000005',
+    1004,
     'Content Marketing Lead',
     'Marketing',
     'Remote, San Francisco',
@@ -428,6 +433,8 @@ INSERT INTO requisitions (id, title, department, location, employment_type, recr
     130000, 170000, 1,
     '[{"location": "San Francisco", "min": 140000, "max": 170000}, {"location": "Remote - US", "min": 130000, "max": 160000}]'::jsonb
   );
+
+SELECT setval('req_number_seq', 1005);
 
 -- ============================================================
 -- Req stages (pipeline stages for each requisition)

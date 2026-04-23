@@ -4,6 +4,7 @@ import { persist } from "zustand/middleware"
 export interface StarredRequisition {
   id: string
   title: string
+  req_number?: number
 }
 
 interface StarredRequisitionsState {

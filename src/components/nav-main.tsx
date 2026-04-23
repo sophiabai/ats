@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react"
+import { Link } from "react-router"
 
 import {
   SidebarGroup,
@@ -26,14 +27,27 @@ export function NavMain({
       <SidebarMenu>
         {items.map((item) => (
           <SidebarMenuItem key={item.title}>
-            <SidebarMenuButton
-              isActive={item.isActive}
-              tooltip={item.title}
-              onClick={item.onClick}
-            >
-              {item.icon && <item.icon />}
-              <span>{item.title}</span>
-            </SidebarMenuButton>
+            {item.onClick ? (
+              <SidebarMenuButton
+                isActive={item.isActive}
+                tooltip={item.title}
+                onClick={item.onClick}
+              >
+                {item.icon && <item.icon />}
+                <span>{item.title}</span>
+              </SidebarMenuButton>
+            ) : (
+              <SidebarMenuButton
+                asChild
+                isActive={item.isActive}
+                tooltip={item.title}
+              >
+                <Link to={item.url}>
+                  {item.icon && <item.icon />}
+                  <span>{item.title}</span>
+                </Link>
+              </SidebarMenuButton>
+            )}
           </SidebarMenuItem>
         ))}
       </SidebarMenu>

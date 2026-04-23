@@ -4,3 +4,7 @@ import { twMerge } from "tailwind-merge"
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
+
+export function formatReqTitle(reqNumber: number | undefined | null, title: string) {
+  return reqNumber != null ? `(${reqNumber}) ${title}` : title
+}

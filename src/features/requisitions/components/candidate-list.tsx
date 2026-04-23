@@ -1,6 +1,6 @@
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { formatDistanceToNow } from "date-fns";
-import { User, ExternalLink } from "lucide-react";
+import { User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -96,6 +96,7 @@ export function CandidateList({
   view = "table",
   evaluations,
 }: CandidateListProps) {
+  const navigate = useNavigate();
   if (applications.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
@@ -174,7 +175,6 @@ export function CandidateList({
           <TableHead>Status</TableHead>
           <TableHead>Criteria</TableHead>
           <TableHead>Applied</TableHead>
-          <TableHead className="w-10" />
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -183,15 +183,13 @@ export function CandidateList({
           const fullName = `${c.first_name} ${c.last_name}`;
           const state = buildLinkState(reqId, reqTitle, fullName);
           return (
-            <TableRow key={app.id}>
+            <TableRow
+              key={app.id}
+              className="cursor-pointer"
+              onClick={() => navigate(`/candidates/${c.id}?app=${app.id}`, { state })}
+            >
               <TableCell>
-                <Link
-                  to={`/candidates/${c.id}?app=${app.id}`}
-                  state={state}
-                  className="font-medium hover:underline"
-                >
-                  {c.first_name} {c.last_name}
-                </Link>
+                <div className="font-medium">{c.first_name} {c.last_name}</div>
               </TableCell>
               <TableCell className="text-muted-foreground">
                 {c.current_title && c.current_company
@@ -217,15 +215,6 @@ export function CandidateList({
                 {formatDistanceToNow(new Date(app.applied_date), {
                   addSuffix: true,
                 })}
-              </TableCell>
-              <TableCell>
-                <Link
-                  to={`/candidates/${c.id}?app=${app.id}`}
-                  state={state}
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  <ExternalLink className="size-4" />
-                </Link>
               </TableCell>
             </TableRow>
           );

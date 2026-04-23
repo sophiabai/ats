@@ -14,6 +14,7 @@ import {
 import { StatusBadge, EmploymentBadge } from "@/features/requisitions/components/status-badge";
 import type { RequisitionRow } from "@/features/requisitions/api/use-requisitions";
 import type { View } from "@/components/custom/view-toggle";
+import { formatReqTitle } from "@/lib/utils";
 
 function formatSalary(min: number | null, max: number | null, currency: string) {
   if (!min && !max) return null;
@@ -41,7 +42,7 @@ export function RequisitionsTable({ data, view = "table" }: RequisitionsTablePro
     navigate(`/requisitions/${req.id}`, {
       state: {
         breadcrumb: [{ title: "Requisitions", href: "/requisitions" }],
-        pageTitle: req.title,
+        pageTitle: formatReqTitle(req.req_number, req.title),
       } satisfies BreadcrumbState,
     });
   }
@@ -60,7 +61,7 @@ export function RequisitionsTable({ data, view = "table" }: RequisitionsTablePro
               <CardContent>
                 <div className="flex items-center gap-2">
                   <Briefcase className="size-4 shrink-0 text-muted-foreground" />
-                  <span className="truncate font-medium">{req.title}</span>
+                  <span className="truncate font-medium">{formatReqTitle(req.req_number, req.title)}</span>
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <StatusBadge status={req.status} />
@@ -131,7 +132,7 @@ export function RequisitionsTable({ data, view = "table" }: RequisitionsTablePro
             <TableCell className="font-medium">
               <div className="flex items-center gap-2">
                 <Briefcase className="size-4 shrink-0 text-muted-foreground" />
-                {req.title}
+                {formatReqTitle(req.req_number, req.title)}
               </div>
             </TableCell>
             <TableCell>

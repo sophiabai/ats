@@ -1,6 +1,7 @@
 import Markdown from "react-markdown";
 import type { ChatMessage, ReqDraftFormData } from "@/types";
 import { ReqDraftCard } from "@/features/chat/components/req-draft-card";
+import { ScheduleCard } from "@/features/chat/components/schedule-card";
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -28,6 +29,7 @@ export function MessageBubble({ message, onOpenReqDraft }: MessageBubbleProps) {
   }
 
   const reqDraft = message.metadata?.type === "req_draft" ? message.metadata : null;
+  const schedule = message.metadata?.type === "schedule" ? message.metadata : null;
 
   return (
     <div>
@@ -49,6 +51,9 @@ export function MessageBubble({ message, onOpenReqDraft }: MessageBubbleProps) {
           formData={reqDraft.formData}
           onOpen={() => onOpenReqDraft(reqDraft.formData)}
         />
+      )}
+      {schedule && (
+        <ScheduleCard date={schedule.date} slots={schedule.slots} />
       )}
     </div>
   );

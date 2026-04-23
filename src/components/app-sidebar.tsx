@@ -30,11 +30,12 @@ import {
   SidebarFooter,
   SidebarRail,
 } from "@/components/ui/sidebar"
+import { formatReqTitle } from "@/lib/utils"
 
 const data = {
   user: {
-    name: "shadcn",
-    email: "m@example.com",
+    name: "Sophia Bai",
+    email: "sophia@example.com",
     avatar: "/avatars/shadcn.jpg",
   },
   quickAccess: [
@@ -114,7 +115,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       ...(starred.length > 0 && {
         items: [
           { title: "All requisitions", url: "/requisitions" },
-          ...starred.map((r) => ({ title: r.title, url: `/requisitions/${r.id}` })),
+          ...starred.map((r) => ({ title: formatReqTitle(r.req_number, r.title), url: `/requisitions/${r.id}` })),
         ],
       }),
     },

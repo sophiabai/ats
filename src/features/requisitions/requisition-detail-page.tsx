@@ -15,7 +15,7 @@ import {
   Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,13 +38,10 @@ import {
   groupApplicationsByMilestone,
 } from "@/features/requisitions/api/use-requisition-detail";
 import type { View } from "@/components/custom/view-toggle";
-import {
-  ResponsiveTabsList,
-  type TabItem,
-} from "@/components/custom/responsive-tabs-list";
 import { useStarredRequisitionsStore } from "@/stores/starred-requisitions-store";
 import { useSetPageTitle } from "@/stores/page-title-store";
 import type { Milestone } from "@/types/database";
+import { formatReqTitle } from "@/lib/utils";
 
 const EMPLOYMENT_LABELS: Record<string, string> = {
   full_time: "Full-time",
@@ -100,7 +97,7 @@ function DetailSkeleton() {
 export function Component() {
   const { reqId } = useParams<{ reqId: string }>();
   const { data: req, isLoading, error } = useRequisitionDetail(reqId!);
-  useSetPageTitle(req?.title ?? null);
+  useSetPageTitle(req ? formatReqTitle(req.req_number, req.title) : null);
   const { data: pools } = useReqCandidatePools(reqId!);
   const { data: evaluations } = useCriteriaEvaluations(reqId);
   const poolCandidateCount = pools?.reduce((sum, p) => sum + p.candidates.length, 0) ?? 0;
@@ -129,27 +126,20 @@ export function Component() {
   const salary = formatSalary(req.salary_min, req.salary_max, req.salary_currency);
   const starred = isStarred(req.id);
 
-  const tabItems: TabItem[] = [
-    { value: "pools", label: `Candidate pools (${poolCandidateCount})` },
-    ...(Object.keys(MILESTONE_LABELS) as Milestone[]).map((m) => ({
-      value: m,
-      label: `${MILESTONE_LABELS[m]} (${grouped[m].length})`,
-    })),
-    { value: "rejected", label: `Rejected (${rejected.length})` },
-  ];
+  const milestoneKeys = Object.keys(MILESTONE_LABELS) as Milestone[];
 
   return (
     <div className="space-y-6">
       <div>
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-semibold ">{req.title}</h1>
+          <h1 className="text-2xl font-semibold">{formatReqTitle(req.req_number, req.title)}</h1>
           <StatusBadge status={req.status} />
           <div className="ml-auto flex items-center gap-1">
             <Button
               variant="ghost"
               size="icon"
               className="size-8"
-              onClick={() => toggleStar({ id: req.id, title: req.title })}
+              onClick={() => toggleStar({ id: req.id, title: req.title, req_number: req.req_number })}
             >
               <Star
                 className={cn(
@@ -221,29 +211,26 @@ export function Component() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <div className="flex items-center gap-2">
-          <ResponsiveTabsList
-            items={tabItems}
-            activeValue={activeTab}
-            onValueChange={setActiveTab}
-          />
-          <div className="flex shrink-0 items-center gap-2">
-            {activeTab === "pools" && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setLinkPoolsOpen(true)}
-              >
-                <Plus className="mr-1.5 size-4" />
-                Link pools
-              </Button>
-            )}
-          </div>
+          <TabsList>
+            <TabsTrigger value="pools">
+              Candidate pools ({poolCandidateCount})
+            </TabsTrigger>
+            {milestoneKeys.map((m) => (
+              <TabsTrigger key={m} value={m}>
+                {MILESTONE_LABELS[m]} ({grouped[m].length})
+              </TabsTrigger>
+            ))}
+            <TabsTrigger value="rejected">
+              Rejected ({rejected.length})
+            </TabsTrigger>
+          </TabsList>
+          <div className="flex shrink-0 items-center gap-2" />
         </div>
 
         <TabsContent value="pools" className="mt-4">
           <ReqPoolCandidates
             reqId={req.id}
-            reqTitle={req.title}
+            reqTitle={formatReqTitle(req.req_number, req.title)}
             linkDialogOpen={linkPoolsOpen}
             onLinkDialogOpenChange={setLinkPoolsOpen}
             evaluations={evaluations}
@@ -257,7 +244,7 @@ export function Component() {
               <CandidateList
                 applications={grouped[m]}
                 reqId={req.id}
-                reqTitle={req.title}
+                reqTitle={formatReqTitle(req.req_number, req.title)}
                 view="cards"
                 evaluations={evaluations}
               />
@@ -266,7 +253,7 @@ export function Component() {
                 <CandidateList
                   applications={grouped[m]}
                   reqId={req.id}
-                  reqTitle={req.title}
+                  reqTitle={formatReqTitle(req.req_number, req.title)}
                   view="table"
                   evaluations={evaluations}
                 />
@@ -280,7 +267,7 @@ export function Component() {
             <CandidateList
               applications={rejected}
               reqId={req.id}
-              reqTitle={req.title}
+              reqTitle={formatReqTitle(req.req_number, req.title)}
               view="cards"
               evaluations={evaluations}
             />
@@ -289,7 +276,7 @@ export function Component() {
               <CandidateList
                 applications={rejected}
                 reqId={req.id}
-                reqTitle={req.title}
+                reqTitle={formatReqTitle(req.req_number, req.title)}
                 view="table"
                 evaluations={evaluations}
               />

@@ -101,6 +101,7 @@ export interface LocationPayRange {
 export interface Requisition {
   id: string;
   created_at: string;
+  req_number: number;
   title: string;
   department: string | null;
   location: string | null;

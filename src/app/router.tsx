@@ -8,6 +8,15 @@ const routes: RouteObject[] = [
       import("@/features/docs/pipeline-automation-page"),
   },
   {
+    path: "proto-hub",
+    lazy: () => import("@/features/proto-hub/proto-hub-page"),
+  },
+  {
+    path: "candidate-availability",
+    lazy: () =>
+      import("@/features/scheduling/candidate-availability-page"),
+  },
+  {
     path: "careers",
     lazy: () =>
       import("@/features/job-board/public-job-board-page"),
