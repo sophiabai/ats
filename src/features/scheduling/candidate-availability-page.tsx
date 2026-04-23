@@ -7,8 +7,22 @@ import { useState, useMemo } from "react"
 
 const CANDIDATE = "Andy"
 
-// Fake inbox data
-const emails = [
+type Email = {
+  id: string
+  slug?: string
+  from: string
+  senderEmail: string
+  senderInitial: string
+  senderColor: string
+  subject: string
+  preview: string
+  time: string
+  unread: boolean
+  starred: boolean
+  availabilityUrl: string | null
+}
+
+const emails: Email[] = [
   {
     id: "scheduling-acme-inc",
     slug: "interview-invitation-acme-inc",
@@ -186,7 +200,7 @@ export function Component() {
 // ---------------------------------------------------------------------------
 // Inbox list view
 // ---------------------------------------------------------------------------
-function InboxList({ emails, onOpen }: { emails: typeof emails; onOpen: (id: string) => void }) {
+function InboxList({ emails, onOpen }: { emails: Email[]; onOpen: (id: string) => void }) {
   return (
     <div>
       <div className="flex items-center gap-2 px-4 py-2">
@@ -227,7 +241,7 @@ function EmailDetail({
   email,
   onBack,
 }: {
-  email: (typeof emails)[0]
+  email: Email
   onBack: () => void
 }) {
   return (
@@ -335,17 +349,6 @@ function EmailDetail({
 // ---------------------------------------------------------------------------
 // Inline SVG icons — no external dependencies
 // ---------------------------------------------------------------------------
-function GmailLogo() {
-  return (
-    <svg viewBox="0 0 75 24" width="75" height="24" className="shrink-0">
-      <path d="M7.04 14.4L0 8.47V19.2c0 1.1.9 2 2 2h10V13.6l-4.96 3.8z" fill="#4285f4" />
-      <path d="M24 5.6V2c0-1.1-.9-2-2-2H14L7.04 14.4 12 18.4l12-9.2V5.6z" fill="#34a853" />
-      <path d="M0 4.8V8.47l7.04 5.93L12 10.4 0 .8v4z" fill="#ea4335" />
-      <path d="M0 .8l12 9.6L24 .8V2c0-1.1-.9-2-2-2H2C.9 0 0 .9 0 2V.8z" fill="#c5221f" />
-      <text x="28" y="17" fill="#5f6368" fontSize="16" fontFamily="Google Sans, Arial">Gmail</text>
-    </svg>
-  )
-}
 
 function MenuIcon() {
   return <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M4 6h16M4 12h16M4 18h16" /></svg>

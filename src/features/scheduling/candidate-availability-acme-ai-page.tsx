@@ -35,8 +35,6 @@ export function Component() {
     currentRow: number
   } | null>(null)
 
-  const durationSlots = 7
-
   const previewSlot = useMemo(() => {
     if (!dragging) return null
     const minRow = Math.min(dragging.startRow, dragging.currentRow)
