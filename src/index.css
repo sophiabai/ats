@@ -159,6 +159,12 @@
     --brand: oklch(0.707 0.165 254.624);
 }
 
+.customer-brand {
+    --primary: oklch(0.571 0.199 264.532);
+    --primary-foreground: oklch(1 0 0);
+    --ring: oklch(0.571 0.199 264.532 / 0.4);
+}
+
 [data-slot="sidebar-container"] {
   top: var(--top-nav-height, 0px);
   height: calc(100svh - var(--top-nav-height, 0px));
