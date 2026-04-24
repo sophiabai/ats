@@ -189,8 +189,24 @@
   animation: cand-fade-in 250ms var(--ease-out-quint) both;
 }
 .customer-brand {
+    color-scheme: light;
+    --background: var(--stone-50);
+    --foreground: var(--stone-800);
+    --card: oklch(1 0 0);
+    --card-foreground: var(--stone-800);
+    --popover: oklch(1 0 0);
+    --popover-foreground: var(--stone-800);
     --primary: oklch(0.571 0.199 264.532);
     --primary-foreground: oklch(1 0 0);
+    --secondary: var(--stone-100);
+    --secondary-foreground: var(--stone-800);
+    --muted: var(--stone-100);
+    --muted-foreground: var(--stone-500);
+    --accent: var(--stone-100);
+    --accent-foreground: var(--stone-900);
+    --destructive: oklch(0.577 0.245 27.325);
+    --border: var(--stone-200);
+    --input: var(--stone-200);
     --ring: oklch(0.571 0.199 264.532 / 0.4);
 }
 
