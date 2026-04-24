@@ -118,37 +118,35 @@ export function RootLayout() {
   return (
     <div className="flex h-svh flex-col">
       <TopNav />
-      <SidebarProvider defaultOpen={true} className="min-h-0 flex-1 rounded-t-3xl overflow-hidden">
+      <SidebarProvider defaultOpen={true} className="min-h-0 flex-1 rounded-t-2xl overflow-hidden">
         <AppSidebar />
         <SidebarInset className="relative min-w-0 min-h-0 overflow-hidden bg-white dark:bg-stone-950">
-          <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-in-out-quart group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-            <div className="flex items-center gap-2 px-4">
-              <SidebarTrigger className="-ml-1" />
-              <Separator
-                orientation="vertical"
-                className="mr-2 data-[orientation=vertical]:h-4"
-              />
-              <Breadcrumb>
-                <BreadcrumbList>
-                  {crumbs.map((crumb, i) => (
-                    <span key={crumb.href} className="contents">
-                      {i > 0 && <BreadcrumbSeparator className="hidden md:block" />}
-                      <BreadcrumbItem className="hidden md:block">
-                        <BreadcrumbLink asChild>
-                          <Link to={crumb.href}>{crumb.title}</Link>
-                        </BreadcrumbLink>
-                      </BreadcrumbItem>
-                    </span>
-                  ))}
-                  {crumbs.length > 0 && (
-                    <BreadcrumbSeparator className="hidden md:block" />
-                  )}
-                  <BreadcrumbItem>
-                    <BreadcrumbPage>{page}</BreadcrumbPage>
-                  </BreadcrumbItem>
-                </BreadcrumbList>
-              </Breadcrumb>
-            </div>
+          <header className="flex h-16 shrink-0 items-center gap-2 px-4 transition-[width,height] ease-in-out-quart group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+            <SidebarTrigger className="-ml-1" />
+            <Separator
+              orientation="vertical"
+              className="mr-2 data-[orientation=vertical]:h-4"
+            />
+            <Breadcrumb>
+              <BreadcrumbList>
+                {crumbs.map((crumb, i) => (
+                  <span key={crumb.href} className="contents">
+                    {i > 0 && <BreadcrumbSeparator className="hidden md:block" />}
+                    <BreadcrumbItem className="hidden md:block">
+                      <BreadcrumbLink asChild>
+                        <Link to={crumb.href}>{crumb.title}</Link>
+                      </BreadcrumbLink>
+                    </BreadcrumbItem>
+                  </span>
+                ))}
+                {crumbs.length > 0 && (
+                  <BreadcrumbSeparator className="hidden md:block" />
+                )}
+                <BreadcrumbItem>
+                  <BreadcrumbPage>{page}</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
           </header>
           <div className="flex w-full flex-1 flex-col gap-6 overflow-y-auto px-17 pt-6 pb-20">
             <Outlet />

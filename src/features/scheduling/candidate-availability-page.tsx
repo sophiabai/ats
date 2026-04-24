@@ -52,6 +52,20 @@ const emails: Email[] = [
     availabilityUrl: "/candidate-availability-acme-ai",
   },
   {
+    id: "scheduling-acme-ai-direct",
+    slug: "schedule-interview-acme-ai",
+    from: "Anne Montgomery",
+    senderEmail: "anne@acme.ai",
+    senderInitial: "A",
+    senderColor: "#7c3aed",
+    subject: "Schedule your interview — ACME AI",
+    preview: `Hi ${CANDIDATE}, Great news! We have a time that works for your interview at ACME AI. Please pick a slot…`,
+    time: "8:15 AM",
+    unread: true,
+    starred: false,
+    availabilityUrl: "/candidate-schedule-acme-ai",
+  },
+  {
     id: "welcome",
     from: "Google Community",
     senderEmail: "no-reply@google.com",
@@ -106,7 +120,7 @@ const emails: Email[] = [
 ]
 
 const sidebarLabels = [
-  { icon: InboxIcon, label: "Inbox", count: 2, active: true },
+  { icon: InboxIcon, label: "Inbox", count: 3, active: true },
   { icon: StarIcon, label: "Starred", count: 0, active: false },
   { icon: ClockIcon, label: "Snoozed", count: 0, active: false },
   { icon: SendIcon, label: "Sent", count: 0, active: false },
@@ -330,6 +344,43 @@ function EmailDetail({
             >
               Enter your availability here &gt;&gt;
             </a>
+          </p>
+          <p>
+            Best,
+            <br />
+            Anne
+          </p>
+        </div>
+      ) : email.id === "scheduling-acme-ai-direct" ? (
+        <div className="space-y-4 text-sm leading-relaxed text-gray-800">
+          <p>Hi {CANDIDATE},</p>
+          <p>
+            Great news! We've found times that work for your interview for the{" "}
+            <strong>Senior Software Engineering</strong> role at <strong>ACME AI</strong>.
+          </p>
+          <p>
+            Please click the link below to pick a time slot that works best for you. The interview will be{" "}
+            <strong>3 hours 30 minutes</strong> and will include the following sessions:
+          </p>
+          <ul className="ml-6 list-disc space-y-1 text-gray-700">
+            <li>Technical Deep Dive (60 min) — David Chen</li>
+            <li>System Design (60 min) — Sarah Kim & James Liu</li>
+            <li>Break (15 min)</li>
+            <li>Team Fit (45 min) — Anne Montgomery</li>
+            <li>Hiring Manager Chat (30 min) — Michael Torres</li>
+          </ul>
+          <p>
+            <a
+              href={email.availabilityUrl!}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#1a73e8] hover:underline"
+            >
+              Schedule your interview here &gt;&gt;
+            </a>
+          </p>
+          <p className="text-gray-500">
+            If none of the available times work for you, reply to this email and we'll find an alternative.
           </p>
           <p>
             Best,

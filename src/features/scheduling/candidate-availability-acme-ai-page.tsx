@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Calendar as ShadcnCalendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { CandidateSummaryPanel } from "./components/candidate-summary-panel"
 
 // ---------------------------------------------------------------------------
 // Candidate availability picker page.
@@ -11,7 +12,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 
 const CANDIDATE = "Andy"
 const COMPANY = "ACME"
-const DURATION = "3 hours 30 minutes"
 const DURATION_SLOTS = 14 // 3h30m = 14 quarter-hour slots
 const SLOT_HEIGHT = 48
 const HOURS = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
@@ -337,67 +337,15 @@ export function Component() {
       {step === 1 && (<>
       {/* Main content — Step 1: Calendar */}
       <div className="cand-fade-up relative z-10 flex flex-1 items-start justify-center px-8 pb-[200px] pt-14">
-        <div className="flex w-[884px] overflow-hidden rounded-3xl bg-white/85 shadow-sm">
-          {/* Left summary panel */}
-          <div className="flex w-[264px] shrink-0 flex-col gap-10 p-6">
-            {/* Company logo */}
-            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-lg border border-stone-200 bg-white">
-              <img src="/customer-logo.svg" alt="ACME" className="h-16 w-auto" />
-            </div>
-
-            {/* Greeting */}
-            <div className="flex flex-col gap-1">
-              <p className="text-sm text-muted-foreground">Hi {CANDIDATE},</p>
-              <p className="text-lg font-semibold leading-7 text-stone-900">
-                Share your availability to meet with {COMPANY}
-              </p>
-            </div>
-
-            {/* Metadata */}
-            <div className="flex flex-col gap-6">
-              {/* Duration */}
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-500/10">
-                  <ClockIcon className="h-4 w-4 text-emerald-600" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-xs text-muted-foreground">Duration</span>
-                  <span className="text-sm font-medium text-stone-900">{DURATION}</span>
-                </div>
-              </div>
-
-              {/* Timezone */}
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-500/10">
-                  <MapPinIcon className="h-4 w-4 text-amber-600" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-xs text-muted-foreground">Display time zone</span>
-                  <span className="flex items-center gap-1 text-sm font-medium text-stone-900">
-                    Pacific Daylight Time
-                    <ChevronDownIcon className="h-4 w-4 text-stone-500" />
-                  </span>
-                </div>
-              </div>
-
-              {/* Language */}
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                  <GlobeIcon className="h-4 w-4 text-primary" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-xs text-muted-foreground">Display language</span>
-                  <span className="flex items-center gap-1 text-sm font-medium text-stone-900">
-                    EN (US)
-                    <ChevronDownIcon className="h-4 w-4 text-stone-500" />
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div className="flex w-[884px] overflow-hidden rounded-3xl bg-white/85">
+          <CandidateSummaryPanel
+            candidateName={CANDIDATE}
+            companyName={COMPANY}
+            greeting={`Share your availability to meet with ${COMPANY}`}
+          />
 
           {/* Right calendar area */}
-          <div className="flex flex-1 flex-col overflow-hidden rounded-l-3xl bg-white">
+          <div className="flex flex-1 flex-col overflow-hidden rounded-l-3xl bg-white shadow-lg">
             {/* Calendar header */}
             <div className="flex items-center gap-2 border-b border-stone-200 px-5 py-4">
               <div className="flex flex-1 items-center gap-2">
@@ -480,9 +428,9 @@ export function Component() {
                   className="relative flex flex-1 flex-col border-r border-stone-200 last:border-r-0"
                 >
                   {/* Day header */}
-                  <div className={`flex h-14 shrink-0 flex-col items-center justify-center border-b border-black/10 p-2 shadow-[0_2px_4px_-2px_rgba(0,0,0,0.06)] ${!dayAllowed ? "opacity-40" : ""}`}>
-                    <span className="text-xs text-muted-foreground">{day.short}</span>
-                    <span className="text-base font-medium text-stone-900">{day.date}</span>
+                  <div className="flex h-14 shrink-0 flex-col items-center justify-center border-b border-black/10 p-2 shadow-[0_2px_4px_-2px_rgba(0,0,0,0.06)]">
+                    <span className={`text-xs text-muted-foreground ${!dayAllowed ? "opacity-40" : ""}`}>{day.short}</span>
+                    <span className={`text-base font-medium text-stone-900 ${!dayAllowed ? "opacity-40" : ""}`}>{day.date}</span>
                   </div>
 
                   {/* Slot grid */}
@@ -831,34 +779,6 @@ export function Component() {
 // ---------------------------------------------------------------------------
 // Inline SVG icons
 // ---------------------------------------------------------------------------
-function ClockIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <circle cx="12" cy="12" r="10" />
-      <polyline points="12 6 12 12 16 14" />
-    </svg>
-  )
-}
-
-function MapPinIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-      <circle cx="12" cy="10" r="3" />
-    </svg>
-  )
-}
-
-function GlobeIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <circle cx="12" cy="12" r="10" />
-      <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
-      <path d="M2 12h20" />
-    </svg>
-  )
-}
-
 function ChevronDownIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

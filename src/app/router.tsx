@@ -32,6 +32,12 @@ const routes: RouteObject[] = [
       import("@/features/scheduling/candidate-availability-acme-ai-page"),
   },
   {
+    path: "candidate-schedule-acme-ai",
+    HydrateFallback: () => null,
+    lazy: () =>
+      import("@/features/scheduling/candidate-schedule-acme-ai-page"),
+  },
+  {
     path: "careers",
     HydrateFallback: () => null,
     lazy: () =>
