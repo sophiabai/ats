@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Calendar as ShadcnCalendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -10,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 
 const CANDIDATE = "Andy"
 const COMPANY = "ACME"
-const DURATION = "3 hour 30 minutes"
+const DURATION = "3 hours 30 minutes"
 const DURATION_SLOTS = 14 // 3h30m = 14 quarter-hour slots
 const SLOT_HEIGHT = 48
 const HOURS = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
@@ -27,6 +28,31 @@ function getMonday(d: Date) {
   const diff = day === 0 ? -6 : 1 - day
   date.setDate(date.getDate() + diff)
   return date
+}
+
+function addBusinessDays(from: Date, n: number) {
+  const d = new Date(from)
+  let added = 0
+  while (added < n) {
+    d.setDate(d.getDate() + 1)
+    const dow = d.getDay()
+    if (dow !== 0 && dow !== 6) added++
+  }
+  return d
+}
+
+const SCHEDULE_WINDOW_START = addBusinessDays(new Date(), 2)
+const SCHEDULE_WINDOW_END = (() => {
+  const d = new Date(SCHEDULE_WINDOW_START)
+  d.setDate(d.getDate() + 13)
+  return d
+})()
+
+function isAllowedDate(d: Date) {
+  const dow = d.getDay()
+  if (dow === 0 || dow === 6) return false
+  const dk = dateKey(d)
+  return dk >= dateKey(SCHEDULE_WINDOW_START) && dk <= dateKey(SCHEDULE_WINDOW_END)
 }
 
 function getWeekDays(monday: Date) {
@@ -47,43 +73,48 @@ function formatHour(h: number) {
   return `${h - 12}pm`
 }
 
-type Slot = { day: number; startHour: number; slots: number }
+type Slot = { day: string; startHour: number; slots: number }
+
+function dateKey(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+}
 
 export function Component() {
-  const [weekStart, setWeekStart] = useState(() => getMonday(new Date(2025, 4, 5)))
+  const [weekStart, setWeekStart] = useState(() => getMonday(SCHEDULE_WINDOW_START))
   const [calendarOpen, setCalendarOpen] = useState(false)
   const days = useMemo(() => getWeekDays(weekStart), [weekStart])
 
   const [selections, setSelections] = useState<Slot[]>([])
   const [dragging, setDragging] = useState<{
-    dayIdx: number
+    dayKey: string
     startRow: number
     currentRow: number
   } | null>(null)
   const [resizing, setResizing] = useState<{
-    dayIdx: number
+    dayKey: string
     slotIndex: number
     edge: "top" | "bottom"
     originalSlot: Slot
     currentRow: number
   } | null>(null)
-  const [selectedSlot, setSelectedSlot] = useState<{ day: number; index: number } | null>(null)
-  const [hoverPos, setHoverPos] = useState<{ dayIdx: number; row: number } | null>(null)
+  const [selectedSlot, setSelectedSlot] = useState<{ day: string; index: number } | null>(null)
+  const [hoverPos, setHoverPos] = useState<{ dayKey: string; row: number } | null>(null)
   const [moving, setMoving] = useState<{
-    dayIdx: number
+    dayKey: string
     slotIndex: number
     originalSlot: Slot
     grabRow: number
     currentRow: number
-    currentDayIdx: number
+    currentDayKey: string
   } | null>(null)
 
   const totalRows = (HOURS.length - 1) * 4
+  const availableRows = (HOURS.length - 2) * 4 // rows before the unavailable last hour
   const lastDeleteTime = useRef(0)
   const [ghostSuppressed, setGhostSuppressed] = useState(false)
 
-  const deleteSlot = useCallback((dayIdx: number, slotIndex: number) => {
-    const daySlots = selections.filter((s) => s.day === dayIdx)
+  const deleteSlot = useCallback((dayKey: string, slotIndex: number) => {
+    const daySlots = selections.filter((s) => s.day === dayKey)
     const target = daySlots[slotIndex]
     if (target) {
       setSelections((prev) =>
@@ -114,44 +145,66 @@ export function Component() {
 
   const previewSlot = useMemo(() => {
     if (!dragging) return null
-    const minRow = Math.min(dragging.startRow, dragging.currentRow)
-    const maxRow = Math.max(dragging.startRow, dragging.currentRow)
+    const minRow = Math.min(dragging.startRow, Math.min(dragging.currentRow, availableRows - 1))
+    const maxRow = Math.min(Math.max(dragging.startRow, dragging.currentRow), availableRows - 1)
     const draggedSlots = maxRow - minRow + 1
-    const actualSlots = draggedSlots < DURATION_SLOTS
-      ? Math.min(DURATION_SLOTS, totalRows - minRow)
-      : draggedSlots
-    return { day: dragging.dayIdx, startHour: HOURS[0] + minRow * 0.25, slots: actualSlots }
-  }, [dragging, totalRows])
+    const actualSlots = Math.min(
+      draggedSlots < DURATION_SLOTS ? Math.max(DURATION_SLOTS, draggedSlots) : draggedSlots,
+      availableRows - minRow,
+    )
+    return { day: dragging.dayKey, startHour: HOURS[0] + minRow * 0.25, slots: actualSlots }
+  }, [dragging, availableRows])
+
+  function mergeOverlapping(slots: Slot[]): Slot[] {
+    const byDay = new Map<string, Slot[]>()
+    for (const s of slots) {
+      const arr = byDay.get(s.day) ?? []
+      arr.push(s)
+      byDay.set(s.day, arr)
+    }
+    const result: Slot[] = []
+    for (const [, daySlots] of byDay) {
+      daySlots.sort((a, b) => a.startHour - b.startHour)
+      const merged: Slot[] = [{ ...daySlots[0] }]
+      for (let i = 1; i < daySlots.length; i++) {
+        const prev = merged[merged.length - 1]
+        const cur = daySlots[i]
+        const prevEnd = prev.startHour + prev.slots * 0.25
+        if (cur.startHour <= prevEnd) {
+          const curEnd = cur.startHour + cur.slots * 0.25
+          const newEnd = Math.max(prevEnd, curEnd)
+          prev.slots = Math.round((newEnd - prev.startHour) / 0.25)
+        } else {
+          merged.push({ ...cur })
+        }
+      }
+      result.push(...merged)
+    }
+    return result
+  }
 
   const commitDrag = useCallback(() => {
     if (!dragging) return
-    const minRow = Math.min(dragging.startRow, dragging.currentRow)
-    const maxRow = Math.max(dragging.startRow, dragging.currentRow)
+    const minRow = Math.min(dragging.startRow, Math.min(dragging.currentRow, availableRows - 1))
+    const maxRow = Math.min(Math.max(dragging.startRow, dragging.currentRow), availableRows - 1)
     const draggedSlots = maxRow - minRow + 1
-    const actualSlots = draggedSlots < DURATION_SLOTS
-      ? Math.min(DURATION_SLOTS, totalRows - minRow)
-      : draggedSlots
+    const actualSlots = Math.min(
+      draggedSlots < DURATION_SLOTS ? Math.max(DURATION_SLOTS, draggedSlots) : draggedSlots,
+      availableRows - minRow,
+    )
     const newSlot: Slot = {
-      day: dragging.dayIdx,
+      day: dragging.dayKey,
       startHour: HOURS[0] + minRow * 0.25,
       slots: actualSlots,
     }
-    setSelections((prev) => {
-      const filtered = prev.filter(
-        (s) =>
-          s.day !== newSlot.day ||
-          s.startHour + s.slots * 0.25 <= newSlot.startHour ||
-          newSlot.startHour + newSlot.slots * 0.25 <= s.startHour
-      )
-      return [...filtered, newSlot]
-    })
+    setSelections((prev) => mergeOverlapping([...prev, newSlot]))
     setDragging(null)
-  }, [dragging, totalRows])
+  }, [dragging, availableRows])
 
   const commitResize = useCallback(() => {
     if (!resizing) return
-    const { dayIdx, slotIndex, edge, originalSlot, currentRow } = resizing
-    const daySlots = selections.filter((s) => s.day === dayIdx)
+    const { dayKey, slotIndex, edge, originalSlot, currentRow } = resizing
+    const daySlots = selections.filter((s) => s.day === dayKey)
     const target = daySlots[slotIndex]
     if (!target) { setResizing(null); return }
 
@@ -159,20 +212,22 @@ export function Component() {
     let newSlots = originalSlot.slots
 
     if (edge === "bottom") {
-      const newEndRow = currentRow + 1
+      const clampedEnd = Math.min(currentRow + 1, availableRows)
       const startRow = (originalSlot.startHour - HOURS[0]) * 4
-      newSlots = Math.max(1, newEndRow - startRow)
+      newSlots = Math.max(1, clampedEnd - startRow)
     } else {
-      const originalEndRow = (originalSlot.startHour - HOURS[0]) * 4 + originalSlot.slots
+      const originalEndRow = Math.min((originalSlot.startHour - HOURS[0]) * 4 + originalSlot.slots, availableRows)
       newStartHour = HOURS[0] + currentRow * 0.25
       newSlots = Math.max(1, originalEndRow - currentRow)
     }
 
     setSelections((prev) =>
-      prev.map((s) =>
-        s.day === target.day && s.startHour === target.startHour && s.slots === target.slots
-          ? { ...s, startHour: newStartHour, slots: newSlots }
-          : s
+      mergeOverlapping(
+        prev.map((s) =>
+          s.day === target.day && s.startHour === target.startHour && s.slots === target.slots
+            ? { ...s, startHour: newStartHour, slots: newSlots }
+            : s
+        )
       )
     )
     setResizing(null)
@@ -180,25 +235,36 @@ export function Component() {
 
   const commitMove = useCallback(() => {
     if (!moving) return
-    const { dayIdx, slotIndex, originalSlot, grabRow, currentRow, currentDayIdx } = moving
-    const daySlots = selections.filter((s) => s.day === dayIdx)
+    const { dayKey, slotIndex, originalSlot, grabRow, currentRow, currentDayKey } = moving
+    const daySlots = selections.filter((s) => s.day === dayKey)
     const target = daySlots[slotIndex]
     if (!target) { setMoving(null); return }
 
     const rowDelta = currentRow - grabRow
     const originalStartRow = (originalSlot.startHour - HOURS[0]) * 4
-    const newStartRow = Math.max(0, Math.min(totalRows - originalSlot.slots, originalStartRow + rowDelta))
+    const newStartRow = Math.max(0, Math.min(availableRows - originalSlot.slots, originalStartRow + rowDelta))
     const newStartHour = HOURS[0] + newStartRow * 0.25
 
     setSelections((prev) =>
-      prev.map((s) =>
-        s.day === target.day && s.startHour === target.startHour && s.slots === target.slots
-          ? { ...s, day: currentDayIdx, startHour: newStartHour }
-          : s
+      mergeOverlapping(
+        prev.map((s) =>
+          s.day === target.day && s.startHour === target.startHour && s.slots === target.slots
+            ? { ...s, day: currentDayKey, startHour: newStartHour }
+            : s
+        )
       )
     )
     setMoving(null)
   }, [moving, selections, totalRows])
+
+  useEffect(() => {
+    if (!moving) return
+    function handleGlobalMouseUp() {
+      commitMove()
+    }
+    window.addEventListener("mouseup", handleGlobalMouseUp)
+    return () => window.removeEventListener("mouseup", handleGlobalMouseUp)
+  }, [moving, commitMove])
 
   function getRowFromY(e: React.MouseEvent, containerRect: DOMRect) {
     const y = e.clientY - containerRect.top
@@ -220,6 +286,42 @@ export function Component() {
   }
 
   const isValid = selections.length >= 2
+  const [step, setStep] = useState(1)
+  const [note, setNote] = useState("")
+
+  function formatSlotTime(hour: number) {
+    const h = Math.floor(hour)
+    const m = Math.round((hour - h) * 60)
+    const ampm = h >= 12 ? "pm" : "am"
+    const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h
+    return m === 0 ? `${h12}:00${ampm}` : `${h12}:${String(m).padStart(2, "0")}${ampm}`
+  }
+
+  function parseDateKey(dk: string) {
+    const [y, m, d] = dk.split("-").map(Number)
+    return new Date(y, m - 1, d)
+  }
+
+  const groupedSelections = useMemo(() => {
+    const byDay = new Map<string, Slot[]>()
+    for (const s of selections) {
+      const arr = byDay.get(s.day) ?? []
+      arr.push(s)
+      byDay.set(s.day, arr)
+    }
+    const sorted = [...byDay.entries()].sort(([a], [b]) => a.localeCompare(b))
+    return sorted.map(([dk, slots]) => {
+      const d = parseDateKey(dk)
+      const label = `${DAY_LONG[d.getDay()]}, ${MONTH_NAMES[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`
+      const ranges = slots
+        .sort((a, b) => a.startHour - b.startHour)
+        .map((s) => {
+          const end = s.startHour + s.slots * 0.25
+          return `${formatSlotTime(s.startHour)} - ${formatSlotTime(end)} (PST)`
+        })
+      return { label, ranges }
+    })
+  }, [selections])
 
   return (
     <div
@@ -232,11 +334,12 @@ export function Component() {
       }}
     >
 
-      {/* Main content */}
-      <div className="relative z-10 flex flex-1 items-start justify-center px-8 pb-[200px] pt-14">
-        <div className="flex w-[884px] overflow-hidden rounded-3xl border border-border bg-white/80 shadow-sm">
+      {step === 1 && (<>
+      {/* Main content — Step 1: Calendar */}
+      <div className="cand-fade-up relative z-10 flex flex-1 items-start justify-center px-8 pb-[200px] pt-14">
+        <div className="flex w-[884px] overflow-hidden rounded-3xl bg-white/85 shadow-sm">
           {/* Left summary panel */}
-          <div className="flex w-[264px] shrink-0 flex-col gap-10 border-r border-black/10 bg-white/[0.09] p-6">
+          <div className="flex w-[264px] shrink-0 flex-col gap-10 p-6">
             {/* Company logo */}
             <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-lg border border-stone-200 bg-white">
               <img src="/customer-logo.svg" alt="ACME" className="h-16 w-auto" />
@@ -271,7 +374,7 @@ export function Component() {
                 <div className="flex flex-col">
                   <span className="text-xs text-muted-foreground">Display time zone</span>
                   <span className="flex items-center gap-1 text-sm font-medium text-stone-900">
-                    Pacific Day Time
+                    Pacific Daylight Time
                     <ChevronDownIcon className="h-4 w-4 text-stone-500" />
                   </span>
                 </div>
@@ -294,7 +397,7 @@ export function Component() {
           </div>
 
           {/* Right calendar area */}
-          <div className="flex flex-1 flex-col overflow-hidden rounded-r-3xl bg-white">
+          <div className="flex flex-1 flex-col overflow-hidden rounded-l-3xl bg-white">
             {/* Calendar header */}
             <div className="flex items-center gap-2 border-b border-stone-200 px-5 py-4">
               <div className="flex flex-1 items-center gap-2">
@@ -319,6 +422,7 @@ export function Component() {
                         }
                       }}
                       weekStartsOn={1}
+                      disabled={(date) => !isAllowedDate(date)}
                     />
                   </PopoverContent>
                 </Popover>
@@ -367,13 +471,16 @@ export function Component() {
               </div>
 
               {/* Day columns */}
-              {days.map((day, dayIdx) => (
+              {days.map((day) => {
+                const dk = dateKey(day.full)
+                const dayAllowed = isAllowedDate(day.full)
+                return (
                 <div
-                  key={day.short}
+                  key={dk}
                   className="relative flex flex-1 flex-col border-r border-stone-200 last:border-r-0"
                 >
                   {/* Day header */}
-                  <div className="flex h-14 shrink-0 flex-col items-center justify-center border-b border-black/10 p-2 shadow-[0_2px_4px_-2px_rgba(0,0,0,0.06)]">
+                  <div className={`flex h-14 shrink-0 flex-col items-center justify-center border-b border-black/10 p-2 shadow-[0_2px_4px_-2px_rgba(0,0,0,0.06)] ${!dayAllowed ? "opacity-40" : ""}`}>
                     <span className="text-xs text-muted-foreground">{day.short}</span>
                     <span className="text-base font-medium text-stone-900">{day.date}</span>
                   </div>
@@ -384,31 +491,35 @@ export function Component() {
                     className="relative select-none"
                     style={{ height: (HOURS.length - 1) * SLOT_HEIGHT }}
                     onMouseDown={(e) => {
+                      if (!dayAllowed) return
                       if (resizing || moving) return
                       setSelectedSlot(null)
                       setHoverPos(null)
                       const rect = e.currentTarget.getBoundingClientRect()
                       const row = getRowFromY(e, rect)
+                      if (row >= availableRows) return
                       const clickHour = HOURS[0] + row * 0.25
                       const hitIdx = selections.findIndex(
                         (s) =>
-                          s.day === dayIdx &&
+                          s.day === dk &&
                           clickHour >= s.startHour &&
                           clickHour < s.startHour + s.slots * 0.25
                       )
                       if (hitIdx < 0) {
-                        setDragging({ dayIdx, startRow: row, currentRow: row })
+                        setDragging({ dayKey: dk, startRow: row, currentRow: row })
                       }
                     }}
                     onMouseMove={(e) => {
                       const rect = e.currentTarget.getBoundingClientRect()
                       const row = getRowFromY(e, rect)
                       if (moving) {
-                        if (row !== moving.currentRow || dayIdx !== moving.currentDayIdx) {
-                          setMoving((prev) => prev ? { ...prev, currentRow: row, currentDayIdx: dayIdx } : null)
+                        const targetKey = dayAllowed ? dk : moving.currentDayKey
+                        if (row !== moving.currentRow || targetKey !== moving.currentDayKey) {
+                          setMoving((prev) => prev ? { ...prev, currentRow: row, currentDayKey: targetKey } : null)
                         }
                         return
                       }
+                      if (!dayAllowed) return
                       if (resizing) {
                         if (row !== resizing.currentRow) {
                           setResizing((prev) => prev ? { ...prev, currentRow: row } : null)
@@ -416,13 +527,13 @@ export function Component() {
                         return
                       }
                       if (dragging) {
-                        if (dragging.dayIdx === dayIdx && row !== dragging.currentRow) {
+                        if (dragging.dayKey === dk && row !== dragging.currentRow) {
                           setDragging((prev) => (prev ? { ...prev, currentRow: row } : null))
                         }
                         return
                       }
-                      if (!hoverPos || hoverPos.dayIdx !== dayIdx || hoverPos.row !== row) {
-                        setHoverPos({ dayIdx, row })
+                      if (!hoverPos || hoverPos.dayKey !== dk || hoverPos.row !== row) {
+                        setHoverPos({ dayKey: dk, row })
                       }
                     }}
                     onMouseUp={() => {
@@ -432,8 +543,7 @@ export function Component() {
                     }}
                     onMouseLeave={() => {
                       setHoverPos(null)
-                      if (moving) commitMove()
-                      else if (resizing) commitResize()
+                      if (resizing) commitResize()
                       else if (dragging) commitDrag()
                     }}
                   >
@@ -457,23 +567,24 @@ export function Component() {
 
                     {/* Selected slots */}
                     {selections
-                      .filter((s) => s.day === dayIdx)
+                      .filter((s) => s.day === dk)
                       .map((slot, i) => {
-                        const isBeingMovedAway = moving && moving.dayIdx === dayIdx && moving.slotIndex === i && moving.currentDayIdx !== dayIdx
+                        const isBeingMovedAway = moving && moving.dayKey === dk && moving.slotIndex === i && moving.currentDayKey !== dk
                         if (isBeingMovedAway) return null
                         let displaySlot = slot
-                        if (moving && moving.dayIdx === dayIdx && moving.slotIndex === i) {
+                        if (moving && moving.dayKey === dk && moving.slotIndex === i) {
                           const rowDelta = moving.currentRow - moving.grabRow
                           const originalStartRow = (moving.originalSlot.startHour - HOURS[0]) * 4
-                          const newStartRow = Math.max(0, Math.min(totalRows - moving.originalSlot.slots, originalStartRow + rowDelta))
+                          const newStartRow = Math.max(0, Math.min(availableRows - moving.originalSlot.slots, originalStartRow + rowDelta))
                           displaySlot = { ...slot, startHour: HOURS[0] + newStartRow * 0.25 }
-                        } else if (resizing && resizing.dayIdx === dayIdx && resizing.slotIndex === i) {
+                        } else if (resizing && resizing.dayKey === dk && resizing.slotIndex === i) {
                           if (resizing.edge === "bottom") {
                             const startRow = (resizing.originalSlot.startHour - HOURS[0]) * 4
-                            const newSlots = Math.max(1, resizing.currentRow + 1 - startRow)
+                            const clampedEnd = Math.min(resizing.currentRow + 1, availableRows)
+                            const newSlots = Math.max(1, clampedEnd - startRow)
                             displaySlot = { ...slot, slots: newSlots }
                           } else {
-                            const originalEndRow = (resizing.originalSlot.startHour - HOURS[0]) * 4 + resizing.originalSlot.slots
+                            const originalEndRow = Math.min((resizing.originalSlot.startHour - HOURS[0]) * 4 + resizing.originalSlot.slots, availableRows)
                             const newStartHour = HOURS[0] + resizing.currentRow * 0.25
                             const newSlots = Math.max(1, originalEndRow - resizing.currentRow)
                             displaySlot = { ...slot, startHour: newStartHour, slots: newSlots }
@@ -481,9 +592,9 @@ export function Component() {
                         }
                         const topPx = (displaySlot.startHour - HOURS[0]) * SLOT_HEIGHT
                         const heightPx = displaySlot.slots * (SLOT_HEIGHT / 4)
-                        const isSelected = selectedSlot?.day === dayIdx && selectedSlot?.index === i
-                        const isMoving = moving && moving.dayIdx === dayIdx && moving.slotIndex === i
-                        const isResizing = resizing && resizing.dayIdx === dayIdx && resizing.slotIndex === i
+                        const isSelected = selectedSlot?.day === dk && selectedSlot?.index === i
+                        const isMoving = moving && moving.dayKey === dk && moving.slotIndex === i
+                        const isResizing = resizing && resizing.dayKey === dk && resizing.slotIndex === i
                         const showSelectedShadow = isSelected || isResizing
                         const isFocused = showSelectedShadow || isMoving
                         return (
@@ -499,11 +610,11 @@ export function Component() {
                               e.stopPropagation()
                               const rect = e.currentTarget.closest("[data-grid]")!.getBoundingClientRect()
                               const row = getRowFromY(e as unknown as React.MouseEvent, rect)
-                              setMoving({ dayIdx, slotIndex: i, originalSlot: slot, grabRow: row, currentRow: row, currentDayIdx: dayIdx })
+                              setMoving({ dayKey: dk, slotIndex: i, originalSlot: slot, grabRow: row, currentRow: row, currentDayKey: dk })
                             }}
                             onMouseUp={() => {
-                              if (moving && moving.grabRow === moving.currentRow && moving.dayIdx === moving.currentDayIdx) {
-                                setSelectedSlot(isSelected ? null : { day: dayIdx, index: i })
+                              if (moving && moving.grabRow === moving.currentRow && moving.dayKey === moving.currentDayKey) {
+                                setSelectedSlot(isSelected ? null : { day: dk, index: i })
                               }
                             }}
                           >
@@ -515,7 +626,7 @@ export function Component() {
                               title="Delete"
                               onClick={(e) => {
                                 e.stopPropagation()
-                                deleteSlot(dayIdx, i)
+                                deleteSlot(dk, i)
                               }}
                             >
                               <TrashIcon className="h-3.5 w-3.5" />
@@ -527,7 +638,7 @@ export function Component() {
                                 e.stopPropagation()
                                 const rect = e.currentTarget.closest("[data-grid]")!.getBoundingClientRect()
                                 const row = getRowFromY(e as unknown as React.MouseEvent, rect)
-                                setResizing({ dayIdx, slotIndex: i, edge: "top", originalSlot: slot, currentRow: row })
+                                setResizing({ dayKey: dk, slotIndex: i, edge: "top", originalSlot: slot, currentRow: row })
                               }}
                             />
                             {/* Bottom resize handle */}
@@ -537,7 +648,7 @@ export function Component() {
                                 e.stopPropagation()
                                 const rect = e.currentTarget.closest("[data-grid]")!.getBoundingClientRect()
                                 const row = getRowFromY(e as unknown as React.MouseEvent, rect)
-                                setResizing({ dayIdx, slotIndex: i, edge: "bottom", originalSlot: slot, currentRow: row })
+                                setResizing({ dayKey: dk, slotIndex: i, edge: "bottom", originalSlot: slot, currentRow: row })
                               }}
                             />
                           </div>
@@ -545,10 +656,10 @@ export function Component() {
                       })}
 
                     {/* Moving block in target day */}
-                    {moving && moving.currentDayIdx === dayIdx && moving.dayIdx !== dayIdx && (() => {
+                    {moving && moving.currentDayKey === dk && moving.dayKey !== dk && (() => {
                       const rowDelta = moving.currentRow - moving.grabRow
                       const originalStartRow = (moving.originalSlot.startHour - HOURS[0]) * 4
-                      const newStartRow = Math.max(0, Math.min(totalRows - moving.originalSlot.slots, originalStartRow + rowDelta))
+                      const newStartRow = Math.max(0, Math.min(availableRows - moving.originalSlot.slots, originalStartRow + rowDelta))
                       const topPx = newStartRow * (SLOT_HEIGHT / 4)
                       const heightPx = moving.originalSlot.slots * (SLOT_HEIGHT / 4)
                       return (
@@ -564,7 +675,7 @@ export function Component() {
                     })()}
 
                     {/* Drag preview */}
-                    {previewSlot && previewSlot.day === dayIdx && (
+                    {previewSlot && previewSlot.day === dk && (
                       <div
                         className="absolute inset-x-1 z-20 rounded-md border border-primary/40 bg-primary/20"
                         style={{
@@ -575,19 +686,20 @@ export function Component() {
                     )}
 
                     {/* Hover ghost block */}
-                    {hoverPos && hoverPos.dayIdx === dayIdx && !dragging && !resizing && !moving && !ghostSuppressed && (() => {
+                    {hoverPos && hoverPos.dayKey === dk && !dragging && !resizing && !moving && !ghostSuppressed && (() => {
+                      if (hoverPos.row >= availableRows) return null
                       const hoverHour = HOURS[0] + hoverPos.row * 0.25
                       const overlapsExisting = selections.some(
-                        (s) => s.day === dayIdx && hoverHour >= s.startHour && hoverHour < s.startHour + s.slots * 0.25
+                        (s) => s.day === dk && hoverHour >= s.startHour && hoverHour < s.startHour + s.slots * 0.25
                       )
                       if (overlapsExisting) return null
-                      const clampedSlots = Math.min(DURATION_SLOTS, totalRows - hoverPos.row)
+                      const clampedSlots = Math.min(DURATION_SLOTS, availableRows - hoverPos.row)
                       if (clampedSlots <= 0) return null
                       const ghostTop = hoverPos.row * (SLOT_HEIGHT / 4)
                       const ghostHeight = clampedSlots * (SLOT_HEIGHT / 4)
                       return (
                         <div
-                          className="pointer-events-none absolute inset-x-1 z-5 rounded-md border border-dashed border-primary/30 bg-primary/5"
+                          className="cand-fade-in pointer-events-none absolute inset-x-1 z-5 rounded-md border border-dashed border-primary/30 bg-primary/5"
                           style={{ top: ghostTop, height: ghostHeight }}
                         >
                           <span className="block px-1.5 py-1 text-[11px] leading-none font-medium text-primary/40">
@@ -606,25 +718,112 @@ export function Component() {
                           "repeating-linear-gradient(135deg, transparent, transparent 4px, rgba(0,0,0,0.04) 4px, rgba(0,0,0,0.04) 5px)",
                       }}
                     />
+
+                    {/* Full-column disabled overlay */}
+                    {!dayAllowed && (
+                      <div
+                        className="absolute inset-0 z-20"
+                        style={{
+                          backgroundImage:
+                            "repeating-linear-gradient(135deg, transparent, transparent 4px, rgba(0,0,0,0.04) 4px, rgba(0,0,0,0.04) 5px)",
+                        }}
+                      />
+                    )}
                   </div>
                 </div>
-              ))}
+              )})}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Bottom bar */}
-      <div className="fixed inset-x-0 bottom-0 z-20 flex items-center justify-end gap-3 border-t border-stone-200 bg-stone-100/30 p-5 backdrop-blur-sm">
+      {/* Bottom bar — Step 1 */}
+      <div className="cand-slide-up fixed inset-x-0 bottom-0 z-20 flex items-center justify-end gap-3 border-t border-border bg-stone-100/30 p-5 backdrop-blur-sm">
         {!isValid && (
-          <span className="rounded-full bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-600">
-            Please select at least 2 time slots
-          </span>
+          <Badge variant="secondary">
+            Select at least 2 time slots to continue
+          </Badge>
         )}
-        <Button disabled={!isValid} size="lg">
+        <Button disabled={!isValid} size="lg" onClick={() => setStep(2)}>
           Continue
         </Button>
       </div>
+      </>)}
+
+      {step === 2 && (<>
+      {/* Main content — Step 2: Optional note */}
+      <div className="cand-fade-up relative z-10 flex flex-1 items-start justify-center p-14">
+        <div className="flex w-[560px] flex-col gap-6 overflow-hidden rounded-3xl border border-border bg-card p-6 shadow-sm">
+          <div className="flex flex-col gap-2">
+            <h2 className="text-lg font-semibold text-foreground">
+              Add an optional note to the recruiter
+            </h2>
+            <textarea
+              className="h-[120px] w-full resize rounded-lg border border-input bg-white px-3.5 py-2 text-sm text-foreground shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              placeholder=" "
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom bar — Step 2 */}
+      <div className="cand-slide-up fixed inset-x-0 bottom-0 z-20 flex items-center justify-between border-t border-border bg-stone-100/30 p-5 backdrop-blur-sm">
+        <Button variant="secondary" size="lg" onClick={() => setStep(1)}>
+          Back
+        </Button>
+        <Button size="lg" onClick={() => setStep(3)}>
+          Submit
+        </Button>
+      </div>
+      </>)}
+
+      {step === 3 && (<>
+      {/* Main content — Step 3: Confirmation */}
+      <div className="cand-fade-up relative z-10 flex flex-1 items-start justify-center px-8 pb-[200px] pt-10">
+        <div className="flex w-[560px] flex-col items-center gap-8 rounded-3xl border border-border bg-card px-6 py-8 shadow-sm">
+          <ScheduledIllustration />
+          <div className="flex w-full flex-col items-center gap-6">
+            <div className="flex w-full flex-col gap-2 text-foreground">
+              <h2 className="text-2xl font-semibold leading-8">
+                Thanks for sharing your availability!
+              </h2>
+              <p className="text-base leading-6">
+                You will get a confirmation once your meeting is scheduled.
+                <br />
+                Looking forward to meeting with you!
+              </p>
+            </div>
+
+            <div className="h-px w-full bg-border" />
+
+            <div className="flex w-full flex-col gap-4 text-foreground">
+              {groupedSelections.map((group) => (
+                <div key={group.label} className="flex flex-col gap-0.5">
+                  <p className="text-base font-semibold leading-6">{group.label}</p>
+                  {group.ranges.map((range, i) => (
+                    <p key={i} className="text-base leading-6">{range}</p>
+                  ))}
+                </div>
+              ))}
+            </div>
+
+            <div className="flex w-full flex-col gap-4">
+              <div className="h-px w-full bg-border" />
+              <div className="text-sm leading-5 text-muted-foreground">
+                <p>All times displayed in America/Los_Angeles.</p>
+                <p>You can update your availability until the interview is scheduled.</p>
+              </div>
+            </div>
+
+            <Button onClick={() => setStep(1)}>
+              Update availability
+            </Button>
+          </div>
+        </div>
+      </div>
+      </>)}
     </div>
   )
 }
@@ -690,4 +889,8 @@ function TrashIcon({ className }: { className?: string }) {
       <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
     </svg>
   )
+}
+
+function ScheduledIllustration() {
+  return <img src="/scheduled.svg" alt="" width={158} height={125} />
 }

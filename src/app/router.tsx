@@ -4,35 +4,42 @@ import { RootLayout } from "@/app/layout";
 const routes: RouteObject[] = [
   {
     path: "pipeline-automation",
+    HydrateFallback: () => null,
     lazy: () =>
       import("@/features/docs/pipeline-automation-page"),
   },
   {
     path: "proto-hub",
+    HydrateFallback: () => null,
     lazy: () => import("@/features/proto-hub/proto-hub-page"),
   },
   {
     path: "candidate-email",
+    HydrateFallback: () => null,
     lazy: () =>
       import("@/features/scheduling/candidate-availability-page"),
   },
   {
     path: "candidate-email/:slug",
+    HydrateFallback: () => null,
     lazy: () =>
       import("@/features/scheduling/candidate-availability-page"),
   },
   {
     path: "candidate-availability-acme-ai",
+    HydrateFallback: () => null,
     lazy: () =>
       import("@/features/scheduling/candidate-availability-acme-ai-page"),
   },
   {
     path: "careers",
+    HydrateFallback: () => null,
     lazy: () =>
       import("@/features/job-board/public-job-board-page"),
   },
   {
     path: "careers/:postId",
+    HydrateFallback: () => null,
     lazy: () =>
       import("@/features/job-board/public-job-post-detail-page"),
   },

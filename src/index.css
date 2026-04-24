@@ -159,6 +159,35 @@
     --brand: oklch(0.707 0.165 254.624);
 }
 
+@keyframes cand-fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes cand-fade-down {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes cand-slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes cand-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.cand-fade-up {
+  animation: cand-fade-up 400ms var(--ease-out-quint) both;
+}
+.cand-fade-down {
+  animation: cand-fade-down 350ms var(--ease-out-quint) both;
+}
+.cand-slide-up {
+  animation: cand-slide-up 400ms var(--ease-out-quint) both;
+}
+.cand-fade-in {
+  animation: cand-fade-in 250ms var(--ease-out-quint) both;
+}
 .customer-brand {
     --primary: oklch(0.571 0.199 264.532);
     --primary-foreground: oklch(1 0 0);
