@@ -7,7 +7,7 @@ import {
   type KeyboardEvent,
   type Ref,
 } from "react";
-import { ArrowUp, Mic, Paperclip } from "lucide-react";
+import { ArrowUp, Mic, Paperclip, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -27,8 +27,8 @@ const textareaClass = cn(
 interface ChatInputProps {
   onSend: (content: string) => void;
   disabled?: boolean;
-  /** Bar variant: icon buttons (paperclip, mic, arrow). Default: Send button. */
-  variant?: "default" | "bar";
+  /** Bar variant: icon buttons (paperclip, mic, arrow). Nav: compact search bar. Default: Send button. */
+  variant?: "default" | "bar" | "nav";
   /** Controlled value (e.g. for quick actions that prefill). */
   value?: string;
   onChange?: (value: string) => void;
@@ -179,6 +179,44 @@ export function ChatInput({
   }, []);
 
   const mirrorRef = useReactRef<HTMLDivElement | null>(null);
+
+  if (variant === "nav") {
+    return (
+      <div className="flex h-9 items-center gap-1.5 rounded-lg border border-border bg-top-nav-muted px-3 focus-within:ring-2 focus-within:ring-ring/50">
+        <Search className="size-4 shrink-0 text-top-nav-foreground/70" />
+        <div className="relative min-w-0 flex-1">
+          {commandText && (
+            <div
+              ref={mirrorRef}
+              aria-hidden
+              className="pointer-events-none absolute inset-0 overflow-hidden whitespace-nowrap text-sm"
+            >
+              <span className="text-berry-500">{commandPrefix}</span>
+              <span>{value || ""}</span>
+            </div>
+          )}
+          <input
+            ref={mergedRef as React.Ref<HTMLInputElement>}
+            type="text"
+            value={commandText ? fullValue : value}
+            onChange={(e) =>
+              commandText
+                ? handleFullValueChange(e.target.value)
+                : setValue(e.target.value)
+            }
+            onKeyDown={handleKeyDown as unknown as React.KeyboardEventHandler<HTMLInputElement>}
+            placeholder={commandText ? "Describe the role, or press Enter to skip" : ""}
+            disabled={disabled}
+            className={cn(
+              "w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
+              commandText &&
+                "text-transparent caret-foreground [&::placeholder]:text-muted-foreground [&::selection]:bg-ring/20",
+            )}
+          />
+        </div>
+      </div>
+    );
+  }
 
   if (variant === "bar") {
     return (

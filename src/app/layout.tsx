@@ -1,6 +1,5 @@
 import { Link, Outlet, useLocation } from "react-router";
 import { AppSidebar } from "@/components/app-sidebar";
-import { ChatBar } from "@/components/chat-bar";
 import { DockedChatPanel } from "@/components/docked-chat-panel";
 import { TopNav } from "@/components/top-nav";
 import { useChatBarStore } from "@/stores/chat-bar-store";
@@ -111,14 +110,12 @@ function useBreadcrumbs(): { crumbs: Crumb[]; page: string } {
 
 export function RootLayout() {
   const { crumbs, page } = useBreadcrumbs();
-  const { pathname } = useLocation();
   const docked = useChatBarStore((s) => s.docked);
-  const hideChatBar = pathname.startsWith("/workflows");
 
   return (
     <div className="flex h-svh flex-col">
       <TopNav />
-      <SidebarProvider defaultOpen={true} className="min-h-0 flex-1 rounded-t-2xl overflow-hidden">
+      <SidebarProvider defaultOpen={true} className="min-h-0 flex-1 rounded-t-2xl overflow-hidden shadow-sm">
         <AppSidebar />
         <SidebarInset className="relative min-w-0 min-h-0 overflow-hidden bg-white dark:bg-stone-950">
           <header className="flex h-16 shrink-0 items-center gap-2 px-4 transition-[width,height] ease-in-out-quart group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
@@ -151,7 +148,6 @@ export function RootLayout() {
           <div className="flex w-full flex-1 flex-col gap-6 overflow-y-auto px-17 pt-6 pb-20">
             <Outlet />
           </div>
-          {!hideChatBar && <ChatBar />}
         </SidebarInset>
         {docked && <DockedChatPanel />}
       </SidebarProvider>

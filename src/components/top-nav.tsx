@@ -1,15 +1,14 @@
 import {
-  BadgeCheck,
   Bell,
-  CreditCard,
+  FlaskConical,
   LogOut,
   Monitor,
   Moon,
-  Search,
   Sparkles,
   Sun,
 } from "lucide-react"
 import logoUrl from "@/assets/Logo.svg"
+import { ChatBar } from "@/components/chat-bar"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
@@ -25,9 +24,9 @@ import { useChatBarStore } from "@/stores/chat-bar-store"
 import { useThemeStore, type Theme } from "@/stores/theme-store"
 
 const user = {
-  name: "shadcn",
-  email: "m@example.com",
-  avatar: "/avatars/shadcn.jpg",
+  name: "Sophia Bai",
+  email: "sophia@example.com",
+  avatar: "/avatars/sophia.jpg",
 }
 
 const themeOptions: { value: Theme; label: string; icon: typeof Sun }[] = [
@@ -37,24 +36,25 @@ const themeOptions: { value: Theme; label: string; icon: typeof Sun }[] = [
 ]
 
 export function TopNav() {
-  const { setOpen: openSearch, setDocked, toggleDocked } = useChatBarStore()
+  const { toggleDocked } = useChatBarStore()
   const { theme, setTheme } = useThemeStore()
 
   return (
     <header className="relative flex h-(--top-nav-height) shrink-0 items-center justify-between bg-top-nav px-5">
-      <img src={logoUrl} alt="Logo" className="h-6 w-auto" />
+      <img src={logoUrl} alt="Logo" className="h-6 w-auto brightness-0 dark:brightness-100" />
 
-      <button
-        type="button"
-        onClick={() => { setDocked(false); openSearch(true) }}
-        className="absolute left-1/2 top-1/2 flex h-9 w-80 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center gap-1.5 rounded-lg bg-top-nav-muted px-3 shadow-sm"
-      >
-        <Search className="size-4 shrink-0 text-top-nav-foreground/70" />
-        <span className="sr-only">Search</span>
-      </button>
+      <ChatBar />
 
-      <div className="flex items-center gap-6">
-        <div className="flex items-center">
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-9 text-top-nav-foreground hover:bg-top-nav-muted"
+          >
+            <Bell className="size-4" />
+            <span className="sr-only">Notifications</span>
+          </Button>
           <Button
             variant="ghost"
             size="icon"
@@ -64,22 +64,14 @@ export function TopNav() {
             <Sparkles className="size-4" />
             <span className="sr-only">AI</span>
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-9 text-top-nav-foreground hover:bg-top-nav-muted"
-          >
-            <Bell className="size-4" />
-            <span className="sr-only">Notifications</span>
-          </Button>
         </div>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button type="button" className="size-[38px] shrink-0 overflow-hidden rounded-lg focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
-              <Avatar className="size-full rounded-lg">
+            <button type="button" className="size-8 shrink-0 rounded-full ring-2 ring-white focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
+              <Avatar className="size-full">
                 <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg text-xs">CN</AvatarFallback>
+                <AvatarFallback className="text-[10px]">SB</AvatarFallback>
               </Avatar>
             </button>
           </DropdownMenuTrigger>
@@ -88,7 +80,7 @@ export function TopNav() {
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="size-8 rounded-lg">
                   <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                  <AvatarFallback className="rounded-lg">SB</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
@@ -96,28 +88,6 @@ export function TopNav() {
                 </div>
               </div>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <Sparkles />
-                Upgrade to Pro
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheck />
-                Account
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Bell />
-                Notifications
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">
@@ -134,6 +104,11 @@ export function TopNav() {
                 </DropdownMenuItem>
               ))}
             </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => window.open("/proto-hub", "_blank")}>
+              <FlaskConical />
+              Proto hub
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
               <LogOut />

@@ -20,7 +20,6 @@ import {
 } from "lucide-react"
 import { NavMain, type NavMainItem } from "@/components/nav-main"
 import { NavProjects } from "@/components/nav-projects"
-import { NavUser } from "@/components/nav-user"
 import { useChatBarStore } from "@/stores/chat-bar-store"
 import { useStarredRequisitionsStore } from "@/stores/starred-requisitions-store"
 import { useCandidatePools } from "@/features/candidates/api/use-candidate-pools"
@@ -33,11 +32,6 @@ import {
 import { formatReqTitle } from "@/lib/utils"
 
 const data = {
-  user: {
-    name: "Sophia Bai",
-    email: "sophia@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
   quickAccess: [
     {
       title: "Inbox",
@@ -161,9 +155,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           overflow={data.recruitingOverflow}
         />
       </SidebarContent>
-      <SidebarFooter>
-        <NavUser user={data.user} />
-      </SidebarFooter>
+      <SidebarFooter />
       <SidebarRail />
     </Sidebar>
   )

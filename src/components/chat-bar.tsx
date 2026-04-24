@@ -178,10 +178,10 @@ export function ChatBar() {
         !containerRef.current.contains(e.target as Node)
       ) {
         setExpanded(false)
-        setOpen(false)
+        setValue("")
       }
     },
-    [reqDialogOpen, setOpen],
+    [reqDialogOpen],
   )
 
   useEffect(() => {
@@ -319,22 +319,18 @@ export function ChatBar() {
       } else if (expanded) {
         setExpanded(false)
       } else {
-        setOpen(false)
+        inputRef.current?.blur()
       }
     }
   }
 
-  if (docked || !open) return null
+  const hasOverlay = showDropdown || expanded || chat.isError
 
   return (
   <>
-    <div
-      ref={containerRef}
-      className="absolute inset-x-4 top-[80px] z-50 mx-auto flex max-w-[600px] flex-col"
-    >
-      {/* Input */}
+    <div ref={containerRef} className="relative w-80">
       <ChatInput
-        variant="bar"
+        variant="nav"
         value={value}
         onChange={setValue}
         onSend={handleSend}
@@ -345,122 +341,123 @@ export function ChatBar() {
         onClearCommand={() => setActiveCommand(null)}
       />
 
-      {chat.isError && (
-        <p className="px-5 py-2 text-center text-sm text-destructive">
-          Failed to get a response. Try again.
-        </p>
-      )}
+      {hasOverlay && (
+        <div className="absolute left-1/2 top-full z-50 mt-2 flex w-[600px] -translate-x-1/2 flex-col">
+          {chat.isError && (
+            <p className="px-5 py-2 text-center text-sm text-destructive">
+              Failed to get a response. Try again.
+            </p>
+          )}
 
-      {/* Search / navigation dropdown */}
-      {showDropdown && !expanded && (
-        <div className="mt-1.5 max-h-[300px] overflow-y-auto rounded-2xl border bg-popover px-4 py-2 shadow-2xl">
-          {dropdownItems.map((item, idx) => {
-            const showHeading =
-              idx === 0 || dropdownItems[idx - 1].type !== item.type
-            const Icon =
-              item.type === "candidate"
-                ? Users
-                : item.type === "requisition"
-                  ? Briefcase
-                  : Sparkles
-            return (
-              <div key={item.id}>
-                {showHeading && (
-                  <div className="py-1.5 text-xs font-medium text-muted-foreground">
-                    {GROUP_LABELS[item.type]}
+          {showDropdown && !expanded && (
+            <div className="max-h-[300px] overflow-y-auto rounded-xl border bg-popover px-4 py-2 shadow-lg">
+              {dropdownItems.map((item, idx) => {
+                const showHeading =
+                  idx === 0 || dropdownItems[idx - 1].type !== item.type
+                const Icon =
+                  item.type === "candidate"
+                    ? Users
+                    : item.type === "requisition"
+                      ? Briefcase
+                      : Sparkles
+                return (
+                  <div key={item.id}>
+                    {showHeading && (
+                      <div className="py-1.5 text-xs font-medium text-muted-foreground">
+                        {GROUP_LABELS[item.type]}
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      className={cn(
+                        "flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-left text-sm transition-colors",
+                        idx === selectedIndex
+                          ? "bg-accent text-accent-foreground"
+                          : "hover:bg-accent/50",
+                      )}
+                      onClick={() => handleItemSelect(item)}
+                      onMouseEnter={() => setSelectedIndex(idx)}
+                    >
+                      {item.type !== "action" && (
+                        <Icon
+                          className={cn(
+                            "size-4 shrink-0",
+                            item.type === "ai"
+                              ? "text-berry-400"
+                              : "text-muted-foreground",
+                          )}
+                        />
+                      )}
+                      <div className="flex min-w-0 flex-1 items-center gap-2">
+                        <div className="flex min-w-0 flex-col">
+                          <span className="truncate font-medium">
+                            {item.type === "action" ? `/${item.label}` : item.label}
+                          </span>
+                          {item.sublabel && (
+                            <span className="truncate text-xs text-muted-foreground">
+                              {item.sublabel}
+                            </span>
+                          )}
+                        </div>
+                        {item.badge && (
+                          <Badge
+                            variant="outline"
+                            className="ml-auto shrink-0 capitalize"
+                          >
+                            {item.badge}
+                          </Badge>
+                        )}
+                        {idx === selectedIndex && (
+                          <kbd className="ml-auto shrink-0 rounded border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                            Enter
+                          </kbd>
+                        )}
+                      </div>
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {expanded && !docked && (
+            <div className="flex max-h-[50vh] flex-col rounded-xl border bg-popover shadow-lg">
+              <div className="flex shrink-0 items-center justify-end gap-1 border-b px-4 py-4">
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={() => {
+                    setExpanded(false)
+                    setDocked(true)
+                  }}
+                  title="Open as side panel"
+                >
+                  <PanelRightDashed className="size-3.5" />
+                </Button>
+              </div>
+              <div className="overflow-y-auto px-6 py-6">
+                {messages.length === 0 && !chat.isPending ? (
+                  <p className="py-8 text-center text-sm text-muted-foreground">
+                    Send a message to start a conversation.
+                  </p>
+                ) : (
+                  <div className="flex flex-col gap-4">
+                    {messages.map((msg, idx) => (
+                      <MessageBubble
+                        key={idx}
+                        message={msg}
+                        onOpenReqDraft={openReqDialog}
+                      />
+                    ))}
+                    {(chat.isPending || parseReq.isPending) && <MessageSkeleton />}
+                    <div ref={bottomRef} />
                   </div>
                 )}
-                <button
-                  type="button"
-                  className={cn(
-                    "flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-left text-sm transition-colors",
-                    idx === selectedIndex
-                      ? "bg-accent text-accent-foreground"
-                      : "hover:bg-accent/50",
-                  )}
-                  onClick={() => handleItemSelect(item)}
-                  onMouseEnter={() => setSelectedIndex(idx)}
-                >
-                  {item.type !== "action" && (
-                    <Icon
-                      className={cn(
-                        "size-4 shrink-0",
-                        item.type === "ai"
-                          ? "text-berry-400"
-                          : "text-muted-foreground",
-                      )}
-                    />
-                  )}
-                  <div className="flex min-w-0 flex-1 items-center gap-2">
-                    <div className="flex min-w-0 flex-col">
-                      <span className="truncate font-medium">
-                        {item.type === "action" ? `/${item.label}` : item.label}
-                      </span>
-                      {item.sublabel && (
-                        <span className="truncate text-xs text-muted-foreground">
-                          {item.sublabel}
-                        </span>
-                      )}
-                    </div>
-                    {item.badge && (
-                      <Badge
-                        variant="outline"
-                        className="ml-auto shrink-0 capitalize"
-                      >
-                        {item.badge}
-                      </Badge>
-                    )}
-                    {idx === selectedIndex && (
-                      <kbd className="ml-auto shrink-0 rounded border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                        Enter
-                      </kbd>
-                    )}
-                  </div>
-                </button>
               </div>
-            )
-          })}
+            </div>
+          )}
         </div>
       )}
-
-      {/* Messages panel */}
-      {expanded && (
-        <div className="mt-1.5 flex max-h-[50vh] flex-col rounded-2xl border bg-popover shadow-2xl">
-          <div className="flex shrink-0 items-center justify-end gap-1 border-b px-4 py-4">
-            <Button
-              variant="ghost"
-              size="icon-xs"
-              onClick={() => {
-                setExpanded(false)
-                setDocked(true)
-              }}
-              title="Open as side panel"
-            >
-              <PanelRightDashed className="size-3.5" />
-            </Button>
-          </div>
-          <div className="overflow-y-auto px-6 py-6">
-            {messages.length === 0 && !chat.isPending ? (
-              <p className="py-8 text-center text-sm text-muted-foreground">
-                Send a message to start a conversation.
-              </p>
-            ) : (
-              <div className="flex flex-col gap-4">
-                {messages.map((msg, idx) => (
-                  <MessageBubble
-                    key={idx}
-                    message={msg}
-                    onOpenReqDraft={openReqDialog}
-                  />
-                ))}
-                {(chat.isPending || parseReq.isPending) && <MessageSkeleton />}
-                <div ref={bottomRef} />
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
     </div>
 
     <CreateRequisitionDialog
