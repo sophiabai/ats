@@ -66,7 +66,7 @@ const GROUP_LABELS: Record<string, string> = {
 }
 
 export function ChatBar() {
-  const { open, setOpen, docked, setDocked } = useChatBarStore()
+  const { open, docked, setDocked } = useChatBarStore()
   const [expanded, setExpanded] = useState(false)
   const [value, setValue] = useState("")
   const { messages, addMessage } = useChatStore()

@@ -12,13 +12,7 @@ import {
   Send,
   Undo2,
   User,
-  UserPlus,
 } from "lucide-react";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -365,8 +359,6 @@ const DEMO_SCHEDULE: ScheduleMetadata = {
 };
 
 export function Component() {
-  const scheduleItems = ACTION_ITEMS.filter((i) => i.type === "schedule");
-  const decisionItems = ACTION_ITEMS.filter((i) => i.type === "decision");
   const [view, setView] = useState<InboxView>("candidate");
   const { setDocked } = useChatBarStore();
   const { addMessage } = useChatStore();

@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { CandidateSummaryPanel } from "./components/candidate-summary-panel"
+import { OptionalNoteStep } from "./components/optional-note-step"
 
 const CANDIDATE = "Andy"
 const COMPANY = "ACME"
@@ -97,6 +98,8 @@ function getCalendarGrid(year: number, month: number) {
 }
 
 export function Component() {
+  const [step, setStep] = useState(1)
+  const [note, setNote] = useState("")
   const [viewMonth, setViewMonth] = useState(() => ({ year: WINDOW_START.getFullYear(), month: WINDOW_START.getMonth() }))
   const [selectedDate, setSelectedDate] = useState<Date | null>(() => WINDOW_START)
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
@@ -113,6 +116,22 @@ export function Component() {
 
   const today = useMemo(() => dateKey(new Date()), [])
 
+  const confirmationDetails = useMemo(() => {
+    if (!selectedDate || !selectedSlot) return null
+    const matchedSlot = slots.find(
+      (s) => s.time === selectedSlot || (s.multiDay && `multi-${slots.indexOf(s)}` === selectedSlot),
+    )
+    if (!matchedSlot) return null
+    if (matchedSlot.multiDay) {
+      return matchedSlot.multiDay.map((day) => ({
+        label: day.label,
+        ranges: day.ranges,
+      }))
+    }
+    const dateLabel = `${DAY_LONG[selectedDate.getDay()]}, ${MONTH_NAMES[selectedDate.getMonth()]} ${selectedDate.getDate()}, ${selectedDate.getFullYear()}`
+    return [{ label: dateLabel, ranges: [`${matchedSlot.time} (PST)`] }]
+  }, [selectedDate, selectedSlot, slots])
+
   function prevMonth() {
     setViewMonth((v) => v.month === 0 ? { year: v.year - 1, month: 11 } : { ...v, month: v.month - 1 })
   }
@@ -125,6 +144,7 @@ export function Component() {
       className="customer-brand relative flex min-h-svh flex-col overflow-hidden bg-muted"
       style={{ backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "repeat", backgroundImage: BG_IMAGE }}
     >
+      {step === 1 && (<>
       <div className="cand-fade-up relative z-10 flex flex-1 items-start justify-center px-8 pb-[200px] pt-14">
         <div className="flex overflow-hidden rounded-3xl bg-white/85">
           <CandidateSummaryPanel
@@ -150,21 +170,22 @@ export function Component() {
                 <span>{MONTH_NAMES[viewMonth.month]}</span>
                 <span className="font-normal text-muted-foreground">{viewMonth.year}</span>
               </div>
-              <button
-                className="rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-foreground hover:bg-stone-50"
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   const now = new Date()
                   setViewMonth({ year: now.getFullYear(), month: now.getMonth() })
                 }}
               >
                 Today
-              </button>
+              </Button>
             </div>
 
             {/* Day headers */}
             <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
               {DAY_SHORT.map((d) => (
-                <div key={d} className="w-12 py-1">{d}</div>
+                <div key={d} className="w-10 py-1">{d}</div>
               ))}
             </div>
             <div className="mb-1 h-px bg-border" />
@@ -176,13 +197,13 @@ export function Component() {
                 const isToday = dk === today
                 const isSelected = selectedDate && dk === dateKey(selectedDate)
                 const available = cell.current && isAvailableDate(cell.date)
-                const hasAvailableDot = available && cell.date.getDay() !== 0 && cell.date.getDay() !== 6
+                const hasTodayDot = isToday && cell.current
                 return (
                   <button
                     key={i}
                     disabled={!available}
                     onClick={() => { setSelectedDate(cell.date); setSelectedSlot(null) }}
-                    className={`relative flex h-10 w-12 items-center justify-center rounded-lg text-sm transition-colors
+                    className={`relative flex h-10 w-10 items-center justify-center rounded-lg text-sm transition-colors
                       ${!cell.current ? "text-stone-300" : ""}
                       ${cell.current && !available ? "text-stone-300" : ""}
                       ${cell.current && available && !isSelected ? "text-foreground hover:bg-stone-100" : ""}
@@ -192,7 +213,7 @@ export function Component() {
                     `}
                   >
                     {cell.day}
-                    {hasAvailableDot && !isSelected && (
+                    {hasTodayDot && !isSelected && (
                       <span className="absolute bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-primary" />
                     )}
                   </button>
@@ -217,17 +238,17 @@ export function Component() {
                         </p>
                         <button
                           onClick={() => setSelectedSlot(`multi-${i}`)}
-                          className={`rounded-lg border px-3 py-2 text-left text-xs transition-colors ${
+                          className={`rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
                             selectedSlot === `multi-${i}`
-                              ? "border-primary bg-primary/5 text-primary"
-                              : "border-border hover:border-primary/40"
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-border text-foreground hover:border-primary/40"
                           }`}
                         >
                           {slot.multiDay.map((day, di) => (
                             <div key={di} className={di > 0 ? "mt-1.5" : ""}>
-                              <span className="text-muted-foreground">{day.label}</span>
+                              <span className={selectedSlot === `multi-${i}` ? "text-primary-foreground/70" : "text-muted-foreground"}>{day.label}</span>
                               {day.ranges.map((r, ri) => (
-                                <p key={ri} className="font-medium text-foreground">{r}</p>
+                                <p key={ri} className="font-medium">{r}</p>
                               ))}
                             </div>
                           ))}
@@ -257,18 +278,80 @@ export function Component() {
         </div>
       </div>
 
-      {/* Bottom bar */}
+      {/* Bottom bar — Step 1 */}
       <div className="cand-slide-up fixed inset-x-0 bottom-0 z-20 flex items-center justify-end gap-3 border-t border-border bg-stone-100/30 p-5 backdrop-blur-sm">
         <div className="flex items-center">
-          <span className="text-sm text-muted-foreground">None of these work?</span>
+          <span className="text-sm text-foreground">None of these work?</span>
           <Button variant="link" size="lg">
             Suggest time
           </Button>
         </div>
-        <Button size="lg" disabled={!selectedSlot}>
-          Schedule
+        <Button size="lg" disabled={!selectedSlot} onClick={() => setStep(2)}>
+          Continue
         </Button>
       </div>
+      </>)}
+
+      {step === 2 && (
+        <OptionalNoteStep
+          note={note}
+          onNoteChange={setNote}
+          onBack={() => setStep(1)}
+          onSubmit={() => setStep(3)}
+          submitLabel="Schedule"
+        />
+      )}
+
+      {step === 3 && (<>
+      <div className="cand-fade-up relative z-10 flex flex-1 items-start justify-center px-8 pb-[200px] pt-10">
+        <div className="flex w-[560px] flex-col items-center gap-8 rounded-3xl border border-border bg-card px-6 py-8 shadow-sm">
+          <ScheduledIllustration />
+          <div className="flex w-full flex-col items-center gap-6">
+            <div className="flex w-full flex-col gap-2 text-foreground">
+              <h2 className="text-2xl font-semibold leading-8">
+                Your interview is scheduled!
+              </h2>
+              <p className="text-base leading-6">
+                You will get an email confirmation with a calendar invite.
+                <br />
+                Looking forward to meeting with you!
+              </p>
+            </div>
+
+            <div className="h-px w-full bg-border" />
+
+            {confirmationDetails && (
+              <div className="flex w-full flex-col gap-4 text-foreground">
+                {confirmationDetails.map((group) => (
+                  <div key={group.label} className="flex flex-col gap-0.5">
+                    <p className="text-base font-semibold leading-6">{group.label}</p>
+                    {group.ranges.map((range, i) => (
+                      <p key={i} className="text-base leading-6">{range}</p>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex w-full flex-col gap-4">
+              <div className="h-px w-full bg-border" />
+              <div className="text-sm leading-5 text-muted-foreground">
+                <p>All times displayed in America/Los_Angeles.</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Button onClick={() => setStep(1)}>
+                Reschedule
+              </Button>
+              <Button variant="outline" onClick={() => setStep(1)}>
+                Cancel interview
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+      </>)}
     </div>
   )
 }
@@ -287,4 +370,8 @@ function ChevronRightIcon({ className }: { className?: string }) {
       <path d="m9 18 6-6-6-6" />
     </svg>
   )
+}
+
+function ScheduledIllustration() {
+  return <img src="/scheduled.svg" alt="" width={158} height={125} />
 }
