@@ -6,13 +6,18 @@ export function OptionalNoteStep({
   onBack,
   onSubmit,
   submitLabel = "Submit",
+  skipLabel,
 }: {
   note: string
   onNoteChange: (value: string) => void
   onBack: () => void
   onSubmit: () => void
   submitLabel?: string
+  skipLabel?: string
 }) {
+  const hasNote = note.trim().length > 0
+  const resolvedSkipLabel = skipLabel ?? `Skip and ${submitLabel.toLowerCase()}`
+
   return (
     <>
       <div className="cand-fade-up relative z-10 flex flex-1 items-start justify-center p-14">
@@ -35,9 +40,15 @@ export function OptionalNoteStep({
         <Button variant="secondary" size="lg" onClick={onBack}>
           Back
         </Button>
-        <Button size="lg" onClick={onSubmit}>
-          {submitLabel}
-        </Button>
+        {hasNote ? (
+          <Button size="lg" onClick={onSubmit}>
+            {submitLabel}
+          </Button>
+        ) : (
+          <Button variant="outline" size="lg" onClick={onSubmit}>
+            {resolvedSkipLabel}
+          </Button>
+        )}
       </div>
     </>
   )
