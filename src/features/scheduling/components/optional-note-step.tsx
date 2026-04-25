@@ -45,7 +45,7 @@ export function OptionalNoteStep({
             {submitLabel}
           </Button>
         ) : (
-          <Button variant="outline" size="lg" onClick={onSubmit}>
+          <Button variant="outline" size="lg" className="text-foreground" onClick={onSubmit}>
             {resolvedSkipLabel}
           </Button>
         )}

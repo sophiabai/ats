@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { CandidateSummaryPanel } from "./components/candidate-summary-panel"
 import { OptionalNoteStep } from "./components/optional-note-step"
+import { MobileNoteStep } from "./components/mobile-note-step"
 import { useMediaQuery } from "@/hooks/use-media-query"
 
 const CANDIDATE = "Andy"
@@ -521,42 +522,14 @@ function MobileLayout({ s }: { s: ScheduleState }) {
 
       {/* Step 3: Optional note */}
       {mobileStep === 3 && (
-        <div className="cand-fade-up flex flex-1 flex-col">
-          <div className="flex items-center gap-4 border-b border-border p-6">
-            <button
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border"
-              onClick={() => setMobileStep(2)}
-            >
-              <ChevronLeftIcon className="h-4 w-4 text-foreground" />
-            </button>
-            <div className="flex flex-col gap-2">
-              <div>
-                <p className="text-lg font-medium text-foreground">Add an optional note to the recruiter</p>
-                <p className="text-sm text-muted-foreground">{selectedDateLabel} {selectedTimeLabel}</p>
-              </div>
-              <InfoPills />
-            </div>
-          </div>
-
-          <div className="flex flex-1 flex-col gap-6 px-8 py-6">
-            <textarea
-              autoFocus
-              className="h-24 w-full resize rounded-lg border border-input bg-white px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder=" "
-              value={s.note}
-              onChange={(e) => s.setNote(e.target.value)}
-            />
-            {s.note.trim() ? (
-              <Button className="h-12 w-full" onClick={() => setMobileStep(4)}>
-                Schedule
-              </Button>
-            ) : (
-              <Button variant="outline" className="h-12 w-full" onClick={() => setMobileStep(4)}>
-                Skip and schedule
-              </Button>
-            )}
-          </div>
-        </div>
+        <MobileNoteStep
+          note={s.note}
+          onNoteChange={(v) => s.setNote(v)}
+          onBack={() => setMobileStep(2)}
+          onSubmit={() => setMobileStep(4)}
+          submitLabel="Schedule"
+          subtitle={`${selectedDateLabel} ${selectedTimeLabel}`}
+        />
       )}
 
       {/* Step 4: Confirmation */}
