@@ -98,7 +98,7 @@
     --primary-foreground: var(--stone-50);
     --secondary: var(--stone-100);
     --secondary-foreground: var(--stone-800);
-    --muted: var(--stone-100);
+    --muted: var(--stone-50);
     --muted-foreground: var(--stone-500);
     --accent: var(--stone-100);
     --accent-foreground: var(--stone-900);

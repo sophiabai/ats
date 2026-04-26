@@ -75,7 +75,7 @@ export function StageIcon({ status }: { status: StageStatus }) {
 
 export function InterviewTimeline({ interviews }: { interviews: ReqInterview[] }) {
   return (
-    <div className="mt-2 border-t pt-2">
+    <div className="mt-2 pt-2">
       {interviews.map((iv, idx) => {
         const isLast = idx === interviews.length - 1;
         return (

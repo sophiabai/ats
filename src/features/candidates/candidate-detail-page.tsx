@@ -1,24 +1,44 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useParams, useSearchParams } from "react-router";
 import { format, formatDistanceToNow } from "date-fns";
 import {
   Briefcase,
   Calendar,
   CheckCircle2,
+  ChevronDown,
   FileText,
   GraduationCap,
+  Home,
   Mail,
   MapPin,
   MessageSquare,
+  Paperclip,
   Phone,
   Search,
   Send,
+  SendHorizontal,
+  TrendingUp,
   UserCheck,
+  Users,
 } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { cn, formatReqTitle } from "@/lib/utils";
 import {
   useCandidateDetail,
@@ -33,6 +53,7 @@ import {
   MILESTONE_ORDER,
   StageIcon,
 } from "@/features/candidates/components/application-tab-content";
+import { ScheduleInterviewDialog } from "@/features/candidates/components/schedule-interview-dialog";
 import { useSetPageTitle } from "@/stores/page-title-store";
 import type { Milestone } from "@/types/database";
 
@@ -50,9 +71,9 @@ function ProfileSkeleton() {
 
 export function Component() {
   const { candidateId } = useParams<{ candidateId: string }>();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const preselectedAppId = searchParams.get("app");
-  const preselectedTab = searchParams.get("tab");
+  const tabParam = searchParams.get("tab");
 
   const {
     data: candidate,
@@ -64,21 +85,32 @@ export function Component() {
     candidate ? `${candidate.first_name} ${candidate.last_name}` : null,
   );
 
+  const VALID_TABS = ["profile", "applications", "documents", "messages", "activities"];
   const apps = candidate?.applications ?? [];
-  const defaultTab =
-    preselectedTab === "activities"
-      ? "activities"
-      : preselectedTab === "applications" ||
-          (preselectedAppId && apps.some((a) => a.id === preselectedAppId))
-        ? "applications"
-        : "profile";
-  const [activeTab, setActiveTab] = useState<string | undefined>(undefined);
 
-  useEffect(() => {
-    setActiveTab(undefined);
-  }, [candidateId]);
+  const tabsValue = VALID_TABS.includes(tabParam ?? "")
+    ? tabParam!
+    : preselectedAppId && apps.some((a) => a.id === preselectedAppId)
+      ? "applications"
+      : "profile";
 
-  const tabsValue = activeTab ?? defaultTab;
+  const setActiveTab = useCallback(
+    (tab: string) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (tab === "profile") {
+            next.delete("tab");
+          } else {
+            next.set("tab", tab);
+          }
+          return next;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
 
   if (isLoading) return <ProfileSkeleton />;
 
@@ -130,6 +162,8 @@ export function Component() {
         <TabsList>
           <TabsTrigger value="profile">Candidate info</TabsTrigger>
           <TabsTrigger value="applications">Job applications</TabsTrigger>
+          <TabsTrigger value="documents">Documents</TabsTrigger>
+          <TabsTrigger value="messages">Messages</TabsTrigger>
           <TabsTrigger value="activities">Activity</TabsTrigger>
         </TabsList>
 
@@ -141,7 +175,20 @@ export function Component() {
           <JobApplicationsTabContent
             apps={apps}
             preselectedAppId={preselectedAppId}
+            candidateName={`${candidate.first_name} ${candidate.last_name}`}
           />
+        </TabsContent>
+
+        <TabsContent value="documents" className="mt-4">
+          <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
+            Coming soon
+          </div>
+        </TabsContent>
+
+        <TabsContent value="messages" className="mt-4">
+          <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
+            Coming soon
+          </div>
         </TabsContent>
 
         <TabsContent value="activities" className="mt-4">
@@ -294,15 +341,18 @@ const STATUS_LABEL: Record<string, string> = {
   withdrawn: "Withdrawn",
 };
 
-function ApplicationDetailPanel({ app }: { app: ApplicationDetail }) {
-  const [subTab, setSubTab] = useState("application");
+function ApplicationDetailPanel({ app, candidateName }: { app: ApplicationDetail; candidateName: string }) {
+  const [subTab, setSubTab] = useState("interviews");
+  const [scheduleOpen, setScheduleOpen] = useState(false);
   const allStages = app.requisitions?.req_stages ?? [];
+  const reqTitle = formatReqTitle(app.requisitions.req_number, app.requisitions.title);
 
   const pipeline = useMemo(() => {
     const grouped = new Map<Milestone, ReqStageWithInterviews[]>();
     for (const ms of MILESTONE_ORDER) grouped.set(ms, []);
     for (const stage of allStages) grouped.get(stage.milestone)?.push(stage);
-    for (const [, arr] of grouped) arr.sort((a, b) => a.sort_order - b.sort_order);
+    for (const [, arr] of grouped)
+      arr.sort((a, b) => a.sort_order - b.sort_order);
     for (const [, arr] of grouped) {
       for (const stage of arr) {
         stage.req_interviews = (stage.req_interviews ?? []).sort(
@@ -317,124 +367,261 @@ function ApplicationDetailPanel({ app }: { app: ApplicationDetail }) {
   const [selectedStageId, setSelectedStageId] = useState<string | null>(
     defaultStageId,
   );
-  const selectedStage = allStages.find((s) => s.id === selectedStageId);
 
   return (
-    <Tabs
-      value={subTab}
-      onValueChange={setSubTab}
-      className="flex flex-1 flex-col overflow-hidden"
-    >
-      <div className="px-5 pt-5">
-        <TabsList>
-          <TabsTrigger value="application">Interview stages</TabsTrigger>
-          <TabsTrigger value="interviews">Application info</TabsTrigger>
-          <TabsTrigger value="documents">Documents</TabsTrigger>
-          <TabsTrigger value="feedback">All feedback</TabsTrigger>
-          <TabsTrigger value="messages">Messages</TabsTrigger>
-          <TabsTrigger value="activity">Activity</TabsTrigger>
-        </TabsList>
-      </div>
-
-      <TabsContent
-        value="application"
-        className="mt-0 flex flex-1 overflow-hidden rounded-xl"
+    <div className="flex flex-1 gap-4 overflow-hidden">
+      <Tabs
+        value={subTab}
+        onValueChange={setSubTab}
+        className="flex min-w-0 flex-1 flex-col overflow-hidden"
       >
-        <div className="w-60 shrink-0 space-y-1 overflow-y-auto border-r p-4">
-          {MILESTONE_ORDER.map((ms, msIdx) => {
-            const stages = pipeline.get(ms) ?? [];
-            return (
-              <div key={ms}>
-                <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground/70">
-                  Milestone {msIdx + 1}: {MILESTONE_LABELS[ms]}
-                </div>
-                {stages.length > 0
-                  ? stages.map((stage) => {
-                      const status = getStageStatus(
-                        ms,
-                        stage.id,
-                        app.current_milestone,
-                        app.current_stage_id,
-                        allStages,
-                      );
-                      const isSelected = stage.id === selectedStageId;
-                      return (
-                        <button
-                          key={stage.id}
-                          type="button"
-                          onClick={() => setSelectedStageId(stage.id)}
-                          className={cn(
-                            "flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm transition-colors",
-                            isSelected
-                              ? "bg-card shadow-sm"
-                              : "hover:bg-card/50",
-                            status === "upcoming" && "text-muted-foreground",
-                          )}
-                        >
-                          <StageIcon status={status} />
-                          <span className="truncate">{stage.name}</span>
-                        </button>
-                      );
-                    })
-                  : (
-                    <div className="flex items-center gap-2 px-2 py-2 text-sm text-muted-foreground/40">
-                      <StageIcon status="upcoming" />
-                      <span>{MILESTONE_LABELS[ms]}</span>
-                    </div>
-                  )}
-              </div>
-            );
-          })}
+        <div className="px-4 pt-4">
+          <TabsList className="h-8 text-xs">
+            <TabsTrigger value="home"><Home className="size-3.5" /> Home</TabsTrigger>
+            <TabsTrigger value="interviews"><Calendar className="size-3.5" /> Interview stages</TabsTrigger>
+            <TabsTrigger value="progress"><TrendingUp className="size-3.5" /> Progress</TabsTrigger>
+            <TabsTrigger value="people"><Users className="size-3.5" /> People</TabsTrigger>
+          </TabsList>
         </div>
 
-        <div className="flex-1 space-y-4 overflow-y-auto p-4">
-          {selectedStage ? (
-            <>
-              <div className="flex items-center justify-between">
-                <h3 className="text-base font-semibold">
-                  {selectedStage.name}
-                </h3>
-                <Button size="sm">Schedule</Button>
-              </div>
-              {selectedStage.req_interviews.length > 0 ? (
-                <InterviewTimeline
-                  interviews={selectedStage.req_interviews}
-                />
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  No interviews configured for this stage
-                </p>
-              )}
-            </>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              Select a stage to view details
-            </p>
-          )}
-        </div>
-      </TabsContent>
+        <TabsContent value="interviews" className="mt-0 flex-1 overflow-y-auto p-4">
+          <Card className="space-y-2 p-4">
+            {MILESTONE_ORDER.map((ms, msIdx) => (
+              <PipelineMilestone
+                key={ms}
+                milestone={ms}
+                index={msIdx}
+                stages={pipeline.get(ms) ?? []}
+                app={app}
+                allStages={allStages}
+                selectedStageId={selectedStageId}
+                onSelectStage={setSelectedStageId}
+                onSchedule={() => setScheduleOpen(true)}
+              />
+            ))}
+          </Card>
+        </TabsContent>
 
-      {["interviews", "documents", "feedback", "messages", "activity"].map(
-        (tab) => (
-          <TabsContent
-            key={tab}
-            value={tab}
-            className="mt-0 flex flex-1 items-center justify-center"
-          >
+        {["home", "progress", "people"].map((tab) => (
+          <TabsContent key={tab} value={tab} className="mt-0 flex flex-1 items-center justify-center">
             <p className="text-sm text-muted-foreground">Coming soon</p>
           </TabsContent>
-        ),
-      )}
-    </Tabs>
+        ))}
+      </Tabs>
+
+      <aside className="flex w-64 shrink-0 flex-col gap-4 overflow-y-auto px-4 pt-[74px] pb-4">
+        <NotesCard />
+        <CommentsCard />
+      </aside>
+
+      <ScheduleInterviewDialog
+        open={scheduleOpen}
+        onOpenChange={setScheduleOpen}
+        candidateName={candidateName}
+        reqTitle={reqTitle}
+      />
+    </div>
   );
+}
+
+function PipelineMilestone({
+  milestone,
+  index,
+  stages,
+  app,
+  allStages,
+  selectedStageId,
+  onSelectStage,
+  onSchedule,
+}: {
+  milestone: Milestone;
+  index: number;
+  stages: ReqStageWithInterviews[];
+  app: ApplicationDetail;
+  allStages: ReqStageWithInterviews[];
+  selectedStageId: string | null;
+  onSelectStage: (id: string | null) => void;
+  onSchedule: () => void;
+}) {
+  return (
+    <div>
+      <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground/70">
+        Milestone {index + 1}: {MILESTONE_LABELS[milestone]}
+      </div>
+      {stages.length > 0
+        ? stages.map((stage) => {
+            const status = getStageStatus(
+              milestone,
+              stage.id,
+              app.current_milestone,
+              app.current_stage_id,
+              allStages,
+            );
+            const isSelected = stage.id === selectedStageId;
+            return (
+              <div key={stage.id}>
+                <button
+                  type="button"
+                  onClick={() => onSelectStage(isSelected ? null : stage.id)}
+                  className={cn(
+                    "flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm",
+                    !isSelected && "hover:bg-muted/50",
+                    status === "upcoming" && "text-muted-foreground",
+                  )}
+                >
+                  <StageIcon status={status} />
+                  <span className="flex-1 truncate text-left font-semibold">
+                    {stage.name}
+                  </span>
+                  {isSelected && status === "current" && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                        <Button size="sm">Schedule</Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onSelect={onSchedule}>Schedule</DropdownMenuItem>
+                        <DropdownMenuItem>Request availability</DropdownMenuItem>
+                        <DropdownMenuItem>Candidate self-schedule</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+                </button>
+                {isSelected && stage.req_interviews.length > 0 && (
+                  <div className="ml-6 pl-2">
+                    <InterviewTimeline interviews={stage.req_interviews} />
+                  </div>
+                )}
+              </div>
+            );
+          })
+        : (
+          <div className="flex items-center gap-2 px-2 py-2 text-sm text-muted-foreground/40">
+            <StageIcon status="upcoming" />
+            <span>{MILESTONE_LABELS[milestone]}</span>
+          </div>
+        )}
+    </div>
+  );
+}
+
+function NotesCard() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <Card className="gap-0 py-0">
+        <CollapsibleTrigger asChild>
+          <button
+            type="button"
+            className="flex w-full items-center justify-between px-4 py-2.5"
+          >
+            <span className="text-base font-semibold">Notes</span>
+            <ChevronDown
+              className={cn(
+                "size-4 text-muted-foreground transition-transform",
+                open && "rotate-180",
+              )}
+            />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <CardContent className="border-t px-4 py-3">
+            <p className="text-sm text-muted-foreground">No notes yet</p>
+          </CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
+  );
+}
+
+const DEMO_COMMENTS = [
+  {
+    author: "Sarah Chen",
+    time: "2 days ago",
+    text: "Looks great! Let's schedule an interview for them.",
+  },
+  {
+    author: "Anne Montgomery",
+    time: "2 days ago",
+    text: "Hi @Sarah Chen Can you please also take a look at this resume?",
+    mention: "Sarah Chen",
+  },
+];
+
+function initials(name: string) {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("");
+}
+
+function CommentsCard() {
+  return (
+    <Card className="gap-0 py-0">
+      <CardHeader className="px-4 py-3">
+        <CardTitle className="text-base">Comments</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4 px-4 pb-4">
+        <div className="relative">
+          <Input className="h-9 pr-16" placeholder="Add a comment..." />
+          <div className="absolute top-1/2 right-1.5 flex -translate-y-1/2 items-center gap-0.5">
+            <Button variant="ghost" size="icon" className="size-6 opacity-50">
+              <Paperclip className="size-3.5" />
+            </Button>
+            <Button variant="ghost" size="icon" className="size-6 opacity-50">
+              <SendHorizontal className="size-3.5" />
+            </Button>
+          </div>
+        </div>
+        {DEMO_COMMENTS.map((comment, i) => (
+          <div key={i} className="flex gap-2">
+            <Avatar size="sm">
+              <AvatarFallback>{initials(comment.author)}</AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm">
+                <span className="font-semibold">{comment.author}</span>{" "}
+                <span className="text-xs text-muted-foreground">{comment.time}</span>
+              </p>
+              <p className="text-sm">
+                {comment.mention ? (
+                  <>
+                    Hi <span className="text-primary underline">@{comment.mention}</span>{" "}
+                    {comment.text.split(`@${comment.mention}`).slice(1).join("").trim()}
+                  </>
+                ) : (
+                  comment.text
+                )}
+              </p>
+            </div>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
+const STATUS_BADGE_CLASSES: Record<string, string> = {
+  active: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+  rejected: "bg-red-500/10 text-red-700 dark:text-red-400",
+  hired: "bg-blue-500/10 text-blue-700 dark:text-blue-400",
+};
+
+function formatStatusLabel(status: string, date: string) {
+  const formatted = format(new Date(date), "MMM d, yyyy");
+  return status === "active"
+    ? `Active since: ${formatted}`
+    : `${STATUS_LABEL[status] ?? status} on: ${formatted}`;
 }
 
 function JobApplicationsTabContent({
   apps,
   preselectedAppId,
+  candidateName,
 }: {
   apps: ApplicationDetail[];
   preselectedAppId: string | null;
+  candidateName: string;
 }) {
   const defaultAppId =
     preselectedAppId && apps.some((a) => a.id === preselectedAppId)
@@ -443,7 +630,6 @@ function JobApplicationsTabContent({
   const [selectedAppId, setSelectedAppId] = useState<string | null>(
     defaultAppId,
   );
-
   const selectedApp =
     apps.find((a) => a.id === selectedAppId) ?? apps[0] ?? null;
 
@@ -457,53 +643,39 @@ function JobApplicationsTabContent({
   }
 
   return (
-    <div className="flex min-h-[480px] overflow-hidden rounded-xl border shadow-sm">
-      <nav className="flex w-80 shrink-0 flex-col gap-1 border-r bg-muted/50 p-4">
-        {apps.map((app) => {
-          const isActive = app.id === selectedApp?.id;
-          return (
-            <button
-              key={app.id}
-              type="button"
-              onClick={() => setSelectedAppId(app.id)}
+    <div className="flex min-h-[480px] overflow-hidden bg-muted rounded-xl">
+      <nav className="flex w-80 shrink-0 flex-col gap-1 p-4">
+        {apps.map((app) => (
+          <button
+            key={app.id}
+            type="button"
+            onClick={() => setSelectedAppId(app.id)}
+            className={cn(
+              "flex flex-col gap-1.5 rounded-lg p-2 text-left",
+              app.id === selectedApp?.id
+                ? "bg-card shadow-sm"
+                : "hover:bg-card/60",
+            )}
+          >
+            <span className="truncate text-sm">
+              {formatReqTitle(app.requisitions.req_number, app.requisitions.title)}
+            </span>
+            <Badge
+              variant="outline"
               className={cn(
-                "flex flex-col gap-1.5 rounded-lg p-2 text-left transition-colors",
-                isActive
-                  ? "bg-card shadow-sm"
-                  : "hover:bg-card/60",
+                "w-fit border-0 text-[11px]",
+                STATUS_BADGE_CLASSES[app.status] ?? "bg-muted text-muted-foreground",
               )}
             >
-              <span className="truncate text-sm leading-snug">
-                {formatReqTitle(
-                  app.requisitions.req_number,
-                  app.requisitions.title,
-                )}
-              </span>
-              <Badge
-                variant="outline"
-                className={cn(
-                  "w-fit border-0 text-[11px]",
-                  app.status === "active"
-                    ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                    : app.status === "rejected"
-                      ? "bg-red-500/10 text-red-700 dark:text-red-400"
-                      : app.status === "hired"
-                        ? "bg-blue-500/10 text-blue-700 dark:text-blue-400"
-                        : "bg-muted text-muted-foreground",
-                )}
-              >
-                {app.status === "active"
-                  ? `Active since: ${format(new Date(app.applied_date), "MMM d, yyyy")}`
-                  : `${STATUS_LABEL[app.status] ?? app.status} on: ${format(new Date(app.applied_date), "MMM d, yyyy")}`}
-              </Badge>
-            </button>
-          );
-        })}
+              {formatStatusLabel(app.status, app.applied_date)}
+            </Badge>
+          </button>
+        ))}
       </nav>
 
-      <div className="flex flex-1 flex-col overflow-hidden bg-card">
+      <div className="flex flex-1 flex-col overflow-hidden">
         {selectedApp && (
-          <ApplicationDetailPanel key={selectedApp.id} app={selectedApp} />
+          <ApplicationDetailPanel key={selectedApp.id} app={selectedApp} candidateName={candidateName} />
         )}
       </div>
     </div>

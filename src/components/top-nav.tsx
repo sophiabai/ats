@@ -68,10 +68,10 @@ export function TopNav() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button type="button" className="size-8 shrink-0 rounded-full ring-2 ring-white focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
-              <Avatar className="size-full">
+            <button type="button" className="size-8 shrink-0 overflow-hidden rounded-lg focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
+              <Avatar className="size-full rounded-lg">
                 <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="text-[10px]">SB</AvatarFallback>
+                <AvatarFallback className="rounded-lg text-[10px]">SB</AvatarFallback>
               </Avatar>
             </button>
           </DropdownMenuTrigger>
