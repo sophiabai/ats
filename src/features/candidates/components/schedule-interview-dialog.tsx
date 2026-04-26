@@ -58,12 +58,6 @@ type ScheduleDateOption = {
 const SLOT_HEIGHT = 56
 const HOURS = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
 
-function formatHour(h: number) {
-  if (h === 0 || h === 12) return "12pm"
-  if (h < 12) return `${h}am`
-  return `${h - 12}pm`
-}
-
 function initials(name: string) {
   return name
     .split(" ")
