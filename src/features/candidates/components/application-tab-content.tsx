@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Check, CheckCircle2, Circle, Clock, Minus, User, XCircle } from "lucide-react";
+import { Calendar, Check, CheckCircle2, Circle, Clock, MoreHorizontal, Minus, User, XCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Tooltip,
@@ -62,44 +62,37 @@ export function StageIcon({ status }: { status: StageStatus }) {
     );
   if (status === "current")
     return (
-      <div className="flex size-5 items-center justify-center rounded-full bg-blue-500/15 text-blue-600">
-        <Circle className="size-2.5 fill-current" />
+      <div className="flex size-5 items-center justify-center rounded-full border border-muted-foreground/30 text-muted-foreground">
+        <MoreHorizontal className="size-3" />
       </div>
     );
   return (
-    <div className="flex size-5 items-center justify-center rounded-full bg-muted text-muted-foreground/40">
-      <Minus className="size-3" />
+    <div className="flex size-5 items-center justify-center rounded-full border border-muted-foreground/20 text-muted-foreground/40">
+      <MoreHorizontal className="size-3" />
     </div>
   );
 }
 
 export function InterviewTimeline({ interviews }: { interviews: ReqInterview[] }) {
   return (
-    <div className="mt-2 pt-2">
+    <div className="pt-1">
       {interviews.map((iv, idx) => {
         const isLast = idx === interviews.length - 1;
         return (
-          <div key={iv.id} className="flex gap-3">
+          <div key={iv.id} className="flex gap-2">
             <div className="flex flex-col items-center">
-              <div className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border bg-background">
-                <Circle className="size-1.5 fill-muted-foreground/40 text-muted-foreground/40" />
+              <div className="flex size-5 shrink-0 items-center justify-center rounded bg-stone-200/30 text-muted-foreground">
+                <Calendar className="size-4" />
               </div>
               {!isLast && <div className="w-px flex-1 bg-border" />}
             </div>
             <div className={cn("pb-3", isLast && "pb-0")}>
-              <span className="text-sm text-muted-foreground">{iv.title}</span>
-              <div className="flex items-center gap-3 text-xs text-muted-foreground/60">
-                <span className="flex items-center gap-1">
-                  <Clock className="size-3" />
-                  {iv.duration_minutes}m
-                </span>
-                {iv.interviewer_name && (
-                  <span className="flex items-center gap-1">
-                    <User className="size-3" />
-                    {iv.interviewer_name}
-                  </span>
-                )}
-              </div>
+              <p className="text-sm leading-5 text-foreground">
+                {iv.title} ({iv.duration_minutes} min)
+              </p>
+              <p className="text-sm leading-5 text-muted-foreground">
+                {iv.interviewer_name || "No interviewers"}
+              </p>
             </div>
           </div>
         );

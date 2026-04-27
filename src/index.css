@@ -71,6 +71,10 @@
     --color-berry-900: #2E0011;
     --color-brand: var(--brand);
     --color-highlight: var(--highlight);
+    --shadow-sm: 0 1px 3px 0 rgba(159, 30, 122, 0.05), 0 1px 2px -1px rgba(159, 30, 122, 0.05);
+    --text-base--line-height: 1.375rem;
+    --text-lg--line-height: 1.5rem;
+    --text-xl--line-height: 1.625rem;
 }
 
 :root {

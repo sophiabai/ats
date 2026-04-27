@@ -8,7 +8,6 @@ import {
   ChevronDown,
   FileText,
   GraduationCap,
-  Home,
   Mail,
   MapPin,
   MessageSquare,
@@ -17,9 +16,7 @@ import {
   Search,
   Send,
   SendHorizontal,
-  TrendingUp,
   UserCheck,
-  Users,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +33,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -369,47 +373,51 @@ function ApplicationDetailPanel({ app, candidateName }: { app: ApplicationDetail
   );
 
   return (
-    <div className="flex flex-1 gap-4 overflow-hidden">
+    <div className="flex flex-1 overflow-hidden">
       <Tabs
         value={subTab}
         onValueChange={setSubTab}
-        className="flex min-w-0 flex-1 flex-col overflow-hidden"
+        className="flex min-w-0 flex-1 flex-col gap-0 overflow-hidden"
       >
-        <div className="px-4 pt-4">
-          <TabsList className="h-8 text-xs">
-            <TabsTrigger value="home"><Home className="size-3.5" /> Home</TabsTrigger>
-            <TabsTrigger value="interviews"><Calendar className="size-3.5" /> Interview stages</TabsTrigger>
-            <TabsTrigger value="progress"><TrendingUp className="size-3.5" /> Progress</TabsTrigger>
-            <TabsTrigger value="people"><Users className="size-3.5" /> People</TabsTrigger>
+        <div className="-mb-px pt-4">
+          <TabsList variant="file-labels" className="text-xs">
+            <TabsTrigger value="home">Application</TabsTrigger>
+            <TabsTrigger value="interviews">Interview stages</TabsTrigger>
+            <TabsTrigger value="documents">Documents</TabsTrigger>
+            <TabsTrigger value="feedback">All feedback</TabsTrigger>
+            <TabsTrigger value="messages">Messages</TabsTrigger>
+            <TabsTrigger value="activities">Activity</TabsTrigger>
           </TabsList>
         </div>
 
-        <TabsContent value="interviews" className="mt-0 flex-1 overflow-y-auto p-4">
-          <Card className="space-y-2 p-4">
-            {MILESTONE_ORDER.map((ms, msIdx) => (
-              <PipelineMilestone
-                key={ms}
-                milestone={ms}
-                index={msIdx}
-                stages={pipeline.get(ms) ?? []}
-                app={app}
-                allStages={allStages}
-                selectedStageId={selectedStageId}
-                onSelectStage={setSelectedStageId}
-                onSchedule={() => setScheduleOpen(true)}
-              />
-            ))}
-          </Card>
-        </TabsContent>
-
-        {["home", "progress", "people"].map((tab) => (
-          <TabsContent key={tab} value={tab} className="mt-0 flex flex-1 items-center justify-center">
-            <p className="text-sm text-muted-foreground">Coming soon</p>
+        <Card className={cn("mb-6 flex min-h-0 flex-1 flex-col overflow-hidden", subTab === "home" && "rounded-tl-none")}>
+          <TabsContent value="interviews" className="mt-0 flex-1 overflow-y-auto p-4">
+            <div className="space-y-2">
+              {MILESTONE_ORDER.map((ms, msIdx) => (
+                <PipelineMilestone
+                  key={ms}
+                  milestone={ms}
+                  index={msIdx}
+                  stages={pipeline.get(ms) ?? []}
+                  app={app}
+                  allStages={allStages}
+                  selectedStageId={selectedStageId}
+                  onSelectStage={setSelectedStageId}
+                  onSchedule={() => setScheduleOpen(true)}
+                />
+              ))}
+            </div>
           </TabsContent>
-        ))}
+
+          {["home", "documents", "feedback", "messages", "activities"].map((tab) => (
+            <TabsContent key={tab} value={tab} className="mt-0 flex flex-1 items-center justify-center">
+              <p className="text-sm text-muted-foreground">Coming soon</p>
+            </TabsContent>
+          ))}
+        </Card>
       </Tabs>
 
-      <aside className="flex w-64 shrink-0 flex-col gap-4 overflow-y-auto px-4 pt-[74px] pb-4">
+      <aside className="flex w-64 shrink-0 flex-col gap-4 overflow-y-auto px-4 pt-[48px] pb-4">
         <NotesCard />
         <CommentsCard />
       </aside>
@@ -459,13 +467,12 @@ function PipelineMilestone({
             );
             const isSelected = stage.id === selectedStageId;
             return (
-              <div key={stage.id}>
+              <div key={stage.id} className="rounded-lg hover:bg-muted">
                 <button
                   type="button"
                   onClick={() => onSelectStage(isSelected ? null : stage.id)}
                   className={cn(
-                    "flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm",
-                    !isSelected && "hover:bg-muted/50",
+                    "flex w-full items-center gap-2 px-2 py-2 text-sm",
                     status === "upcoming" && "text-muted-foreground",
                   )}
                 >
@@ -487,7 +494,7 @@ function PipelineMilestone({
                   )}
                 </button>
                 {isSelected && stage.req_interviews.length > 0 && (
-                  <div className="ml-6 pl-2">
+                  <div className="pb-2 pl-2 pr-2">
                     <InterviewTimeline interviews={stage.req_interviews} />
                   </div>
                 )}
@@ -643,40 +650,62 @@ function JobApplicationsTabContent({
   }
 
   return (
-    <div className="flex min-h-[480px] overflow-hidden bg-muted rounded-xl">
-      <nav className="flex w-80 shrink-0 flex-col gap-1 p-4">
-        {apps.map((app) => (
-          <button
-            key={app.id}
-            type="button"
-            onClick={() => setSelectedAppId(app.id)}
-            className={cn(
-              "flex flex-col gap-1.5 rounded-lg p-2 text-left",
-              app.id === selectedApp?.id
-                ? "bg-card shadow-sm"
-                : "hover:bg-card/60",
-            )}
-          >
-            <span className="truncate text-sm">
-              {formatReqTitle(app.requisitions.req_number, app.requisitions.title)}
-            </span>
-            <Badge
-              variant="outline"
+    <div className="space-y-3">
+      {/* Dropdown — small screens */}
+      <div className="lg:hidden">
+        <Select
+          value={selectedAppId ?? undefined}
+          onValueChange={setSelectedAppId}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {apps.map((app) => (
+              <SelectItem key={app.id} value={app.id}>
+                {formatReqTitle(app.requisitions.req_number, app.requisitions.title)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="flex min-h-[480px] overflow-hidden rounded-xl bg-muted lg:flex-row">
+        {/* Sidebar — large screens */}
+        <nav className="hidden w-72 shrink-0 flex-col gap-1 p-4 pt-[50px] lg:flex">
+          {apps.map((app) => (
+            <button
+              key={app.id}
+              type="button"
+              onClick={() => setSelectedAppId(app.id)}
               className={cn(
-                "w-fit border-0 text-[11px]",
-                STATUS_BADGE_CLASSES[app.status] ?? "bg-muted text-muted-foreground",
+                "flex flex-col gap-1.5 rounded-lg p-2 text-left",
+                app.id === selectedApp?.id
+                  ? "bg-card shadow-sm"
+                  : "hover:bg-card/60",
               )}
             >
-              {formatStatusLabel(app.status, app.applied_date)}
-            </Badge>
-          </button>
-        ))}
-      </nav>
+              <span className="truncate text-sm">
+                {formatReqTitle(app.requisitions.req_number, app.requisitions.title)}
+              </span>
+              <Badge
+                variant="outline"
+                className={cn(
+                  "w-fit border-0 text-[11px]",
+                  STATUS_BADGE_CLASSES[app.status] ?? "bg-muted text-muted-foreground",
+                )}
+              >
+                {formatStatusLabel(app.status, app.applied_date)}
+              </Badge>
+            </button>
+          ))}
+        </nav>
 
-      <div className="flex flex-1 flex-col overflow-hidden">
-        {selectedApp && (
-          <ApplicationDetailPanel key={selectedApp.id} app={selectedApp} candidateName={candidateName} />
-        )}
+        <div className="flex flex-1 flex-col overflow-hidden">
+          {selectedApp && (
+            <ApplicationDetailPanel key={selectedApp.id} app={selectedApp} candidateName={candidateName} />
+          )}
+        </div>
       </div>
     </div>
   );

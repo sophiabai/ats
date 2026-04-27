@@ -1,21 +1,38 @@
 import { useState, useRef } from "react"
 import {
+  Calendar,
   Check,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
+  Clock,
   Expand,
+  Pencil,
   X,
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 
 // ---------------------------------------------------------------------------
@@ -486,7 +503,7 @@ function PersonColumn({
         <div className="min-w-0">
           <p className="truncate text-xs font-medium">{person.name}</p>
           <p className="truncate text-[10px] text-muted-foreground">
-            {person.location}
+            {person.location} · {person.timezone}
           </p>
         </div>
       </div>
@@ -707,6 +724,250 @@ function ScheduleDateCard({
 }
 
 // ---------------------------------------------------------------------------
+// Confirm details panel (Step 2)
+// ---------------------------------------------------------------------------
+
+function InterviewSessionExpanded({
+  interview,
+  dateShort,
+}: {
+  interview: InterviewSlot
+  dateShort: string
+}) {
+  const timeMatch = interview.time.match(/^(\d{1,2}:\d{2})(am|pm)/i)
+  const timeValue = timeMatch ? timeMatch[1] : "08:00"
+  const timePeriod = timeMatch ? timeMatch[2].toUpperCase() : "AM"
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex gap-3">
+        <div className="flex flex-1 flex-col gap-1">
+          <span className="px-1 text-sm font-medium">Date</span>
+          <div className="flex h-9 items-center gap-2 rounded-lg border border-input bg-background px-4 shadow-xs">
+            <Calendar className="size-4 text-muted-foreground" />
+            <span className="text-sm">{dateShort}</span>
+          </div>
+        </div>
+        <div className="flex flex-1 flex-col gap-1">
+          <span className="px-1 text-sm font-medium">Time</span>
+          <div className="flex h-9 items-center gap-2 rounded-lg border border-input bg-background px-4 shadow-xs">
+            <Clock className="size-4 text-muted-foreground" />
+            <span className="text-sm">{timeValue}</span>
+            <span className="text-sm underline">{timePeriod}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex gap-3">
+        <div className="flex flex-1 flex-col gap-1">
+          <span className="px-1 text-sm font-medium">Duration</span>
+          <Select>
+            <SelectTrigger className="w-full rounded-lg">
+              <SelectValue placeholder="Select item" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="30">30 min</SelectItem>
+              <SelectItem value="45">45 min</SelectItem>
+              <SelectItem value="60">60 min</SelectItem>
+              <SelectItem value="90">90 min</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex flex-1 flex-col gap-1">
+          <span className="px-1 text-sm font-medium">Meeting room</span>
+          <Select>
+            <SelectTrigger className="w-full rounded-lg">
+              <SelectValue placeholder="Select item" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="sf15">SF-15-Bruce(6) [Zoom]</SelectItem>
+              <SelectItem value="sf12">SF-12-Reed(4) [Zoom]</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <span className="px-1 text-sm font-medium">Interviewer</span>
+        <Select>
+          <SelectTrigger className="w-full rounded-lg">
+            <SelectValue placeholder="Select item" />
+          </SelectTrigger>
+          <SelectContent>
+            {interview.participants.map((p) => (
+              <SelectItem key={p.name} value={p.name}>
+                {p.name}
+              </SelectItem>
+            ))}
+            <SelectItem value="cameron">Cameron Williamson</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="flex items-end gap-6">
+        <div className="flex flex-col gap-1">
+          <span className="px-1 text-sm font-medium">Feedback form</span>
+          <div className="flex items-center gap-1">
+            <Badge
+              variant="secondary"
+              className="h-[26px] rounded-md bg-black/10 text-xs font-medium text-primary"
+            >
+              Default
+            </Badge>
+            <Button variant="ghost" size="icon" className="size-7">
+              <Pencil className="size-4" />
+            </Button>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 pb-1.5">
+          <Checkbox id={`coderpair-${interview.title}`} />
+          <label
+            htmlFor={`coderpair-${interview.title}`}
+            className="text-sm font-medium leading-none"
+          >
+            Add CoderPair link
+          </label>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function InterviewSessionCollapsed({
+  interview,
+}: {
+  interview: InterviewSlot
+}) {
+  const participantLabel =
+    interview.participants.length === 0
+      ? "No interviewer"
+      : interview.participants.length === 1
+        ? interview.participants[0].name
+        : `${interview.participants[0].name} +${interview.participants.length - 1}`
+
+  const durationMatch = interview.time.match(
+    /(\d{1,2}:\d{2})(am|pm)\s*[–-]\s*(\d{1,2}:\d{2})(am|pm)/i,
+  )
+  let durationLabel = ""
+  if (durationMatch) {
+    const parseTime = (h: string, p: string) => {
+      const [hh, mm] = h.split(":").map(Number)
+      const hour = p.toLowerCase() === "pm" && hh !== 12 ? hh + 12 : p.toLowerCase() === "am" && hh === 12 ? 0 : hh
+      return hour * 60 + mm
+    }
+    const startMin = parseTime(durationMatch[1], durationMatch[2])
+    const endMin = parseTime(durationMatch[3], durationMatch[4])
+    const diff = endMin - startMin
+    durationLabel = diff >= 60 ? `${Math.floor(diff / 60)}h ${diff % 60 > 0 ? `${diff % 60}m` : ""}`.trim() : `${diff} min`
+  }
+
+  return (
+    <div className="flex flex-col gap-0.5">
+      <p className="text-sm text-muted-foreground">
+        {`May 5, 2025 ${interview.time.split("–")[0].trim()}       ${durationLabel}       ${participantLabel}`}
+      </p>
+    </div>
+  )
+}
+
+function ConfirmDetailsPanel({
+  selectedDate,
+}: {
+  selectedDate: ScheduleDateOption
+}) {
+  const [expandedSessions, setExpandedSessions] = useState<Set<number>>(
+    () => new Set([0, 1]),
+  )
+
+  function toggleSession(idx: number) {
+    setExpandedSessions((prev) => {
+      const next = new Set(prev)
+      if (next.has(idx)) next.delete(idx)
+      else next.add(idx)
+      return next
+    })
+  }
+
+  const dateShort = selectedDate.dateShort.includes("/")
+    ? selectedDate.dateShort
+    : (() => {
+        const parts = selectedDate.date.match(
+          /\w+,\s+(\w+)\s+(\d+),\s+(\d+)/,
+        )
+        if (!parts) return "05 / 05 / 2025"
+        const monthMap: Record<string, string> = {
+          January: "01", February: "02", March: "03", April: "04",
+          May: "05", June: "06", July: "07", August: "08",
+          September: "09", October: "10", November: "11", December: "12",
+        }
+        return `${monthMap[parts[1]] ?? "01"} / ${parts[2].padStart(2, "0")} / ${parts[3]}`
+      })()
+
+  return (
+    <div className="flex w-[500px] shrink-0 flex-col gap-6 overflow-y-auto bg-muted px-8 py-6">
+      <h3 className="text-lg font-semibold">Step 2 of 3: Confirm details</h3>
+
+      <div className="flex flex-col gap-1">
+        <span className="px-1 text-sm font-medium">Add to calendar</span>
+        <Select defaultValue="recruiting">
+          <SelectTrigger className="w-full rounded-lg">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="recruiting">Recruiting</SelectItem>
+            <SelectItem value="personal">Personal</SelectItem>
+            <SelectItem value="team">Team</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        {selectedDate.interviews.map((interview, i) => {
+          const isExpanded = expandedSessions.has(i)
+          return (
+            <Collapsible
+              key={i}
+              open={isExpanded}
+              onOpenChange={() => toggleSession(i)}
+            >
+              <div className="rounded-2xl border border-border bg-card">
+                <CollapsibleTrigger className="flex w-full items-center justify-between px-5 py-4">
+                  {isExpanded ? (
+                    <span className="text-sm font-medium">
+                      {interview.time.split("–")[0].trim()} {interview.title}
+                    </span>
+                  ) : (
+                    <div className="flex flex-1 flex-col items-start gap-0.5">
+                      <span className="text-sm font-medium">
+                        {interview.title}
+                      </span>
+                      <InterviewSessionCollapsed interview={interview} />
+                    </div>
+                  )}
+                  {isExpanded ? (
+                    <ChevronUp className="size-4 shrink-0 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
+                  )}
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="px-5 pb-5">
+                    <InterviewSessionExpanded
+                      interview={interview}
+                      dateShort={dateShort}
+                    />
+                  </div>
+                </CollapsibleContent>
+              </div>
+            </Collapsible>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Main dialog
 // ---------------------------------------------------------------------------
 
@@ -722,6 +983,7 @@ export function ScheduleInterviewDialog({
   reqTitle: string
 }) {
   const [selectedDateIdx, setSelectedDateIdx] = useState(0)
+  const [step, setStep] = useState(1)
   const selectedDate = SCHEDULE_DATES[selectedDateIdx]
 
   return (
@@ -752,31 +1014,36 @@ export function ScheduleInterviewDialog({
 
         {/* Body */}
         <div className="flex flex-1 overflow-hidden border-b border-border">
-          {/* Left panel */}
-          <div className="flex w-[460px] shrink-0 flex-col gap-5 overflow-y-auto bg-muted px-8 py-5">
-            <h3 className="text-lg font-semibold">Step 1 of 3: Find a time</h3>
+          {step === 1 && (
+            <div className="flex w-[460px] shrink-0 flex-col gap-5 overflow-y-auto bg-muted px-8 py-5">
+              <h3 className="text-lg font-semibold">Step 1 of 3: Find a time</h3>
 
-            <div className="flex items-center justify-between">
-              <Badge variant="outline" className="gap-1 text-xs font-normal">
-                Sort by: Best fit
-                <ChevronDown className="size-3" />
-              </Badge>
-              <Button variant="outline" size="sm" className="h-7 text-xs">
-                Preference
-              </Button>
-            </div>
+              <div className="flex items-center justify-between">
+                <Badge variant="outline" className="gap-1 text-xs font-normal">
+                  Sort by: Best fit
+                  <ChevronDown className="size-3" />
+                </Badge>
+                <Button variant="outline" size="sm" className="h-7 text-xs">
+                  Preference
+                </Button>
+              </div>
 
-            <div className="space-y-3">
-              {SCHEDULE_DATES.map((option, i) => (
-                <ScheduleDateCard
-                  key={i}
-                  option={option}
-                  selected={selectedDateIdx === i}
-                  onSelect={() => setSelectedDateIdx(i)}
-                />
-              ))}
+              <div className="space-y-3">
+                {SCHEDULE_DATES.map((option, i) => (
+                  <ScheduleDateCard
+                    key={i}
+                    option={option}
+                    selected={selectedDateIdx === i}
+                    onSelect={() => setSelectedDateIdx(i)}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
+          )}
+
+          {step === 2 && (
+            <ConfirmDetailsPanel selectedDate={selectedDate} />
+          )}
 
           {/* Right panel — calendar grid */}
           <InterviewerCalendarGrid selectedDate={selectedDate} />
@@ -784,10 +1051,23 @@ export function ScheduleInterviewDialog({
 
         {/* Footer */}
         <div className="flex items-center justify-between px-8 py-3">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button>Next: Confirm details</Button>
+          {step === 1 ? (
+            <>
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+              <Button onClick={() => setStep(2)}>
+                Next: Confirm details
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="outline" onClick={() => setStep(1)}>
+                Back
+              </Button>
+              <Button>Next</Button>
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>
