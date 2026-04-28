@@ -487,11 +487,11 @@ INSERT INTO req_stages (id, req_id, milestone, name, sort_order) VALUES
 INSERT INTO req_interviews (id, req_id, stage_id, title, interview_type, duration_minutes, interviewer_name, order_position) VALUES
   ('f0000000-0000-0001-0000-000000000001', 'b0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0001-000000000002', 'Recruiter screen',         'standard',         30, 'Taylor Brooks', 0),
   ('f0000000-0000-0001-0000-000000000002', 'b0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0001-000000000003', 'Hiring manager screen',    'standard',         45, 'Sarah Chen',    0),
-  ('f0000000-0000-0001-0000-000000000003', 'b0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0001-000000000004', 'System Design',                    'technical',        60, 'Leslie Alexander',  0),
-  ('f0000000-0000-0001-0000-000000000004', 'b0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0001-000000000004', 'Algorithms and Data Structures',   'technical',        45, 'Jerome Bell',       1),
+  ('f0000000-0000-0001-0000-000000000003', 'b0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0001-000000000004', 'System Design',                    'technical',        60, 'Jerome Bell',       0),
+  ('f0000000-0000-0001-0000-000000000004', 'b0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0001-000000000004', 'Algorithms and Data Structures',   'technical',        45, 'Javier Ramirez',    1),
   ('f0000000-0000-0001-0000-000000000008', 'b0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0001-000000000004', 'Break',                            'other',            15, NULL,                2),
-  ('f0000000-0000-0001-0000-000000000005', 'b0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0001-000000000004', 'Culture Fit',                      'behavioral',       30, 'Marvin McKinney',   3),
-  ('f0000000-0000-0001-0000-000000000006', 'b0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0001-000000000004', 'Hiring Manager Close-up',          'behavioral',       30, 'Cameron Williamson', 4),
+  ('f0000000-0000-0001-0000-000000000005', 'b0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0001-000000000004', 'Culture Fit',                      'behavioral',       30, 'Cameron Williamson', 3),
+  ('f0000000-0000-0001-0000-000000000006', 'b0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0001-000000000004', 'Hiring Manager Close-up',          'behavioral',       30, 'Leslie Alexander',  4),
   ('f0000000-0000-0001-0000-000000000007', 'b0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0001-000000000006', 'Reference check debrief',  'reference_check',  30, 'Taylor Brooks', 0);
 -- Account Executive
 INSERT INTO req_interviews (id, req_id, stage_id, title, interview_type, duration_minutes, interviewer_name, order_position) VALUES
@@ -555,7 +555,6 @@ INSERT INTO applications (candidate_id, req_id, applied_date, source, current_mi
 INSERT INTO applications (candidate_id, req_id, applied_date, source, current_milestone, current_stage_id, status) VALUES
   ('c0000000-0000-0000-0000-000000000015', 'b0000000-0000-0000-0000-000000000003', '2026-02-01', 'referral',     'final_interview', 'e0000000-0000-0000-0003-000000000004', 'active'),
   ('c0000000-0000-0000-0000-000000000016', 'b0000000-0000-0000-0000-000000000003', '2026-02-03', 'linkedin',     'offer',           'e0000000-0000-0000-0003-000000000005', 'active'),
-  ('c0000000-0000-0000-0000-000000000017', 'b0000000-0000-0000-0000-000000000003', '2026-02-07', 'careers_page', 'screen',          'e0000000-0000-0000-0003-000000000003', 'active'),
   ('c0000000-0000-0000-0000-000000000018', 'b0000000-0000-0000-0000-000000000003', '2026-02-10', 'referral',     'screen',          'e0000000-0000-0000-0003-000000000002', 'active');
 INSERT INTO applications (candidate_id, req_id, applied_date, source, current_milestone, current_stage_id, status, rejected_reason) VALUES
   ('c0000000-0000-0000-0000-000000000019', 'b0000000-0000-0000-0000-000000000003', '2026-02-15', 'linkedin',     'screen',          'e0000000-0000-0000-0003-000000000003', 'rejected', 'Looking for more hands-on IC work');
@@ -588,8 +587,6 @@ INSERT INTO applications (candidate_id, req_id, applied_date, source, current_mi
   ('c0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000001', '2026-01-28', 'careers_page', 'application',     'e0000000-0000-0000-0001-000000000001', 'rejected', 'Looking for candidates with stronger frontend experience'),
   ('c0000000-0000-0000-0000-000000000006', 'b0000000-0000-0000-0000-000000000001', '2026-02-28', 'linkedin',     'application',     'e0000000-0000-0000-0001-000000000001', 'rejected', 'Profile focused on data engineering rather than frontend'),
   ('c0000000-0000-0000-0000-000000000008', 'b0000000-0000-0000-0000-000000000001', '2026-02-25', 'careers_page', 'application',     'e0000000-0000-0000-0001-000000000001', 'rejected', 'Backend-focused; insufficient frontend depth'),
-  ('c0000000-0000-0000-0000-000000000015', 'b0000000-0000-0000-0000-000000000001', '2026-02-08', 'referral',     'application',     'e0000000-0000-0000-0001-000000000001', 'rejected', 'Design-focused; need dedicated frontend engineers'),
-  ('c0000000-0000-0000-0000-000000000017', 'b0000000-0000-0000-0000-000000000001', '2026-02-15', 'careers_page', 'application',     'e0000000-0000-0000-0001-000000000001', 'rejected', 'Design background; looking for dedicated engineers'),
   ('c0000000-0000-0000-0000-000000000025', 'b0000000-0000-0000-0000-000000000001', '2026-02-19', 'linkedin',     'application',     'e0000000-0000-0000-0001-000000000001', 'rejected', 'Technical writing focus; need stronger engineering background');
 INSERT INTO applications (candidate_id, req_id, applied_date, source, current_milestone, current_stage_id, status, withdrawn_reason) VALUES
   ('c0000000-0000-0000-0000-000000000016', 'b0000000-0000-0000-0000-000000000001', '2026-02-06', 'linkedin',     'screen',          'e0000000-0000-0000-0001-000000000002', 'withdrawn', 'Decided to focus on design opportunities');
@@ -625,7 +622,6 @@ INSERT INTO applications (candidate_id, req_id, applied_date, source, current_mi
 INSERT INTO applications (candidate_id, req_id, applied_date, source, current_milestone, current_stage_id, status) VALUES
   ('c0000000-0000-0000-0000-000000000011', 'b0000000-0000-0000-0000-000000000005', '2026-02-15', 'linkedin',     'screen',          'e0000000-0000-0000-0005-000000000002', 'active'),
   ('c0000000-0000-0000-0000-000000000013', 'b0000000-0000-0000-0000-000000000005', '2026-02-17', 'referral',     'screen',          'e0000000-0000-0000-0005-000000000002', 'active'),
-  ('c0000000-0000-0000-0000-000000000015', 'b0000000-0000-0000-0000-000000000005', '2026-02-12', 'referral',     'screen',          'e0000000-0000-0000-0005-000000000003', 'active'),
   ('c0000000-0000-0000-0000-000000000018', 'b0000000-0000-0000-0000-000000000005', '2026-02-14', 'referral',     'screen',          'e0000000-0000-0000-0005-000000000002', 'active');
 INSERT INTO applications (candidate_id, req_id, applied_date, source, current_milestone, current_stage_id, status, rejected_reason) VALUES
   ('c0000000-0000-0000-0000-000000000007', 'b0000000-0000-0000-0000-000000000005', '2026-02-14', 'careers_page', 'screen',          'e0000000-0000-0000-0005-000000000003', 'rejected', 'Analytics skills strong but content quality didn''t meet the bar'),
@@ -884,12 +880,6 @@ INSERT INTO criteria_evaluations (req_id, candidate_id, criterion, met, reasonin
   ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000016', 'Experience designing for developer tools or B2B SaaS platforms', true, 'Designed developer-facing features at Figma including Dev Mode and API documentation.'),
   ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000016', 'Strong systems thinking for design system work', true, 'Built a cross-platform design system at Figma used by 50+ designers.'),
   ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000016', 'Experience with user research methods and data-informed design', true, 'Led research sprints with developer users and iterated designs based on session recordings.'),
-  -- c017: Isabella Garcia – Product Designer at Airbnb
-  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000017', '5+ years of product design experience with end-to-end portfolio', true, 'Has 5 years of design experience at Airbnb with a strong public portfolio.'),
-  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000017', 'Deep proficiency in Figma including prototyping and components', true, 'Uses Figma as primary tool; proficient in components, variables, and prototyping.'),
-  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000017', 'Experience designing for developer tools or B2B SaaS platforms', false, 'Consumer product focus at Airbnb; no B2B or developer tool experience.'),
-  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000017', 'Strong systems thinking for design system work', true, 'Contributed to Airbnb''s DLS (Design Language System).'),
-  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000017', 'Experience with user research methods and data-informed design', true, 'Regularly conducts usability testing and A/B test analysis.'),
   -- c018: Alexander Brown – UX Designer at Shopify
   ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000018', '5+ years of product design experience with end-to-end portfolio', false, 'Has 3 years of professional UX design experience. Below the 5-year bar.'),
   ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000018', 'Deep proficiency in Figma including prototyping and components', true, 'Strong Figma skills demonstrated through component creation at Shopify.'),

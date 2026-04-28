@@ -182,7 +182,7 @@ export function ChatInput({
 
   if (variant === "nav") {
     return (
-      <div className="flex h-9 items-center gap-1.5 rounded-lg border border-border bg-top-nav-muted px-3 focus-within:ring-2 focus-within:ring-ring/50">
+      <div className="flex h-9 items-center gap-1.5 rounded-lg bg-top-nav-muted px-3 focus-within:ring-2 focus-within:ring-ring/50">
         <Search className="size-4 shrink-0 text-top-nav-foreground/70" />
         <div className="relative min-w-0 flex-1">
           {commandText && (

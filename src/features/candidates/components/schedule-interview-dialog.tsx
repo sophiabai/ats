@@ -7,7 +7,6 @@ import {
   ChevronRight,
   ChevronUp,
   Clock,
-  Expand,
   Pencil,
   X,
 } from "lucide-react"
@@ -34,6 +33,12 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 // ---------------------------------------------------------------------------
 // Types
@@ -44,6 +49,10 @@ type Interviewer = {
   initials: string
   location: string
   timezone: string
+  timezoneFull: string
+  utcOffset: number
+  businessStart?: number
+  businessEnd?: number
   avatar?: string
 }
 
@@ -73,7 +82,8 @@ type ScheduleDateOption = {
 // ---------------------------------------------------------------------------
 
 const SLOT_HEIGHT = 56
-const HOURS = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+const HOURS = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 0, 1, 2, 3, 4, 5, 6, 7, 8]
+const BASE_UTC_OFFSET = -7 // PT (calendar base timezone)
 
 function initials(name: string) {
   return name
@@ -88,12 +98,15 @@ function initials(name: string) {
 // Demo data
 // ---------------------------------------------------------------------------
 
+const BUSINESS_START = 9
+const BUSINESS_END = 17
+
 const INTERVIEWERS: Interviewer[] = [
-  { name: "Candidate (Andy…)", initials: "AS", location: "San Francisco", timezone: "PST" },
-  { name: "Leslie Alexander", initials: "LA", location: "San Francisco", timezone: "PST" },
-  { name: "Javier Ramirez", initials: "JR", location: "San Francisco", timezone: "PST" },
-  { name: "Jerome Bell", initials: "JB", location: "Bangalore", timezone: "IST" },
-  { name: "Marvin McKinney", initials: "MM", location: "Bangalore", timezone: "IST" },
+  { name: "Candidate (Andy…)", initials: "AS", location: "San Francisco", timezone: "PDT", timezoneFull: "PDT America/Los Angeles", utcOffset: -7 },
+  { name: "Leslie Alexander", initials: "LA", location: "San Francisco", timezone: "PDT", timezoneFull: "PDT America/Los Angeles", utcOffset: -7 },
+  { name: "Javier Ramirez", initials: "JR", location: "San Francisco", timezone: "PDT", timezoneFull: "PDT America/Los Angeles", utcOffset: -7 },
+  { name: "Jerome Bell", initials: "JB", location: "Bangalore", timezone: "IST", timezoneFull: "IST Asia/Kolkata", utcOffset: 5.5, businessStart: 12, businessEnd: 24 },
+  { name: "Marvin McKinney", initials: "MM", location: "Bangalore", timezone: "IST", timezoneFull: "IST Asia/Kolkata", utcOffset: 5.5, businessStart: 12, businessEnd: 24 },
 ]
 
 const SCHEDULE_DATES: ScheduleDateOption[] = [
@@ -104,13 +117,13 @@ const SCHEDULE_DATES: ScheduleDateOption[] = [
       {
         time: "9:00am – 10:00am",
         title: "System Design",
-        participants: [{ name: "Leslie Alexander" }, { name: "Javier Ramirez" }],
+        participants: [{ name: "Jerome Bell" }, { name: "Marvin McKinney" }],
         room: "SF-15-Bruce(6) [Zoom]",
       },
       {
         time: "10:00am – 10:45am",
         title: "Algorithms and Data Structures",
-        participants: [{ name: "Jerome Bell" }],
+        participants: [{ name: "Javier Ramirez" }],
         room: "SF-15-Bruce(6) [Zoom]",
       },
       {
@@ -122,13 +135,13 @@ const SCHEDULE_DATES: ScheduleDateOption[] = [
       {
         time: "11:00am – 11:30am",
         title: "Culture Fit",
-        participants: [{ name: "Marvin McKinney" }],
+        participants: [{ name: "Cameron Williamson" }],
         room: "SF-15-Bruce(6) [Zoom]",
       },
       {
         time: "11:30am – 12:00pm",
         title: "Hiring Manager Close-up",
-        participants: [{ name: "Cameron Williamson" }],
+        participants: [{ name: "Leslie Alexander" }],
         room: "SF-15-Bruce(6) [Zoom]",
       },
     ],
@@ -143,8 +156,8 @@ const SCHEDULE_DATES: ScheduleDateOption[] = [
       "Leslie Alexander": [
         { title: "Team Meeting", startHour: 8, durationHours: 0.5, type: "busy" },
         { title: "Focus Group", startHour: 8.5, durationHours: 0.5, type: "busy" },
-        { title: "9am, System Design", startHour: 9, durationHours: 1, type: "interview" },
-        { title: "Product Demo", startHour: 11, durationHours: 0.5, type: "busy" },
+        { title: "Product Demo", startHour: 10, durationHours: 0.5, type: "busy" },
+        { title: "11:30, Hiring Mgr", startHour: 11.5, durationHours: 0.5, type: "interview" },
         { title: "Planning Session", startHour: 12.5, durationHours: 0.5, type: "busy" },
         { title: "1:1 weekly", startHour: 13, durationHours: 0.5, type: "busy" },
         { title: "Interview", startHour: 14, durationHours: 0.5, type: "busy" },
@@ -152,19 +165,18 @@ const SCHEDULE_DATES: ScheduleDateOption[] = [
       ],
       "Javier Ramirez": [
         { title: "User Interview", startHour: 8, durationHours: 0.75, type: "busy" },
-        { title: "9am, System Design", startHour: 9, durationHours: 1, type: "interview" },
-        { title: "Product Review", startHour: 10, durationHours: 0.5, type: "busy" },
-        { title: "Design Review", startHour: 10.5, durationHours: 0.5, type: "busy" },
-        { title: "Product Demo", startHour: 11, durationHours: 0.5, type: "busy" },
+        { title: "10am, Algorithms", startHour: 10, durationHours: 0.75, type: "interview" },
+        { title: "Design Review", startHour: 11, durationHours: 0.5, type: "busy" },
+        { title: "Product Demo", startHour: 12, durationHours: 0.5, type: "busy" },
       ],
       "Jerome Bell": [
-        { title: "Workshop", startHour: 8.5, durationHours: 1, type: "busy" },
-        { title: "10am, Algorithms", startHour: 10, durationHours: 0.75, type: "interview" },
-        { title: "Client Meeting", startHour: 10.75, durationHours: 0.5, type: "busy" },
+        { title: "9am, System Design", startHour: 9, durationHours: 1, type: "interview" },
+        { title: "Client Meeting", startHour: 10.5, durationHours: 0.5, type: "busy" },
+        { title: "Team Sync", startHour: 12, durationHours: 0.5, type: "busy" },
       ],
       "Marvin McKinney": [
-        { title: "11am, Culture Fit", startHour: 11, durationHours: 0.5, type: "interview" },
-        { title: "Morning Sync", startHour: 12, durationHours: 0.5, type: "busy" },
+        { title: "9am, System Design", startHour: 9, durationHours: 1, type: "interview" },
+        { title: "Morning Sync", startHour: 11, durationHours: 0.5, type: "busy" },
         { title: "All Hands", startHour: 14, durationHours: 1, type: "busy" },
       ],
     },
@@ -176,13 +188,13 @@ const SCHEDULE_DATES: ScheduleDateOption[] = [
       {
         time: "9:00am – 10:00am",
         title: "System Design",
-        participants: [{ name: "Leslie Alexander" }, { name: "Javier Ramirez", conflict: true }],
+        participants: [{ name: "Jerome Bell" }, { name: "Marvin McKinney" }],
         room: "SF-15-Bruce(6) [Zoom]",
       },
       {
         time: "10:00am – 10:45am",
         title: "Algorithms and Data Structures",
-        participants: [{ name: "Jerome Bell" }],
+        participants: [{ name: "Javier Ramirez", conflict: true }],
         room: "SF-15-Bruce(6) [Zoom]",
       },
       {
@@ -194,13 +206,13 @@ const SCHEDULE_DATES: ScheduleDateOption[] = [
       {
         time: "11:00am – 11:30am",
         title: "Culture Fit",
-        participants: [{ name: "Marvin McKinney" }],
+        participants: [{ name: "Cameron Williamson" }],
         room: "SF-12-Reed(4) [Zoom]",
       },
       {
         time: "11:30am – 12:00pm",
         title: "Hiring Manager Close-up",
-        participants: [{ name: "Cameron Williamson" }],
+        participants: [{ name: "Leslie Alexander" }],
         room: "SF-12-Reed(4) [Zoom]",
       },
     ],
@@ -214,27 +226,26 @@ const SCHEDULE_DATES: ScheduleDateOption[] = [
       ],
       "Leslie Alexander": [
         { title: "Standup", startHour: 8.5, durationHours: 0.25, type: "busy" },
-        { title: "9am, System Design", startHour: 9, durationHours: 1, type: "interview" },
-        { title: "Design Sync", startHour: 10.5, durationHours: 0.5, type: "busy" },
+        { title: "Design Sync", startHour: 10, durationHours: 0.5, type: "busy" },
+        { title: "11:30, Hiring Mgr", startHour: 11.5, durationHours: 0.5, type: "interview" },
         { title: "Lunch w/ Team", startHour: 12, durationHours: 1, type: "busy" },
         { title: "Sprint Planning", startHour: 14, durationHours: 1, type: "busy" },
       ],
       "Javier Ramirez": [
-        { title: "9am, System Design", startHour: 9, durationHours: 1, type: "conflict" },
-        { title: "Eng Sync", startHour: 9, durationHours: 0.5, type: "busy" },
-        { title: "Code Review", startHour: 10, durationHours: 1, type: "busy" },
+        { title: "Eng Sync", startHour: 9.5, durationHours: 1, type: "busy" },
+        { title: "10am, Algorithms", startHour: 10, durationHours: 0.75, type: "conflict" },
+        { title: "Code Review", startHour: 11, durationHours: 1, type: "busy" },
         { title: "Lunch", startHour: 12, durationHours: 0.5, type: "busy" },
         { title: "1:1 with Manager", startHour: 14, durationHours: 0.5, type: "busy" },
       ],
       "Jerome Bell": [
-        { title: "Morning Standup", startHour: 8, durationHours: 0.25, type: "busy" },
-        { title: "10am, Algorithms", startHour: 10, durationHours: 0.75, type: "interview" },
+        { title: "9am, System Design", startHour: 9, durationHours: 1, type: "interview" },
         { title: "Team Lunch", startHour: 12, durationHours: 1, type: "busy" },
         { title: "Architecture Review", startHour: 15, durationHours: 1.5, type: "busy" },
       ],
       "Marvin McKinney": [
-        { title: "11am, Culture Fit", startHour: 11, durationHours: 0.5, type: "interview" },
-        { title: "Product Sync", startHour: 9, durationHours: 0.5, type: "busy" },
+        { title: "9am, System Design", startHour: 9, durationHours: 1, type: "interview" },
+        { title: "Product Sync", startHour: 10.5, durationHours: 0.5, type: "busy" },
         { title: "All Hands", startHour: 14, durationHours: 1, type: "busy" },
         { title: "Retro", startHour: 16, durationHours: 1, type: "busy" },
       ],
@@ -247,13 +258,13 @@ const SCHEDULE_DATES: ScheduleDateOption[] = [
       {
         time: "1:00pm – 2:00pm",
         title: "System Design",
-        participants: [{ name: "Leslie Alexander" }, { name: "Javier Ramirez" }],
+        participants: [{ name: "Jerome Bell" }, { name: "Marvin McKinney" }],
         room: "SF-15-Bruce(6) [Zoom]",
       },
       {
         time: "2:00pm – 2:45pm",
         title: "Algorithms and Data Structures",
-        participants: [{ name: "Jerome Bell" }],
+        participants: [{ name: "Javier Ramirez" }],
         room: "SF-15-Bruce(6) [Zoom]",
       },
       {
@@ -265,13 +276,13 @@ const SCHEDULE_DATES: ScheduleDateOption[] = [
       {
         time: "3:00pm – 3:30pm",
         title: "Culture Fit",
-        participants: [{ name: "Marvin McKinney" }],
+        participants: [{ name: "Cameron Williamson" }],
         room: "SF-15-Bruce(6) [Zoom]",
       },
       {
         time: "3:30pm – 4:00pm",
         title: "Hiring Manager Close-up",
-        participants: [{ name: "Cameron Williamson" }],
+        participants: [{ name: "Leslie Alexander" }],
         room: "SF-15-Bruce(6) [Zoom]",
       },
     ],
@@ -286,23 +297,22 @@ const SCHEDULE_DATES: ScheduleDateOption[] = [
       "Leslie Alexander": [
         { title: "Standup", startHour: 8.5, durationHours: 0.25, type: "busy" },
         { title: "Design Review", startHour: 9, durationHours: 1, type: "busy" },
-        { title: "1pm, System Design", startHour: 13, durationHours: 1, type: "interview" },
+        { title: "3:30, Hiring Mgr", startHour: 15.5, durationHours: 0.5, type: "interview" },
         { title: "Backlog Grooming", startHour: 16, durationHours: 1, type: "busy" },
       ],
       "Javier Ramirez": [
         { title: "Feature Demo", startHour: 10, durationHours: 1, type: "busy" },
         { title: "Lunch", startHour: 12, durationHours: 0.5, type: "busy" },
-        { title: "1pm, System Design", startHour: 13, durationHours: 1, type: "interview" },
+        { title: "2pm, Algorithms", startHour: 14, durationHours: 0.75, type: "interview" },
         { title: "Bug Bash", startHour: 16, durationHours: 1, type: "busy" },
       ],
       "Jerome Bell": [
-        { title: "2pm, Algorithms", startHour: 14, durationHours: 0.75, type: "interview" },
-        { title: "Morning Standup", startHour: 8, durationHours: 0.25, type: "busy" },
+        { title: "1pm, System Design", startHour: 13, durationHours: 1, type: "interview" },
         { title: "API Review", startHour: 9.5, durationHours: 1, type: "busy" },
         { title: "Perf Review", startHour: 11, durationHours: 1, type: "busy" },
       ],
       "Marvin McKinney": [
-        { title: "3pm, Culture Fit", startHour: 15, durationHours: 0.5, type: "interview" },
+        { title: "1pm, System Design", startHour: 13, durationHours: 1, type: "interview" },
         { title: "Morning Sync", startHour: 9, durationHours: 0.5, type: "busy" },
         { title: "Investor Update", startHour: 10, durationHours: 1.5, type: "busy" },
         { title: "Lunch", startHour: 12, durationHours: 0.5, type: "busy" },
@@ -316,13 +326,13 @@ const SCHEDULE_DATES: ScheduleDateOption[] = [
       {
         time: "10:00am – 11:00am",
         title: "System Design",
-        participants: [{ name: "Leslie Alexander" }, { name: "Javier Ramirez" }],
+        participants: [{ name: "Jerome Bell" }, { name: "Marvin McKinney" }],
         room: "SF-12-Reed(4) [Zoom]",
       },
       {
         time: "11:00am – 11:45am",
         title: "Algorithms and Data Structures",
-        participants: [{ name: "Jerome Bell" }],
+        participants: [{ name: "Javier Ramirez" }],
         room: "SF-12-Reed(4) [Zoom]",
       },
       {
@@ -334,13 +344,13 @@ const SCHEDULE_DATES: ScheduleDateOption[] = [
       {
         time: "12:00pm – 12:30pm",
         title: "Culture Fit",
-        participants: [{ name: "Marvin McKinney" }],
+        participants: [{ name: "Cameron Williamson" }],
         room: "SF-12-Reed(4) [Zoom]",
       },
       {
         time: "12:30pm – 1:00pm",
         title: "Hiring Manager Close-up",
-        participants: [{ name: "Cameron Williamson" }],
+        participants: [{ name: "Leslie Alexander" }],
         room: "SF-12-Reed(4) [Zoom]",
       },
     ],
@@ -355,25 +365,24 @@ const SCHEDULE_DATES: ScheduleDateOption[] = [
       "Leslie Alexander": [
         { title: "Standup", startHour: 8.5, durationHours: 0.25, type: "busy" },
         { title: "Perf Reviews", startHour: 9, durationHours: 1, type: "busy" },
-        { title: "10am, System Design", startHour: 10, durationHours: 1, type: "interview" },
+        { title: "12:30, Hiring Mgr", startHour: 12.5, durationHours: 0.5, type: "interview" },
         { title: "Board Prep", startHour: 14, durationHours: 2, type: "busy" },
       ],
       "Javier Ramirez": [
         { title: "Focus Time", startHour: 8, durationHours: 2, type: "busy" },
-        { title: "10am, System Design", startHour: 10, durationHours: 1, type: "interview" },
+        { title: "11am, Algorithms", startHour: 11, durationHours: 0.75, type: "interview" },
         { title: "Lunch", startHour: 12, durationHours: 0.5, type: "busy" },
         { title: "Release Planning", startHour: 15, durationHours: 1, type: "busy" },
       ],
       "Jerome Bell": [
-        { title: "11am, Algorithms", startHour: 11, durationHours: 0.75, type: "interview" },
-        { title: "Standup", startHour: 8, durationHours: 0.25, type: "busy" },
-        { title: "Cross-team Sync", startHour: 9, durationHours: 1, type: "busy" },
+        { title: "10am, System Design", startHour: 10, durationHours: 1, type: "interview" },
+        { title: "Cross-team Sync", startHour: 11.5, durationHours: 0.5, type: "busy" },
         { title: "Incident Review", startHour: 14, durationHours: 1, type: "busy" },
       ],
       "Marvin McKinney": [
-        { title: "12pm, Culture Fit", startHour: 12, durationHours: 0.5, type: "interview" },
+        { title: "10am, System Design", startHour: 10, durationHours: 1, type: "interview" },
         { title: "Exec Standup", startHour: 8, durationHours: 0.5, type: "busy" },
-        { title: "Strategy Session", startHour: 9, durationHours: 1.5, type: "busy" },
+        { title: "Strategy Session", startHour: 12, durationHours: 1.5, type: "busy" },
         { title: "Travel Prep", startHour: 15, durationHours: 1, type: "busy" },
       ],
     },
@@ -385,13 +394,13 @@ const SCHEDULE_DATES: ScheduleDateOption[] = [
       {
         time: "2:00pm – 3:00pm",
         title: "System Design",
-        participants: [{ name: "Leslie Alexander" }, { name: "Javier Ramirez" }],
+        participants: [{ name: "Jerome Bell" }, { name: "Marvin McKinney" }],
         room: "SF-15-Bruce(6) [Zoom]",
       },
       {
         time: "3:00pm – 3:45pm",
         title: "Algorithms and Data Structures",
-        participants: [{ name: "Jerome Bell" }],
+        participants: [{ name: "Javier Ramirez" }],
         room: "SF-15-Bruce(6) [Zoom]",
       },
       {
@@ -403,13 +412,13 @@ const SCHEDULE_DATES: ScheduleDateOption[] = [
       {
         time: "4:00pm – 4:30pm",
         title: "Culture Fit",
-        participants: [{ name: "Marvin McKinney" }],
+        participants: [{ name: "Cameron Williamson" }],
         room: "SF-15-Bruce(6) [Zoom]",
       },
       {
         time: "4:30pm – 5:00pm",
         title: "Hiring Manager Close-up",
-        participants: [{ name: "Cameron Williamson" }],
+        participants: [{ name: "Leslie Alexander" }],
         room: "SF-15-Bruce(6) [Zoom]",
       },
     ],
@@ -425,22 +434,21 @@ const SCHEDULE_DATES: ScheduleDateOption[] = [
         { title: "Standup", startHour: 8.5, durationHours: 0.25, type: "busy" },
         { title: "All Hands", startHour: 9, durationHours: 1, type: "busy" },
         { title: "Eng Lunch", startHour: 12, durationHours: 1, type: "busy" },
-        { title: "2pm, System Design", startHour: 14, durationHours: 1, type: "interview" },
+        { title: "4:30, Hiring Mgr", startHour: 16.5, durationHours: 0.5, type: "interview" },
       ],
       "Javier Ramirez": [
         { title: "All Hands", startHour: 9, durationHours: 1, type: "busy" },
         { title: "Retrospective", startHour: 10, durationHours: 1, type: "busy" },
-        { title: "2pm, System Design", startHour: 14, durationHours: 1, type: "interview" },
+        { title: "3pm, Algorithms", startHour: 15, durationHours: 0.75, type: "interview" },
         { title: "Happy Hour", startHour: 17, durationHours: 1, type: "busy" },
       ],
       "Jerome Bell": [
-        { title: "3pm, Algorithms", startHour: 15, durationHours: 0.75, type: "interview" },
-        { title: "Standup", startHour: 8, durationHours: 0.25, type: "busy" },
+        { title: "2pm, System Design", startHour: 14, durationHours: 1, type: "interview" },
         { title: "Knowledge Share", startHour: 10, durationHours: 1, type: "busy" },
         { title: "Wrap-up", startHour: 17, durationHours: 0.5, type: "busy" },
       ],
       "Marvin McKinney": [
-        { title: "4pm, Culture Fit", startHour: 16, durationHours: 0.5, type: "interview" },
+        { title: "2pm, System Design", startHour: 14, durationHours: 1, type: "interview" },
         { title: "Exec Standup", startHour: 8, durationHours: 0.5, type: "busy" },
         { title: "Board Meeting", startHour: 10, durationHours: 2, type: "busy" },
         { title: "Lunch", startHour: 12, durationHours: 0.5, type: "busy" },
@@ -453,20 +461,64 @@ const SCHEDULE_DATES: ScheduleDateOption[] = [
 // Sub-components
 // ---------------------------------------------------------------------------
 
+function hourToSlotIndex(hour: number): number {
+  if (hour >= HOURS[0]) return hour - HOURS[0]
+  return hour + 24 - HOURS[0]
+}
+
+const HATCH_BG =
+  "repeating-linear-gradient(135deg, transparent, transparent 4px, rgba(0,0,0,0.07) 4px, rgba(0,0,0,0.07) 5px)"
+
+function getNonBusinessRegions(
+  utcOffset: number,
+  bizStart = BUSINESS_START,
+  bizEnd = BUSINESS_END,
+): { topPx: number; heightPx: number }[] {
+  const diff = utcOffset - BASE_UTC_OFFSET
+  const displayedHours = HOURS.slice(0, -1)
+  const regions: { topPx: number; heightPx: number }[] = []
+  let regionStart: number | null = null
+
+  for (let i = 0; i < displayedHours.length; i++) {
+    const h = displayedHours[i]
+    const localH = ((h + diff) % 24 + 24) % 24
+    const isNonBusiness = bizEnd <= 24
+      ? localH < bizStart || localH >= bizEnd
+      : localH < bizStart && localH >= bizEnd % 24
+
+    if (isNonBusiness && regionStart === null) {
+      regionStart = i
+    } else if (!isNonBusiness && regionStart !== null) {
+      regions.push({
+        topPx: regionStart * SLOT_HEIGHT,
+        heightPx: (i - regionStart) * SLOT_HEIGHT,
+      })
+      regionStart = null
+    }
+  }
+  if (regionStart !== null) {
+    regions.push({
+      topPx: regionStart * SLOT_HEIGHT,
+      heightPx: (displayedHours.length - regionStart) * SLOT_HEIGHT,
+    })
+  }
+  return regions
+}
+
 function EventBlock({ event }: { event: CalendarEvent }) {
-  const topPx = (event.startHour - HOURS[0]) * SLOT_HEIGHT
+  const topPx = hourToSlotIndex(event.startHour) * SLOT_HEIGHT
   const heightPx = event.durationHours * SLOT_HEIGHT
   return (
     <div
       className={cn(
-        "absolute inset-x-px z-10 overflow-hidden rounded-md border px-1.5 py-1",
+        "absolute inset-x-px z-10 flex items-center overflow-hidden rounded-md border px-1.5",
         event.type === "interview"
           ? "border-blue-300 bg-blue-500/20"
           : event.type === "conflict"
             ? "border-destructive/30 bg-destructive/10"
             : "border-transparent bg-muted",
       )}
-      style={{ top: topPx, height: heightPx }}
+      style={{ top: topPx + 1, height: heightPx - 2 }}
     >
       <span
         className={cn(
@@ -502,9 +554,14 @@ function PersonColumn({
         </Avatar>
         <div className="min-w-0">
           <p className="truncate text-xs font-medium">{person.name}</p>
-          <p className="truncate text-[10px] text-muted-foreground">
-            {person.location} · {person.timezone}
-          </p>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <p className="truncate text-[10px] text-muted-foreground">
+                {person.location} · {person.timezone}
+              </p>
+            </TooltipTrigger>
+            <TooltipContent>{person.timezoneFull}</TooltipContent>
+          </Tooltip>
         </div>
       </div>
 
@@ -512,10 +569,21 @@ function PersonColumn({
         className="relative"
         style={{ height: (HOURS.length - 1) * SLOT_HEIGHT }}
       >
-        {HOURS.slice(0, -1).map((h, i) => (
+        {getNonBusinessRegions(person.utcOffset, person.businessStart, person.businessEnd).map((region, i) => (
           <div
-            key={h}
-            className="absolute w-full border-b border-border/50"
+            key={i}
+            className="absolute inset-x-0"
+            style={{
+              top: region.topPx,
+              height: region.heightPx,
+              backgroundImage: HATCH_BG,
+            }}
+          />
+        ))}
+        {HOURS.slice(0, -1).map((_, i) => (
+          <div
+            key={i}
+            className="absolute z-[1] w-full border-b border-border/50"
             style={{ top: (i + 1) * SLOT_HEIGHT }}
           />
         ))}
@@ -529,28 +597,36 @@ function PersonColumn({
 
 function TimezoneColumn({
   label,
+  fullLabel,
   utcOffset,
 }: {
   label: string
+  fullLabel: string
   utcOffset: number
 }) {
   return (
-    <div className="flex w-[52px] shrink-0 flex-col border-r border-border">
-      <div className="flex h-14 shrink-0 items-end justify-center border-b border-border pb-1">
-        <span className="text-xs text-muted-foreground">{label}</span>
+    <div className="flex w-[68px] shrink-0 flex-col border-r border-border">
+      <div className="flex h-14 shrink-0 items-end justify-end border-b border-border pb-1 pr-1">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="cursor-default text-xs text-muted-foreground">{label}</span>
+          </TooltipTrigger>
+          <TooltipContent>{fullLabel}</TooltipContent>
+        </Tooltip>
       </div>
       <div style={{ height: (HOURS.length - 1) * SLOT_HEIGHT }}>
-        {HOURS.slice(0, -1).map((h) => {
-          const localH = ((h + utcOffset) % 24 + 24) % 24
-          const mins = utcOffset % 1 !== 0 ? 30 : 0
+        {HOURS.slice(0, -1).map((h, i) => {
+          const diff = utcOffset - BASE_UTC_OFFSET
+          const localH = ((h + diff) % 24 + 24) % 24
+          const mins = diff % 1 !== 0 ? Math.round((localH % 1) * 60) : 0
           const hour = Math.floor(localH)
           const suffix = hour < 12 ? "am" : "pm"
           const h12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
           const formatted =
-            mins > 0 ? `${h12}:${mins}${suffix}` : `${h12}${suffix}`
+            mins > 0 ? `${h12}:${String(mins).padStart(2, "0")}${suffix}` : `${h12}${suffix}`
           return (
             <div
-              key={h}
+              key={i}
               className="flex items-start justify-end pr-1 pt-0.5"
               style={{ height: SLOT_HEIGHT }}
             >
@@ -574,38 +650,44 @@ function InterviewerCalendarGrid({
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden bg-card">
-      <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold">{selectedDate.date}</span>
-          <ChevronDown className="size-3.5 text-muted-foreground" />
-        </div>
-        <div className="flex items-center gap-1.5">
-          <Badge variant="outline" className="gap-1 text-xs font-normal">
-            PDT America/Los Angeles
-            <ChevronDown className="size-3" />
-          </Badge>
-          <Button variant="ghost" size="icon" className="size-7">
-            <Expand className="size-3.5" />
+      <div className="flex items-center gap-2 px-4 py-3">
+        <span className="flex-1 text-lg font-semibold text-foreground">{selectedDate.date}</span>
+        <Select defaultValue="pdt">
+          <SelectTrigger className="h-7 w-[212px] text-sm shadow-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="pdt">PDT America/Los Angeles</SelectItem>
+            <SelectItem value="ist">IST Asia/Kolkata</SelectItem>
+          </SelectContent>
+        </Select>
+        <div className="flex items-center rounded-lg border shadow-xs">
+          <Button variant="ghost" size="icon" className="size-7 rounded-r-none border-r">
+            <ChevronLeft className="size-4" />
           </Button>
-          <div className="flex items-center rounded-md border">
-            <Button variant="ghost" size="icon" className="size-7 rounded-r-none border-r">
-              <ChevronLeft className="size-3.5" />
-            </Button>
-            <Button variant="ghost" size="icon" className="size-7 rounded-l-none">
-              <ChevronRight className="size-3.5" />
-            </Button>
-          </div>
-          <Button variant="ghost" size="sm" className="h-7 text-xs">
-            Today
+          <Button variant="ghost" size="icon" className="size-7 rounded-l-none">
+            <ChevronRight className="size-4" />
           </Button>
         </div>
       </div>
 
       <div ref={scrollRef} className="flex flex-1 overflow-auto">
-        <TimezoneColumn label="IST" utcOffset={5.5} />
-        <TimezoneColumn label="PT" utcOffset={-7} />
+        <TimezoneColumn label="IST" fullLabel="IST Asia/Kolkata" utcOffset={5.5} />
+        <TimezoneColumn label="PDT" fullLabel="PDT America/Los Angeles" utcOffset={-7} />
 
-        {INTERVIEWERS.map((person) => (
+        {[...INTERVIEWERS].sort((a, b) => {
+          const isACandidate = a.name.startsWith("Candidate")
+          const isBCandidate = b.name.startsWith("Candidate")
+          if (isACandidate) return -1
+          if (isBCandidate) return 1
+          const aFirst = (selectedDate.calendarEvents[a.name] ?? [])
+            .filter(e => e.type === "interview")
+            .reduce((min, e) => Math.min(min, e.startHour), Infinity)
+          const bFirst = (selectedDate.calendarEvents[b.name] ?? [])
+            .filter(e => e.type === "interview")
+            .reduce((min, e) => Math.min(min, e.startHour), Infinity)
+          return aFirst - bFirst
+        }).map((person) => (
           <PersonColumn
             key={person.name}
             person={person}
@@ -992,6 +1074,7 @@ export function ScheduleInterviewDialog({
         showCloseButton={false}
         className="flex h-[calc(100vh-40px)] w-[calc(100vw-40px)] max-w-none sm:max-w-none flex-col gap-0 overflow-hidden p-0"
       >
+      <TooltipProvider delayDuration={200}>
         <DialogTitle className="sr-only">Schedule interview</DialogTitle>
         <DialogDescription className="sr-only">
           Find a time to schedule an interview
@@ -1069,6 +1152,7 @@ export function ScheduleInterviewDialog({
             </>
           )}
         </div>
+      </TooltipProvider>
       </DialogContent>
     </Dialog>
   )

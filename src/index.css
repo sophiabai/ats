@@ -169,6 +169,16 @@
     --brand: oklch(0.707 0.165 254.624);
 }
 
+.rippling {
+    --top-nav: #4A0039;
+    --top-nav-foreground: oklch(1 0 0 / 0.9);
+    --top-nav-muted: rgba(255, 255, 255, 0.12);
+    --primary: #7A005D;
+    --primary-foreground: oklch(1 0 0);
+    --ring: #CE71BB;
+    --sidebar-primary: #9F1E7A;
+}
+
 @keyframes cand-fade-up {
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }

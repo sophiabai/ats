@@ -55,7 +55,7 @@ export function RequestAvailabilityDialog({
   senderName: string;
 }) {
   const [duration, setDuration] = useState("195");
-  const [window, setWindow] = useState("2-weeks");
+  const [availWindow, setAvailWindow] = useState("2-weeks");
   const [startTime, setStartTime] = useState("08:00 AM");
   const [endTime, setEndTime] = useState("05:00 PM");
   const [timezone, setTimezone] = useState("america-los-angeles");
@@ -97,7 +97,7 @@ export function RequestAvailabilityDialog({
             <div className="space-y-1">
               <Label>Interview duration</Label>
               <Select value={duration} onValueChange={setDuration}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -114,8 +114,8 @@ export function RequestAvailabilityDialog({
 
             <div className="space-y-1">
               <Label>Share availability window</Label>
-              <Select value={window} onValueChange={setWindow}>
-                <SelectTrigger>
+              <Select value={availWindow} onValueChange={setAvailWindow}>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -131,7 +131,7 @@ export function RequestAvailabilityDialog({
               <div className="space-y-1">
                 <Label>Start time</Label>
                 <Select value={startTime} onValueChange={setStartTime}>
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <Clock className="size-4 text-muted-foreground" />
                     <SelectValue />
                   </SelectTrigger>
@@ -146,7 +146,7 @@ export function RequestAvailabilityDialog({
               <div className="space-y-1">
                 <Label>End time</Label>
                 <Select value={endTime} onValueChange={setEndTime}>
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <Clock className="size-4 text-muted-foreground" />
                     <SelectValue />
                   </SelectTrigger>
@@ -161,7 +161,7 @@ export function RequestAvailabilityDialog({
               <div className="space-y-1">
                 <Label>Timezone</Label>
                 <Select value={timezone} onValueChange={setTimezone}>
-                  <SelectTrigger className="truncate">
+                  <SelectTrigger className="w-full truncate">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -179,7 +179,7 @@ export function RequestAvailabilityDialog({
               <div className="space-y-1">
                 <Label>Minimum time slots to share</Label>
                 <Select value={minSlots} onValueChange={setMinSlots}>
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -194,7 +194,7 @@ export function RequestAvailabilityDialog({
               <div className="space-y-1">
                 <Label>Minimum days to share</Label>
                 <Select value={minDays} onValueChange={setMinDays}>
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>

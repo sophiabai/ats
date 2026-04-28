@@ -1,6 +1,7 @@
 import {
   Bell,
   FlaskConical,
+  Gem,
   LogOut,
   Monitor,
   Moon,
@@ -33,6 +34,7 @@ const themeOptions: { value: Theme; label: string; icon: typeof Sun }[] = [
   { value: "system", label: "System", icon: Monitor },
   { value: "light", label: "Light", icon: Sun },
   { value: "dark", label: "Dark", icon: Moon },
+  { value: "rippling", label: "Rippling", icon: Gem },
 ]
 
 export function TopNav() {
@@ -41,7 +43,7 @@ export function TopNav() {
 
   return (
     <header className="relative flex h-(--top-nav-height) shrink-0 items-center justify-between bg-top-nav px-5">
-      <img src={logoUrl} alt="Logo" className="h-6 w-auto brightness-0 dark:brightness-100" />
+      <img src={logoUrl} alt="Logo" className="h-6 w-auto brightness-0 dark:brightness-100 [.rippling_&]:brightness-100" />
 
       <ChatBar />
 

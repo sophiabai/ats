@@ -1,7 +1,7 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 
-export type Theme = "system" | "light" | "dark"
+export type Theme = "system" | "light" | "dark" | "rippling"
 
 interface ThemeState {
   theme: Theme
@@ -22,6 +22,7 @@ function applyTheme(theme: Theme) {
   const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
   const isDark = theme === "dark" || (theme === "system" && prefersDark)
   document.documentElement.classList.toggle("dark", isDark)
+  document.documentElement.classList.toggle("rippling", theme === "rippling")
 }
 
 function init() {

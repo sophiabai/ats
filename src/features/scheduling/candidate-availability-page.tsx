@@ -297,11 +297,11 @@ function EmailDetail({
             The interview loop is <strong>3 hours 30 minutes</strong> and includes the following sessions:
           </p>
           <ul className="ml-6 list-disc space-y-1 text-gray-700">
-            <li>System Design (60 min) — Leslie Alexander & Javier Ramirez</li>
-            <li>Algorithms and Data Structures (45 min) — Wade Warren</li>
+            <li>System Design (60 min) — Jerome Bell & Marvin McKinney</li>
+            <li>Algorithms and Data Structures (45 min) — Javier Ramirez</li>
             <li>Break (15 min)</li>
-            <li>Culture Fit (30 min) — Leslie Alexander</li>
-            <li>Hiring Manager Close-up (30 min) — Floyd Miles</li>
+            <li>Culture Fit (30 min) — Cameron Williamson</li>
+            <li>Hiring Manager Close-up (30 min) — Leslie Alexander</li>
           </ul>
           <p>
             Please click the button below to share your availability for the upcoming week. The scheduling

@@ -57,6 +57,7 @@ import {
   MILESTONE_ORDER,
   StageIcon,
 } from "@/features/candidates/components/application-tab-content";
+import { RequestAvailabilityDialog } from "@/features/candidates/components/request-availability-dialog";
 import { ScheduleInterviewDialog } from "@/features/candidates/components/schedule-interview-dialog";
 import { useSetPageTitle } from "@/stores/page-title-store";
 import type { Milestone } from "@/types/database";
@@ -89,7 +90,7 @@ export function Component() {
     candidate ? `${candidate.first_name} ${candidate.last_name}` : null,
   );
 
-  const VALID_TABS = ["profile", "applications", "documents", "messages", "activities"];
+  const VALID_TABS = ["profile", "applications", "messages", "activities"];
   const apps = candidate?.applications ?? [];
 
   const tabsValue = VALID_TABS.includes(tabParam ?? "")
@@ -166,7 +167,6 @@ export function Component() {
         <TabsList>
           <TabsTrigger value="profile">Candidate info</TabsTrigger>
           <TabsTrigger value="applications">Job applications</TabsTrigger>
-          <TabsTrigger value="documents">Documents</TabsTrigger>
           <TabsTrigger value="messages">Messages</TabsTrigger>
           <TabsTrigger value="activities">Activity</TabsTrigger>
         </TabsList>
@@ -181,12 +181,6 @@ export function Component() {
             preselectedAppId={preselectedAppId}
             candidateName={`${candidate.first_name} ${candidate.last_name}`}
           />
-        </TabsContent>
-
-        <TabsContent value="documents" className="mt-4">
-          <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
-            Coming soon
-          </div>
         </TabsContent>
 
         <TabsContent value="messages" className="mt-4">
@@ -348,6 +342,7 @@ const STATUS_LABEL: Record<string, string> = {
 function ApplicationDetailPanel({ app, candidateName }: { app: ApplicationDetail; candidateName: string }) {
   const [subTab, setSubTab] = useState("interviews");
   const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [requestAvailOpen, setRequestAvailOpen] = useState(false);
   const allStages = app.requisitions?.req_stages ?? [];
   const reqTitle = formatReqTitle(app.requisitions.req_number, app.requisitions.title);
 
@@ -385,8 +380,6 @@ function ApplicationDetailPanel({ app, candidateName }: { app: ApplicationDetail
             <TabsTrigger value="interviews">Interview stages</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
             <TabsTrigger value="feedback">All feedback</TabsTrigger>
-            <TabsTrigger value="messages">Messages</TabsTrigger>
-            <TabsTrigger value="activities">Activity</TabsTrigger>
           </TabsList>
         </div>
 
@@ -404,12 +397,13 @@ function ApplicationDetailPanel({ app, candidateName }: { app: ApplicationDetail
                   selectedStageId={selectedStageId}
                   onSelectStage={setSelectedStageId}
                   onSchedule={() => setScheduleOpen(true)}
+                  onRequestAvailability={() => setRequestAvailOpen(true)}
                 />
               ))}
             </div>
           </TabsContent>
 
-          {["home", "documents", "feedback", "messages", "activities"].map((tab) => (
+          {["home", "documents", "feedback"].map((tab) => (
             <TabsContent key={tab} value={tab} className="mt-0 flex flex-1 items-center justify-center">
               <p className="text-sm text-muted-foreground">Coming soon</p>
             </TabsContent>
@@ -428,6 +422,16 @@ function ApplicationDetailPanel({ app, candidateName }: { app: ApplicationDetail
         candidateName={candidateName}
         reqTitle={reqTitle}
       />
+
+      <RequestAvailabilityDialog
+        open={requestAvailOpen}
+        onOpenChange={setRequestAvailOpen}
+        candidateName={candidateName}
+        candidateEmail={`${candidateName.toLowerCase().replace(/\s+/g, "")}@gmail.com`}
+        reqTitle={reqTitle}
+        companyName="ACME AI"
+        senderName="Anne Montgomery"
+      />
     </div>
   );
 }
@@ -441,6 +445,7 @@ function PipelineMilestone({
   selectedStageId,
   onSelectStage,
   onSchedule,
+  onRequestAvailability,
 }: {
   milestone: Milestone;
   index: number;
@@ -450,6 +455,7 @@ function PipelineMilestone({
   selectedStageId: string | null;
   onSelectStage: (id: string | null) => void;
   onSchedule: () => void;
+  onRequestAvailability: () => void;
 }) {
   return (
     <div>
@@ -468,31 +474,33 @@ function PipelineMilestone({
             const isSelected = stage.id === selectedStageId;
             return (
               <div key={stage.id} className="rounded-lg hover:bg-muted">
-                <button
-                  type="button"
-                  onClick={() => onSelectStage(isSelected ? null : stage.id)}
-                  className={cn(
-                    "flex w-full items-center gap-2 px-2 py-2 text-sm",
-                    status === "upcoming" && "text-muted-foreground",
-                  )}
-                >
-                  <StageIcon status={status} />
-                  <span className="flex-1 truncate text-left font-semibold">
-                    {stage.name}
-                  </span>
+                <div className="flex items-center gap-2 px-2 py-2 text-sm">
+                  <button
+                    type="button"
+                    onClick={() => onSelectStage(isSelected ? null : stage.id)}
+                    className={cn(
+                      "flex min-w-0 flex-1 items-center gap-2 text-left",
+                      status === "upcoming" && "text-muted-foreground",
+                    )}
+                  >
+                    <StageIcon status={status} />
+                    <span className="flex-1 truncate font-semibold">
+                      {stage.name}
+                    </span>
+                  </button>
                   {isSelected && status === "current" && (
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenuTrigger asChild>
                         <Button size="sm">Schedule</Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onSelect={onSchedule}>Schedule</DropdownMenuItem>
-                        <DropdownMenuItem>Request availability</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={onRequestAvailability}>Request availability</DropdownMenuItem>
                         <DropdownMenuItem>Candidate self-schedule</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   )}
-                </button>
+                </div>
                 {isSelected && stage.req_interviews.length > 0 && (
                   <div className="pb-2 pl-2 pr-2">
                     <InterviewTimeline interviews={stage.req_interviews} />
@@ -642,9 +650,10 @@ function JobApplicationsTabContent({
 
   if (apps.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center gap-2 py-12 text-muted-foreground">
-        <Briefcase className="size-8" />
-        <p className="text-sm">No job applications yet</p>
+      <div className="flex min-h-[480px] flex-col items-center justify-center gap-3 rounded-xl bg-muted p-6 text-center">
+        <Briefcase className="size-8 text-muted-foreground" />
+        <p className="text-sm text-muted-foreground">No job applications yet</p>
+        <Button size="sm">Add to a requisition</Button>
       </div>
     );
   }
