@@ -228,7 +228,11 @@ function ProfileTabContent({ candidate }: { candidate: CandidateDetail }) {
       <div className="space-y-8">
         {workHistory.length > 0 && (
           <section>
-            <h3 className="mb-4 font-semibold">Experience</h3>
+            <h3 className="font-semibold">Experience</h3>
+            <p className="mt-1 mb-4 text-sm text-muted-foreground">
+              Total years of experience:{" "}
+              <span className="font-semibold text-foreground">10.5 years</span>
+            </p>
             <div className="space-y-7">
               {workHistory.map((w, i) => (
                 <div key={i} className="flex gap-3">
@@ -246,7 +250,7 @@ function ProfileTabContent({ candidate }: { candidate: CandidateDetail }) {
                         </>
                       )}
                     </div>
-                    <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground/70">
+                    <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-sm text-muted-foreground">
                       <span>
                         {formatMonth(w.start_date)} – {w.end_date ? formatMonth(w.end_date) : "Present"}
                       </span>
@@ -382,14 +386,11 @@ function ApplicationDetailPanel({ app, candidateName }: { app: ApplicationDetail
           <TabsList variant="file-labels" className="text-xs">
             <TabsTrigger value="home">Application</TabsTrigger>
             <TabsTrigger value="interviews">Interview stages</TabsTrigger>
-            <TabsTrigger value="documents">Documents</TabsTrigger>
             <TabsTrigger value="feedback">All feedback</TabsTrigger>
-            <TabsTrigger value="messages">Messages</TabsTrigger>
-            <TabsTrigger value="activities">Activity</TabsTrigger>
           </TabsList>
         </div>
 
-        <Card className={cn("mb-6 flex min-h-0 flex-1 flex-col overflow-hidden", subTab === "home" && "rounded-tl-none")}>
+        <Card className={cn("flex min-h-0 flex-1 flex-col overflow-hidden", subTab === "home" && "rounded-tl-none")}>
           <TabsContent value="interviews" className="mt-0 flex-1 overflow-y-auto p-4">
             <div className="space-y-2">
               {MILESTONE_ORDER.map((ms, msIdx) => (
@@ -408,7 +409,7 @@ function ApplicationDetailPanel({ app, candidateName }: { app: ApplicationDetail
             </div>
           </TabsContent>
 
-          {["home", "documents", "feedback", "messages", "activities"].map((tab) => (
+          {["home", "feedback"].map((tab) => (
             <TabsContent key={tab} value={tab} className="mt-0 flex flex-1 items-center justify-center">
               <p className="text-sm text-muted-foreground">Coming soon</p>
             </TabsContent>
@@ -471,7 +472,7 @@ function PipelineMilestone({
                   type="button"
                   onClick={() => onSelectStage(isSelected ? null : stage.id)}
                   className={cn(
-                    "flex w-full items-center gap-2 px-2 py-2 text-sm",
+                    "flex w-full cursor-pointer items-center gap-2 px-2 py-2 text-sm",
                     status === "upcoming" && "text-muted-foreground",
                   )}
                 >
@@ -649,9 +650,9 @@ function JobApplicationsTabContent({
   }
 
   return (
-    <div className="flex min-h-[480px] flex-col overflow-hidden rounded-xl bg-muted">
+    <div className="flex min-h-[480px] flex-col overflow-hidden rounded-xl bg-muted p-4">
       {selectedApp && (
-        <div className="flex flex-wrap items-center gap-3 px-4 pt-4">
+        <div className="flex flex-wrap items-center gap-3 p-4">
           <ApplicationSelector
             apps={apps}
             selectedApp={selectedApp}
@@ -710,7 +711,7 @@ function ApplicationSelector({
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="inline-flex min-w-0 items-center gap-1.5 rounded-md text-base font-semibold text-foreground transition-opacity hover:opacity-80"
+          className="-mx-2 inline-flex min-w-0 cursor-pointer items-center gap-1.5 rounded-md px-2 py-1 text-base font-semibold text-foreground transition-colors hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent"
         >
           <span className="truncate">{label}</span>
           <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
@@ -723,7 +724,7 @@ function ApplicationSelector({
             <DropdownMenuItem
               key={app.id}
               onSelect={() => onSelect(app.id)}
-              className={cn(active && "font-medium")}
+              className={cn("gap-3", active && "font-medium")}
             >
               <Check
                 className={cn(
@@ -737,6 +738,16 @@ function ApplicationSelector({
                   app.requisitions.title,
                 )}
               </span>
+              <Badge
+                variant="outline"
+                className={cn(
+                  "ml-auto shrink-0 border-0 text-[11px] font-normal",
+                  STATUS_BADGE_CLASSES[app.status] ??
+                    "bg-muted text-muted-foreground",
+                )}
+              >
+                {formatStatusLabel(app.status, app.applied_date)}
+              </Badge>
             </DropdownMenuItem>
           );
         })}
