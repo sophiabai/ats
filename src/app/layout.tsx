@@ -5,6 +5,7 @@ import { VariantDropdown } from "@/components/custom/variant-dropdown";
 import { DockedChatPanel } from "@/components/docked-chat-panel";
 import { TopNav } from "@/components/top-nav";
 import { useChatBarStore } from "@/stores/chat-bar-store";
+import { useThemeUrlSync } from "@/hooks/use-theme-url-sync";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -113,6 +114,8 @@ export function RootLayout() {
   const { pathname } = useLocation();
   const docked = useChatBarStore((s) => s.docked);
   const hideChatBar = pathname.startsWith("/workflows");
+
+  useThemeUrlSync();
 
   return (
     <div className="flex h-svh flex-col">

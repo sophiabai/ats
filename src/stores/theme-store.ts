@@ -1,7 +1,12 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 
-export type Theme = "system" | "light" | "dark" | "rippling"
+export const THEMES = ["system", "light", "dark", "rippling"] as const
+export type Theme = (typeof THEMES)[number]
+
+export function isValidTheme(value: unknown): value is Theme {
+  return typeof value === "string" && (THEMES as readonly string[]).includes(value)
+}
 
 interface ThemeState {
   theme: Theme
@@ -26,6 +31,12 @@ function applyTheme(theme: Theme) {
 }
 
 function init() {
+  // URL overrides localStorage so shared links apply the intended theme
+  const urlTheme = new URLSearchParams(window.location.search).get("theme")
+  if (isValidTheme(urlTheme)) {
+    useThemeStore.setState({ theme: urlTheme })
+  }
+
   const unsub = useThemeStore.subscribe((state) => applyTheme(state.theme))
   applyTheme(useThemeStore.getState().theme)
 
