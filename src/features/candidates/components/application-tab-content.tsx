@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Calendar, Check, CheckCircle2, Circle, Clock, MoreHorizontal, Minus, User, XCircle } from "lucide-react";
+import { Calendar, Check, CheckCircle2, MoreHorizontal, XCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Tooltip,
