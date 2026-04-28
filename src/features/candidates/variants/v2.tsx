@@ -4,6 +4,7 @@ import { format, formatDistanceToNow } from "date-fns";
 import {
   Briefcase,
   Calendar,
+  Check,
   CheckCircle2,
   ChevronDown,
   FileText,
@@ -33,13 +34,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,7 +51,6 @@ import {
   MILESTONE_ORDER,
   StageIcon,
 } from "@/features/candidates/components/application-tab-content";
-import { RequestAvailabilityDialog } from "@/features/candidates/components/request-availability-dialog";
 import { ScheduleInterviewDialog } from "@/features/candidates/components/schedule-interview-dialog";
 import { useSetPageTitle } from "@/stores/page-title-store";
 import type { Milestone } from "@/types/database";
@@ -74,7 +67,7 @@ function ProfileSkeleton() {
   );
 }
 
-export function CandidateDetailDefault() {
+export function CandidateDetailV2() {
   const { candidateId } = useParams<{ candidateId: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const preselectedAppId = searchParams.get("app");
@@ -90,7 +83,7 @@ export function CandidateDetailDefault() {
     candidate ? `${candidate.first_name} ${candidate.last_name}` : null,
   );
 
-  const VALID_TABS = ["profile", "applications", "messages", "activities"];
+  const VALID_TABS = ["profile", "applications", "documents", "messages", "activities"];
   const apps = candidate?.applications ?? [];
 
   const tabsValue = VALID_TABS.includes(tabParam ?? "")
@@ -167,6 +160,7 @@ export function CandidateDetailDefault() {
         <TabsList>
           <TabsTrigger value="profile">Candidate info</TabsTrigger>
           <TabsTrigger value="applications">Job applications</TabsTrigger>
+          <TabsTrigger value="documents">Documents</TabsTrigger>
           <TabsTrigger value="messages">Messages</TabsTrigger>
           <TabsTrigger value="activities">Activity</TabsTrigger>
         </TabsList>
@@ -181,6 +175,12 @@ export function CandidateDetailDefault() {
             preselectedAppId={preselectedAppId}
             candidateName={`${candidate.first_name} ${candidate.last_name}`}
           />
+        </TabsContent>
+
+        <TabsContent value="documents" className="mt-4">
+          <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
+            Coming soon
+          </div>
         </TabsContent>
 
         <TabsContent value="messages" className="mt-4">
@@ -231,29 +231,34 @@ function ProfileTabContent({ candidate }: { candidate: CandidateDetail }) {
             <h3 className="mb-4 font-semibold">Experience</h3>
             <div className="space-y-7">
               {workHistory.map((w, i) => (
-                <div key={i}>
-                  <div className="font-medium leading-snug">{w.title}</div>
-                  <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-sm text-muted-foreground">
-                    <span>{w.company}</span>
-                    {w.location && (
-                      <>
-                        <span className="text-border">·</span>
-                        <span>{w.location}</span>
-                      </>
+                <div key={i} className="flex gap-3">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-500/10">
+                    <Briefcase className="size-5 text-blue-600 dark:text-blue-400" strokeWidth={1.2} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium leading-snug">{w.title}</div>
+                    <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-sm text-muted-foreground">
+                      <span>{w.company}</span>
+                      {w.location && (
+                        <>
+                          <span className="text-border">·</span>
+                          <span>{w.location}</span>
+                        </>
+                      )}
+                    </div>
+                    <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground/70">
+                      <span>
+                        {formatMonth(w.start_date)} – {w.end_date ? formatMonth(w.end_date) : "Present"}
+                      </span>
+                      <span className="text-border">·</span>
+                      <span>{durationLabel(w.start_date, w.end_date)}</span>
+                    </div>
+                    {w.description && (
+                      <p className="mt-2 text-sm leading-relaxed text-foreground/80">
+                        {w.description}
+                      </p>
                     )}
                   </div>
-                  <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground/70">
-                    <span>
-                      {formatMonth(w.start_date)} – {w.end_date ? formatMonth(w.end_date) : "Present"}
-                    </span>
-                    <span className="text-border">·</span>
-                    <span>{durationLabel(w.start_date, w.end_date)}</span>
-                  </div>
-                  {w.description && (
-                    <p className="mt-2 text-sm leading-relaxed text-foreground/80">
-                      {w.description}
-                    </p>
-                  )}
                 </div>
               ))}
             </div>
@@ -266,8 +271,8 @@ function ProfileTabContent({ candidate }: { candidate: CandidateDetail }) {
             <div className="space-y-4">
               {education.map((ed, i) => (
                 <div key={i} className="flex gap-3">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
-                    <GraduationCap className="size-5 text-muted-foreground" />
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10">
+                    <GraduationCap className="size-5 text-emerald-600 dark:text-emerald-400" strokeWidth={1.2} />
                   </div>
                   <div>
                     <div className="font-medium leading-snug">
@@ -342,7 +347,6 @@ const STATUS_LABEL: Record<string, string> = {
 function ApplicationDetailPanel({ app, candidateName }: { app: ApplicationDetail; candidateName: string }) {
   const [subTab, setSubTab] = useState("interviews");
   const [scheduleOpen, setScheduleOpen] = useState(false);
-  const [requestAvailOpen, setRequestAvailOpen] = useState(false);
   const allStages = app.requisitions?.req_stages ?? [];
   const reqTitle = formatReqTitle(app.requisitions.req_number, app.requisitions.title);
 
@@ -380,6 +384,8 @@ function ApplicationDetailPanel({ app, candidateName }: { app: ApplicationDetail
             <TabsTrigger value="interviews">Interview stages</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
             <TabsTrigger value="feedback">All feedback</TabsTrigger>
+            <TabsTrigger value="messages">Messages</TabsTrigger>
+            <TabsTrigger value="activities">Activity</TabsTrigger>
           </TabsList>
         </div>
 
@@ -397,13 +403,12 @@ function ApplicationDetailPanel({ app, candidateName }: { app: ApplicationDetail
                   selectedStageId={selectedStageId}
                   onSelectStage={setSelectedStageId}
                   onSchedule={() => setScheduleOpen(true)}
-                  onRequestAvailability={() => setRequestAvailOpen(true)}
                 />
               ))}
             </div>
           </TabsContent>
 
-          {["home", "documents", "feedback"].map((tab) => (
+          {["home", "documents", "feedback", "messages", "activities"].map((tab) => (
             <TabsContent key={tab} value={tab} className="mt-0 flex flex-1 items-center justify-center">
               <p className="text-sm text-muted-foreground">Coming soon</p>
             </TabsContent>
@@ -422,16 +427,6 @@ function ApplicationDetailPanel({ app, candidateName }: { app: ApplicationDetail
         candidateName={candidateName}
         reqTitle={reqTitle}
       />
-
-      <RequestAvailabilityDialog
-        open={requestAvailOpen}
-        onOpenChange={setRequestAvailOpen}
-        candidateName={candidateName}
-        candidateEmail={`${candidateName.toLowerCase().replace(/\s+/g, "")}@gmail.com`}
-        reqTitle={reqTitle}
-        companyName="ACME AI"
-        senderName="Anne Montgomery"
-      />
     </div>
   );
 }
@@ -445,7 +440,6 @@ function PipelineMilestone({
   selectedStageId,
   onSelectStage,
   onSchedule,
-  onRequestAvailability,
 }: {
   milestone: Milestone;
   index: number;
@@ -455,7 +449,6 @@ function PipelineMilestone({
   selectedStageId: string | null;
   onSelectStage: (id: string | null) => void;
   onSchedule: () => void;
-  onRequestAvailability: () => void;
 }) {
   return (
     <div>
@@ -474,33 +467,31 @@ function PipelineMilestone({
             const isSelected = stage.id === selectedStageId;
             return (
               <div key={stage.id} className="rounded-lg hover:bg-muted">
-                <div className="flex items-center gap-2 px-2 py-2 text-sm">
-                  <button
-                    type="button"
-                    onClick={() => onSelectStage(isSelected ? null : stage.id)}
-                    className={cn(
-                      "flex min-w-0 flex-1 items-center gap-2 text-left",
-                      status === "upcoming" && "text-muted-foreground",
-                    )}
-                  >
-                    <StageIcon status={status} />
-                    <span className="flex-1 truncate font-semibold">
-                      {stage.name}
-                    </span>
-                  </button>
+                <button
+                  type="button"
+                  onClick={() => onSelectStage(isSelected ? null : stage.id)}
+                  className={cn(
+                    "flex w-full items-center gap-2 px-2 py-2 text-sm",
+                    status === "upcoming" && "text-muted-foreground",
+                  )}
+                >
+                  <StageIcon status={status} />
+                  <span className="flex-1 truncate text-left font-semibold">
+                    {stage.name}
+                  </span>
                   {isSelected && status === "current" && (
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
+                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                         <Button size="sm">Schedule</Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onSelect={onSchedule}>Schedule</DropdownMenuItem>
-                        <DropdownMenuItem onSelect={onRequestAvailability}>Request availability</DropdownMenuItem>
+                        <DropdownMenuItem>Request availability</DropdownMenuItem>
                         <DropdownMenuItem>Candidate self-schedule</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   )}
-                </div>
+                </button>
                 {isSelected && stage.req_interviews.length > 0 && (
                   <div className="pb-2 pl-2 pr-2">
                     <InterviewTimeline interviews={stage.req_interviews} />
@@ -650,73 +641,107 @@ function JobApplicationsTabContent({
 
   if (apps.length === 0) {
     return (
-      <div className="flex min-h-[480px] flex-col items-center justify-center gap-3 rounded-xl bg-muted p-6 text-center">
-        <Briefcase className="size-8 text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">No job applications yet</p>
-        <Button size="sm">Add to a requisition</Button>
+      <div className="flex flex-col items-center justify-center gap-2 py-12 text-muted-foreground">
+        <Briefcase className="size-8" />
+        <p className="text-sm">No job applications yet</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
-      {/* Dropdown — small screens */}
-      <div className="lg:hidden">
-        <Select
-          value={selectedAppId ?? undefined}
-          onValueChange={setSelectedAppId}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {apps.map((app) => (
-              <SelectItem key={app.id} value={app.id}>
-                {formatReqTitle(app.requisitions.req_number, app.requisitions.title)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="flex min-h-[480px] overflow-hidden rounded-xl bg-muted lg:flex-row">
-        {/* Sidebar — large screens */}
-        <nav className="hidden w-72 shrink-0 flex-col gap-1 p-4 pt-[50px] lg:flex">
-          {apps.map((app) => (
-            <button
-              key={app.id}
-              type="button"
-              onClick={() => setSelectedAppId(app.id)}
-              className={cn(
-                "flex flex-col gap-1.5 rounded-lg p-2 text-left",
-                app.id === selectedApp?.id
-                  ? "bg-card shadow-sm"
-                  : "hover:bg-card/60",
-              )}
-            >
-              <span className="truncate text-sm">
-                {formatReqTitle(app.requisitions.req_number, app.requisitions.title)}
-              </span>
-              <Badge
-                variant="outline"
-                className={cn(
-                  "w-fit border-0 text-[11px]",
-                  STATUS_BADGE_CLASSES[app.status] ?? "bg-muted text-muted-foreground",
-                )}
-              >
-                {formatStatusLabel(app.status, app.applied_date)}
-              </Badge>
-            </button>
-          ))}
-        </nav>
-
-        <div className="flex flex-1 flex-col overflow-hidden">
-          {selectedApp && (
-            <ApplicationDetailPanel key={selectedApp.id} app={selectedApp} candidateName={candidateName} />
-          )}
+    <div className="flex min-h-[480px] flex-col overflow-hidden rounded-xl bg-muted">
+      {selectedApp && (
+        <div className="flex flex-wrap items-center gap-3 px-4 pt-4">
+          <ApplicationSelector
+            apps={apps}
+            selectedApp={selectedApp}
+            onSelect={setSelectedAppId}
+          />
+          <Badge
+            variant="outline"
+            className={cn(
+              "border-0 text-xs",
+              STATUS_BADGE_CLASSES[selectedApp.status] ??
+                "bg-muted text-muted-foreground",
+            )}
+          >
+            {formatStatusLabel(selectedApp.status, selectedApp.applied_date)}
+          </Badge>
         </div>
+      )}
+
+      <div className="flex flex-1 flex-col overflow-hidden">
+        {selectedApp && (
+          <ApplicationDetailPanel
+            key={selectedApp.id}
+            app={selectedApp}
+            candidateName={candidateName}
+          />
+        )}
       </div>
     </div>
+  );
+}
+
+function ApplicationSelector({
+  apps,
+  selectedApp,
+  onSelect,
+}: {
+  apps: ApplicationDetail[];
+  selectedApp: ApplicationDetail;
+  onSelect: (id: string) => void;
+}) {
+  const label = formatReqTitle(
+    selectedApp.requisitions.req_number,
+    selectedApp.requisitions.title,
+  );
+
+  if (apps.length <= 1) {
+    return (
+      <span className="truncate text-base font-semibold text-foreground">
+        {label}
+      </span>
+    );
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className="inline-flex min-w-0 items-center gap-1.5 rounded-md text-base font-semibold text-foreground transition-opacity hover:opacity-80"
+        >
+          <span className="truncate">{label}</span>
+          <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="min-w-72">
+        {apps.map((app) => {
+          const active = app.id === selectedApp.id;
+          return (
+            <DropdownMenuItem
+              key={app.id}
+              onSelect={() => onSelect(app.id)}
+              className={cn(active && "font-medium")}
+            >
+              <Check
+                className={cn(
+                  "size-3.5",
+                  active ? "opacity-100" : "opacity-0",
+                )}
+              />
+              <span className="truncate">
+                {formatReqTitle(
+                  app.requisitions.req_number,
+                  app.requisitions.title,
+                )}
+              </span>
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 

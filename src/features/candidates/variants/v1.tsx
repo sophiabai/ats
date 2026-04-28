@@ -57,7 +57,6 @@ import {
   MILESTONE_ORDER,
   StageIcon,
 } from "@/features/candidates/components/application-tab-content";
-import { RequestAvailabilityDialog } from "@/features/candidates/components/request-availability-dialog";
 import { ScheduleInterviewDialog } from "@/features/candidates/components/schedule-interview-dialog";
 import { useSetPageTitle } from "@/stores/page-title-store";
 import type { Milestone } from "@/types/database";
@@ -90,7 +89,7 @@ export function CandidateDetailV1() {
     candidate ? `${candidate.first_name} ${candidate.last_name}` : null,
   );
 
-  const VALID_TABS = ["profile", "applications", "messages", "activities"];
+  const VALID_TABS = ["profile", "applications", "documents", "messages", "activities"];
   const apps = candidate?.applications ?? [];
 
   const tabsValue = VALID_TABS.includes(tabParam ?? "")
@@ -167,6 +166,7 @@ export function CandidateDetailV1() {
         <TabsList>
           <TabsTrigger value="profile">Candidate info</TabsTrigger>
           <TabsTrigger value="applications">Job applications</TabsTrigger>
+          <TabsTrigger value="documents">Documents</TabsTrigger>
           <TabsTrigger value="messages">Messages</TabsTrigger>
           <TabsTrigger value="activities">Activity</TabsTrigger>
         </TabsList>
@@ -181,6 +181,12 @@ export function CandidateDetailV1() {
             preselectedAppId={preselectedAppId}
             candidateName={`${candidate.first_name} ${candidate.last_name}`}
           />
+        </TabsContent>
+
+        <TabsContent value="documents" className="mt-4">
+          <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
+            Coming soon
+          </div>
         </TabsContent>
 
         <TabsContent value="messages" className="mt-4">
@@ -231,29 +237,34 @@ function ProfileTabContent({ candidate }: { candidate: CandidateDetail }) {
             <h3 className="mb-4 font-semibold">Experience</h3>
             <div className="space-y-7">
               {workHistory.map((w, i) => (
-                <div key={i}>
-                  <div className="font-medium leading-snug">{w.title}</div>
-                  <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-sm text-muted-foreground">
-                    <span>{w.company}</span>
-                    {w.location && (
-                      <>
-                        <span className="text-border">·</span>
-                        <span>{w.location}</span>
-                      </>
+                <div key={i} className="flex gap-3">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-500/10">
+                    <Briefcase className="size-5 text-blue-600 dark:text-blue-400" strokeWidth={1.2} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium leading-snug">{w.title}</div>
+                    <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-sm text-muted-foreground">
+                      <span>{w.company}</span>
+                      {w.location && (
+                        <>
+                          <span className="text-border">·</span>
+                          <span>{w.location}</span>
+                        </>
+                      )}
+                    </div>
+                    <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground/70">
+                      <span>
+                        {formatMonth(w.start_date)} – {w.end_date ? formatMonth(w.end_date) : "Present"}
+                      </span>
+                      <span className="text-border">·</span>
+                      <span>{durationLabel(w.start_date, w.end_date)}</span>
+                    </div>
+                    {w.description && (
+                      <p className="mt-2 text-sm leading-relaxed text-foreground/80">
+                        {w.description}
+                      </p>
                     )}
                   </div>
-                  <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground/70">
-                    <span>
-                      {formatMonth(w.start_date)} – {w.end_date ? formatMonth(w.end_date) : "Present"}
-                    </span>
-                    <span className="text-border">·</span>
-                    <span>{durationLabel(w.start_date, w.end_date)}</span>
-                  </div>
-                  {w.description && (
-                    <p className="mt-2 text-sm leading-relaxed text-foreground/80">
-                      {w.description}
-                    </p>
-                  )}
                 </div>
               ))}
             </div>
@@ -266,8 +277,8 @@ function ProfileTabContent({ candidate }: { candidate: CandidateDetail }) {
             <div className="space-y-4">
               {education.map((ed, i) => (
                 <div key={i} className="flex gap-3">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
-                    <GraduationCap className="size-5 text-muted-foreground" />
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10">
+                    <GraduationCap className="size-5 text-emerald-600 dark:text-emerald-400" strokeWidth={1.2} />
                   </div>
                   <div>
                     <div className="font-medium leading-snug">
@@ -342,7 +353,6 @@ const STATUS_LABEL: Record<string, string> = {
 function ApplicationDetailPanel({ app, candidateName }: { app: ApplicationDetail; candidateName: string }) {
   const [subTab, setSubTab] = useState("interviews");
   const [scheduleOpen, setScheduleOpen] = useState(false);
-  const [requestAvailOpen, setRequestAvailOpen] = useState(false);
   const allStages = app.requisitions?.req_stages ?? [];
   const reqTitle = formatReqTitle(app.requisitions.req_number, app.requisitions.title);
 
@@ -380,6 +390,8 @@ function ApplicationDetailPanel({ app, candidateName }: { app: ApplicationDetail
             <TabsTrigger value="interviews">Interview stages</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
             <TabsTrigger value="feedback">All feedback</TabsTrigger>
+            <TabsTrigger value="messages">Messages</TabsTrigger>
+            <TabsTrigger value="activities">Activity</TabsTrigger>
           </TabsList>
         </div>
 
@@ -397,13 +409,12 @@ function ApplicationDetailPanel({ app, candidateName }: { app: ApplicationDetail
                   selectedStageId={selectedStageId}
                   onSelectStage={setSelectedStageId}
                   onSchedule={() => setScheduleOpen(true)}
-                  onRequestAvailability={() => setRequestAvailOpen(true)}
                 />
               ))}
             </div>
           </TabsContent>
 
-          {["home", "documents", "feedback"].map((tab) => (
+          {["home", "documents", "feedback", "messages", "activities"].map((tab) => (
             <TabsContent key={tab} value={tab} className="mt-0 flex flex-1 items-center justify-center">
               <p className="text-sm text-muted-foreground">Coming soon</p>
             </TabsContent>
@@ -422,16 +433,6 @@ function ApplicationDetailPanel({ app, candidateName }: { app: ApplicationDetail
         candidateName={candidateName}
         reqTitle={reqTitle}
       />
-
-      <RequestAvailabilityDialog
-        open={requestAvailOpen}
-        onOpenChange={setRequestAvailOpen}
-        candidateName={candidateName}
-        candidateEmail={`${candidateName.toLowerCase().replace(/\s+/g, "")}@gmail.com`}
-        reqTitle={reqTitle}
-        companyName="ACME AI"
-        senderName="Anne Montgomery"
-      />
     </div>
   );
 }
@@ -445,7 +446,6 @@ function PipelineMilestone({
   selectedStageId,
   onSelectStage,
   onSchedule,
-  onRequestAvailability,
 }: {
   milestone: Milestone;
   index: number;
@@ -455,7 +455,6 @@ function PipelineMilestone({
   selectedStageId: string | null;
   onSelectStage: (id: string | null) => void;
   onSchedule: () => void;
-  onRequestAvailability: () => void;
 }) {
   return (
     <div>
@@ -474,33 +473,31 @@ function PipelineMilestone({
             const isSelected = stage.id === selectedStageId;
             return (
               <div key={stage.id} className="rounded-lg hover:bg-muted">
-                <div className="flex items-center gap-2 px-2 py-2 text-sm">
-                  <button
-                    type="button"
-                    onClick={() => onSelectStage(isSelected ? null : stage.id)}
-                    className={cn(
-                      "flex min-w-0 flex-1 items-center gap-2 text-left",
-                      status === "upcoming" && "text-muted-foreground",
-                    )}
-                  >
-                    <StageIcon status={status} />
-                    <span className="flex-1 truncate font-semibold">
-                      {stage.name}
-                    </span>
-                  </button>
+                <button
+                  type="button"
+                  onClick={() => onSelectStage(isSelected ? null : stage.id)}
+                  className={cn(
+                    "flex w-full items-center gap-2 px-2 py-2 text-sm",
+                    status === "upcoming" && "text-muted-foreground",
+                  )}
+                >
+                  <StageIcon status={status} />
+                  <span className="flex-1 truncate text-left font-semibold">
+                    {stage.name}
+                  </span>
                   {isSelected && status === "current" && (
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
+                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                         <Button size="sm">Schedule</Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onSelect={onSchedule}>Schedule</DropdownMenuItem>
-                        <DropdownMenuItem onSelect={onRequestAvailability}>Request availability</DropdownMenuItem>
+                        <DropdownMenuItem>Request availability</DropdownMenuItem>
                         <DropdownMenuItem>Candidate self-schedule</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   )}
-                </div>
+                </button>
                 {isSelected && stage.req_interviews.length > 0 && (
                   <div className="pb-2 pl-2 pr-2">
                     <InterviewTimeline interviews={stage.req_interviews} />
@@ -650,10 +647,9 @@ function JobApplicationsTabContent({
 
   if (apps.length === 0) {
     return (
-      <div className="flex min-h-[480px] flex-col items-center justify-center gap-3 rounded-xl bg-muted p-6 text-center">
-        <Briefcase className="size-8 text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">No job applications yet</p>
-        <Button size="sm">Add to a requisition</Button>
+      <div className="flex flex-col items-center justify-center gap-2 py-12 text-muted-foreground">
+        <Briefcase className="size-8" />
+        <p className="text-sm">No job applications yet</p>
       </div>
     );
   }

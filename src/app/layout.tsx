@@ -1,8 +1,9 @@
 import { Link, Outlet, useLocation } from "react-router";
 import { AppSidebar } from "@/components/app-sidebar";
+import { ChatBar } from "@/components/chat-bar";
+import { VariantDropdown } from "@/components/custom/variant-dropdown";
 import { DockedChatPanel } from "@/components/docked-chat-panel";
 import { TopNav } from "@/components/top-nav";
-import { VariantDropdown } from "@/components/custom/variant-dropdown";
 import { useChatBarStore } from "@/stores/chat-bar-store";
 import {
   Breadcrumb,
@@ -38,8 +39,6 @@ const SEGMENT_TITLES: Record<string, string> = {
   assessments: "Assessments",
   emails: "Emails",
   "headcount-planning": "Headcount planning",
-  inbox: "Inbox",
-  agents: "Agents",
   workflows: "Workflows",
   "job-board": "Internal job board",
   "my-team": "My team",
@@ -111,47 +110,52 @@ function useBreadcrumbs(): { crumbs: Crumb[]; page: string } {
 
 export function RootLayout() {
   const { crumbs, page } = useBreadcrumbs();
+  const { pathname } = useLocation();
   const docked = useChatBarStore((s) => s.docked);
+  const hideChatBar = pathname.startsWith("/workflows");
 
   return (
     <div className="flex h-svh flex-col">
       <TopNav />
-      <SidebarProvider defaultOpen={true} className="min-h-0 flex-1 rounded-t-2xl overflow-hidden shadow-sm">
+      <SidebarProvider className="min-h-0 flex-1 rounded-t-3xl overflow-hidden">
         <AppSidebar />
         <SidebarInset className="relative min-w-0 min-h-0 overflow-hidden bg-white dark:bg-stone-950">
-          <header className="flex h-16 shrink-0 items-center gap-2 px-4 transition-[width,height] ease-in-out-quart group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-            <SidebarTrigger className="-ml-1" />
-            <Separator
-              orientation="vertical"
-              className="mr-2 data-[orientation=vertical]:h-4"
-            />
-            <Breadcrumb>
-              <BreadcrumbList>
-                {crumbs.map((crumb, i) => (
-                  <span key={crumb.href} className="contents">
-                    {i > 0 && <BreadcrumbSeparator className="hidden md:block" />}
-                    <BreadcrumbItem className="hidden md:block">
-                      <BreadcrumbLink asChild>
-                        <Link to={crumb.href}>{crumb.title}</Link>
-                      </BreadcrumbLink>
-                    </BreadcrumbItem>
-                  </span>
-                ))}
-                {crumbs.length > 0 && (
-                  <BreadcrumbSeparator className="hidden md:block" />
-                )}
-                <BreadcrumbItem>
-                  <BreadcrumbPage>{page}</BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-            <div className="ml-auto">
+          <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-in-out-quart group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+            <div className="flex items-center gap-2 px-4">
+              <SidebarTrigger className="-ml-1" />
+              <Separator
+                orientation="vertical"
+                className="mr-2 data-[orientation=vertical]:h-4"
+              />
+              <Breadcrumb>
+                <BreadcrumbList>
+                  {crumbs.map((crumb, i) => (
+                    <span key={crumb.href} className="contents">
+                      {i > 0 && <BreadcrumbSeparator className="hidden md:block" />}
+                      <BreadcrumbItem className="hidden md:block">
+                        <BreadcrumbLink asChild>
+                          <Link to={crumb.href}>{crumb.title}</Link>
+                        </BreadcrumbLink>
+                      </BreadcrumbItem>
+                    </span>
+                  ))}
+                  {crumbs.length > 0 && (
+                    <BreadcrumbSeparator className="hidden md:block" />
+                  )}
+                  <BreadcrumbItem>
+                    <BreadcrumbPage>{page}</BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
+            </div>
+            <div className="ml-auto px-4">
               <VariantDropdown />
             </div>
           </header>
-          <div className="flex w-full flex-1 flex-col gap-6 overflow-y-auto px-17 pt-6 pb-20">
+          <div className="flex w-full flex-1 flex-col gap-6 overflow-y-auto px-17 pt-6">
             <Outlet />
           </div>
+          {!hideChatBar && <ChatBar />}
         </SidebarInset>
         {docked && <DockedChatPanel />}
       </SidebarProvider>
