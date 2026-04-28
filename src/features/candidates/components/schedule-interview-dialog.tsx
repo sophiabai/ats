@@ -1,4 +1,4 @@
-import { useState, useRef } from "react"
+import { useState, useRef, useMemo, useCallback } from "react"
 import {
   Calendar,
   Check,
@@ -68,6 +68,14 @@ type InterviewSlot = {
   title: string
   participants: { name: string; avatar?: string; conflict?: boolean }[]
   room: string
+}
+
+type EditableInterview = {
+  title: string
+  startHour: number
+  durationMinutes: number
+  room: string
+  participants: { name: string; avatar?: string; conflict?: boolean }[]
 }
 
 type ScheduleDateOption = {
@@ -461,6 +469,63 @@ const SCHEDULE_DATES: ScheduleDateOption[] = [
 // Sub-components
 // ---------------------------------------------------------------------------
 
+function parseTimeToHour(timeStr: string): number {
+  const m = timeStr.match(/(\d{1,2}):(\d{2})(am|pm)/i)
+  if (!m) return 9
+  let h = parseInt(m[1])
+  const min = parseInt(m[2])
+  const period = m[3].toLowerCase()
+  if (period === "pm" && h !== 12) h += 12
+  if (period === "am" && h === 12) h = 0
+  return h + min / 60
+}
+
+function initEditableInterviews(option: ScheduleDateOption): EditableInterview[] {
+  return option.interviews.map((iv) => {
+    const parts = iv.time.split(/[–-]/)
+    const startHour = parseTimeToHour(parts[0].trim())
+    const endHour = parseTimeToHour(parts[1].trim())
+    const durationMinutes = Math.round((endHour - startHour) * 60)
+    return {
+      title: iv.title,
+      startHour,
+      durationMinutes,
+      room: iv.room,
+      participants: iv.participants,
+    }
+  })
+}
+
+function deriveCalendarEvents(
+  editable: EditableInterview[],
+  baseEvents: Record<string, CalendarEvent[]>,
+): Record<string, CalendarEvent[]> {
+  const result: Record<string, CalendarEvent[]> = {}
+  for (const [name, events] of Object.entries(baseEvents)) {
+    result[name] = events.map((ev) => {
+      if (ev.type !== "interview") return ev
+      const evLower = ev.title.toLowerCase()
+      const match = editable.find((e) => {
+        const k = e.title.toLowerCase()
+        return evLower.includes(k) || evLower.includes(k.split(" ")[0])
+      })
+      if (match) {
+        return { ...ev, startHour: match.startHour, durationHours: match.durationMinutes / 60 }
+      }
+      return ev
+    })
+  }
+  return result
+}
+
+function formatHour(h: number): string {
+  const hour = Math.floor(h)
+  const min = Math.round((h - hour) * 60)
+  const period = hour < 12 ? "AM" : "PM"
+  const h12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
+  return min > 0 ? `${h12}:${String(min).padStart(2, "0")} ${period}` : `${h12}:00 ${period}`
+}
+
 function hourToSlotIndex(hour: number): number {
   if (hour >= HOURS[0]) return hour - HOURS[0]
   return hour + 24 - HOURS[0]
@@ -643,13 +708,16 @@ function TimezoneColumn({
 
 function InterviewerCalendarGrid({
   selectedDate,
+  calendarEvents,
 }: {
   selectedDate: ScheduleDateOption
+  calendarEvents?: Record<string, CalendarEvent[]>
 }) {
   const scrollRef = useRef<HTMLDivElement>(null)
+  const events = calendarEvents ?? selectedDate.calendarEvents
 
   return (
-    <div className="flex flex-1 flex-col overflow-hidden bg-card">
+    <div className="flex flex-1 flex-col overflow-hidden border-l border-border bg-card">
       <div className="flex items-center gap-2 px-4 py-3">
         <span className="flex-1 text-lg font-semibold text-foreground">{selectedDate.date}</span>
         <Select defaultValue="pdt">
@@ -680,10 +748,10 @@ function InterviewerCalendarGrid({
           const isBCandidate = b.name.startsWith("Candidate")
           if (isACandidate) return -1
           if (isBCandidate) return 1
-          const aFirst = (selectedDate.calendarEvents[a.name] ?? [])
+          const aFirst = (events[a.name] ?? [])
             .filter(e => e.type === "interview")
             .reduce((min, e) => Math.min(min, e.startHour), Infinity)
-          const bFirst = (selectedDate.calendarEvents[b.name] ?? [])
+          const bFirst = (events[b.name] ?? [])
             .filter(e => e.type === "interview")
             .reduce((min, e) => Math.min(min, e.startHour), Infinity)
           return aFirst - bFirst
@@ -691,7 +759,7 @@ function InterviewerCalendarGrid({
           <PersonColumn
             key={person.name}
             person={person}
-            events={selectedDate.calendarEvents[person.name] ?? []}
+            events={events[person.name] ?? []}
           />
         ))}
       </div>
@@ -809,17 +877,36 @@ function ScheduleDateCard({
 // Confirm details panel (Step 2)
 // ---------------------------------------------------------------------------
 
+const TIME_OPTIONS = (() => {
+  const opts: { value: string; label: string }[] = []
+  for (let h = 0; h < 24; h++) {
+    for (const m of [0, 15, 30, 45]) {
+      const hour = h + m / 60
+      opts.push({ value: String(hour), label: formatHour(hour) })
+    }
+  }
+  return opts
+})()
+
+const ROOM_OPTIONS = [
+  { value: "SF-15-Bruce(6) [Zoom]", label: "SF-15-Bruce(6) [Zoom]" },
+  { value: "SF-12-Reed(4) [Zoom]", label: "SF-12-Reed(4) [Zoom]" },
+]
+
+const ALL_INTERVIEWERS = [
+  "Leslie Alexander", "Javier Ramirez", "Jerome Bell",
+  "Marvin McKinney", "Cameron Williamson",
+]
+
 function InterviewSessionExpanded({
   interview,
   dateShort,
+  onUpdate,
 }: {
-  interview: InterviewSlot
+  interview: EditableInterview
   dateShort: string
+  onUpdate: (patch: Partial<EditableInterview>) => void
 }) {
-  const timeMatch = interview.time.match(/^(\d{1,2}:\d{2})(am|pm)/i)
-  const timeValue = timeMatch ? timeMatch[1] : "08:00"
-  const timePeriod = timeMatch ? timeMatch[2].toUpperCase() : "AM"
-
   return (
     <div className="flex flex-col gap-4">
       <div className="flex gap-3">
@@ -832,22 +919,37 @@ function InterviewSessionExpanded({
         </div>
         <div className="flex flex-1 flex-col gap-1">
           <span className="px-1 text-sm font-medium">Time</span>
-          <div className="flex h-9 items-center gap-2 rounded-lg border border-input bg-background px-4 shadow-xs">
-            <Clock className="size-4 text-muted-foreground" />
-            <span className="text-sm">{timeValue}</span>
-            <span className="text-sm underline">{timePeriod}</span>
-          </div>
+          <Select
+            value={String(interview.startHour)}
+            onValueChange={(v) => onUpdate({ startHour: parseFloat(v) })}
+          >
+            <SelectTrigger className="w-full rounded-lg">
+              <div className="flex items-center gap-2">
+                <Clock className="size-4 text-muted-foreground" />
+                <SelectValue />
+              </div>
+            </SelectTrigger>
+            <SelectContent className="max-h-60">
+              {TIME_OPTIONS.map((t) => (
+                <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
       <div className="flex gap-3">
         <div className="flex flex-1 flex-col gap-1">
           <span className="px-1 text-sm font-medium">Duration</span>
-          <Select>
+          <Select
+            value={String(interview.durationMinutes)}
+            onValueChange={(v) => onUpdate({ durationMinutes: parseInt(v) })}
+          >
             <SelectTrigger className="w-full rounded-lg">
-              <SelectValue placeholder="Select item" />
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="15">15 min</SelectItem>
               <SelectItem value="30">30 min</SelectItem>
               <SelectItem value="45">45 min</SelectItem>
               <SelectItem value="60">60 min</SelectItem>
@@ -857,13 +959,17 @@ function InterviewSessionExpanded({
         </div>
         <div className="flex flex-1 flex-col gap-1">
           <span className="px-1 text-sm font-medium">Meeting room</span>
-          <Select>
+          <Select
+            value={interview.room}
+            onValueChange={(v) => onUpdate({ room: v })}
+          >
             <SelectTrigger className="w-full rounded-lg">
-              <SelectValue placeholder="Select item" />
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="sf15">SF-15-Bruce(6) [Zoom]</SelectItem>
-              <SelectItem value="sf12">SF-12-Reed(4) [Zoom]</SelectItem>
+              {ROOM_OPTIONS.map((r) => (
+                <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -871,17 +977,17 @@ function InterviewSessionExpanded({
 
       <div className="flex flex-col gap-1">
         <span className="px-1 text-sm font-medium">Interviewer</span>
-        <Select>
+        <Select
+          value={interview.participants[0]?.name ?? ""}
+          onValueChange={(v) => onUpdate({ participants: [{ name: v }] })}
+        >
           <SelectTrigger className="w-full rounded-lg">
-            <SelectValue placeholder="Select item" />
+            <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {interview.participants.map((p) => (
-              <SelectItem key={p.name} value={p.name}>
-                {p.name}
-              </SelectItem>
+            {ALL_INTERVIEWERS.map((name) => (
+              <SelectItem key={name} value={name}>{name}</SelectItem>
             ))}
-            <SelectItem value="cameron">Cameron Williamson</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -917,8 +1023,10 @@ function InterviewSessionExpanded({
 
 function InterviewSessionCollapsed({
   interview,
+  dateShort,
 }: {
-  interview: InterviewSlot
+  interview: EditableInterview
+  dateShort: string
 }) {
   const participantLabel =
     interview.participants.length === 0
@@ -927,38 +1035,29 @@ function InterviewSessionCollapsed({
         ? interview.participants[0].name
         : `${interview.participants[0].name} +${interview.participants.length - 1}`
 
-  const durationMatch = interview.time.match(
-    /(\d{1,2}:\d{2})(am|pm)\s*[–-]\s*(\d{1,2}:\d{2})(am|pm)/i,
-  )
-  let durationLabel = ""
-  if (durationMatch) {
-    const parseTime = (h: string, p: string) => {
-      const [hh, mm] = h.split(":").map(Number)
-      const hour = p.toLowerCase() === "pm" && hh !== 12 ? hh + 12 : p.toLowerCase() === "am" && hh === 12 ? 0 : hh
-      return hour * 60 + mm
-    }
-    const startMin = parseTime(durationMatch[1], durationMatch[2])
-    const endMin = parseTime(durationMatch[3], durationMatch[4])
-    const diff = endMin - startMin
-    durationLabel = diff >= 60 ? `${Math.floor(diff / 60)}h ${diff % 60 > 0 ? `${diff % 60}m` : ""}`.trim() : `${diff} min`
-  }
+  const dur = interview.durationMinutes
+  const durationLabel = dur >= 60
+    ? `${Math.floor(dur / 60)}h${dur % 60 > 0 ? ` ${dur % 60}m` : ""}`
+    : `${dur} min`
 
   return (
-    <div className="flex flex-col gap-0.5">
-      <p className="text-sm text-muted-foreground">
-        {`May 5, 2025 ${interview.time.split("–")[0].trim()}       ${durationLabel}       ${participantLabel}`}
-      </p>
-    </div>
+    <p className="text-sm text-muted-foreground">
+      {dateShort} {formatHour(interview.startHour)}  ·  {durationLabel}  ·  {participantLabel}
+    </p>
   )
 }
 
 function ConfirmDetailsPanel({
   selectedDate,
+  editedInterviews,
+  onUpdateInterview,
 }: {
   selectedDate: ScheduleDateOption
+  editedInterviews: EditableInterview[]
+  onUpdateInterview: (idx: number, patch: Partial<EditableInterview>) => void
 }) {
   const [expandedSessions, setExpandedSessions] = useState<Set<number>>(
-    () => new Set([0, 1]),
+    () => new Set([0]),
   )
 
   function toggleSession(idx: number) {
@@ -970,23 +1069,19 @@ function ConfirmDetailsPanel({
     })
   }
 
-  const dateShort = selectedDate.dateShort.includes("/")
-    ? selectedDate.dateShort
-    : (() => {
-        const parts = selectedDate.date.match(
-          /\w+,\s+(\w+)\s+(\d+),\s+(\d+)/,
-        )
-        if (!parts) return "05 / 05 / 2025"
-        const monthMap: Record<string, string> = {
-          January: "01", February: "02", March: "03", April: "04",
-          May: "05", June: "06", July: "07", August: "08",
-          September: "09", October: "10", November: "11", December: "12",
-        }
-        return `${monthMap[parts[1]] ?? "01"} / ${parts[2].padStart(2, "0")} / ${parts[3]}`
-      })()
+  const dateShort = (() => {
+    const parts = selectedDate.date.match(/\w+,\s+(\w+)\s+(\d+),\s+(\d+)/)
+    if (!parts) return "05 / 05 / 2025"
+    const monthMap: Record<string, string> = {
+      January: "01", February: "02", March: "03", April: "04",
+      May: "05", June: "06", July: "07", August: "08",
+      September: "09", October: "10", November: "11", December: "12",
+    }
+    return `${monthMap[parts[1]] ?? "01"} / ${parts[2].padStart(2, "0")} / ${parts[3]}`
+  })()
 
   return (
-    <div className="flex w-[500px] shrink-0 flex-col gap-6 overflow-y-auto bg-muted px-8 py-6">
+    <div className="flex w-1/2 shrink-0 flex-col gap-6 overflow-y-auto bg-muted px-8 py-6">
       <h3 className="text-lg font-semibold">Step 2 of 3: Confirm details</h3>
 
       <div className="flex flex-col gap-1">
@@ -1004,7 +1099,7 @@ function ConfirmDetailsPanel({
       </div>
 
       <div className="flex flex-col gap-3">
-        {selectedDate.interviews.map((interview, i) => {
+        {editedInterviews.map((interview, i) => {
           const isExpanded = expandedSessions.has(i)
           return (
             <Collapsible
@@ -1016,14 +1111,14 @@ function ConfirmDetailsPanel({
                 <CollapsibleTrigger className="flex w-full items-center justify-between px-5 py-4">
                   {isExpanded ? (
                     <span className="text-sm font-medium">
-                      {interview.time.split("–")[0].trim()} {interview.title}
+                      {formatHour(interview.startHour)} {interview.title}
                     </span>
                   ) : (
                     <div className="flex flex-1 flex-col items-start gap-0.5">
                       <span className="text-sm font-medium">
                         {interview.title}
                       </span>
-                      <InterviewSessionCollapsed interview={interview} />
+                      <InterviewSessionCollapsed interview={interview} dateShort={dateShort} />
                     </div>
                   )}
                   {isExpanded ? (
@@ -1037,6 +1132,7 @@ function ConfirmDetailsPanel({
                     <InterviewSessionExpanded
                       interview={interview}
                       dateShort={dateShort}
+                      onUpdate={(patch) => onUpdateInterview(i, patch)}
                     />
                   </div>
                 </CollapsibleContent>
@@ -1067,6 +1163,25 @@ export function ScheduleInterviewDialog({
   const [selectedDateIdx, setSelectedDateIdx] = useState(0)
   const [step, setStep] = useState(1)
   const selectedDate = SCHEDULE_DATES[selectedDateIdx]
+  const [editedInterviews, setEditedInterviews] = useState<EditableInterview[]>(() =>
+    initEditableInterviews(selectedDate),
+  )
+
+  const handleGoToStep2 = useCallback(() => {
+    setEditedInterviews(initEditableInterviews(selectedDate))
+    setStep(2)
+  }, [selectedDate])
+
+  const handleUpdateInterview = useCallback((idx: number, patch: Partial<EditableInterview>) => {
+    setEditedInterviews((prev) =>
+      prev.map((iv, i) => (i === idx ? { ...iv, ...patch } : iv)),
+    )
+  }, [])
+
+  const derivedEvents = useMemo(
+    () => step === 2 ? deriveCalendarEvents(editedInterviews, selectedDate.calendarEvents) : undefined,
+    [step, editedInterviews, selectedDate],
+  )
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -1125,11 +1240,18 @@ export function ScheduleInterviewDialog({
           )}
 
           {step === 2 && (
-            <ConfirmDetailsPanel selectedDate={selectedDate} />
+            <ConfirmDetailsPanel
+              selectedDate={selectedDate}
+              editedInterviews={editedInterviews}
+              onUpdateInterview={handleUpdateInterview}
+            />
           )}
 
           {/* Right panel — calendar grid */}
-          <InterviewerCalendarGrid selectedDate={selectedDate} />
+          <InterviewerCalendarGrid
+            selectedDate={selectedDate}
+            calendarEvents={derivedEvents}
+          />
         </div>
 
         {/* Footer */}
@@ -1139,7 +1261,7 @@ export function ScheduleInterviewDialog({
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button onClick={() => setStep(2)}>
+              <Button onClick={handleGoToStep2}>
                 Next: Confirm details
               </Button>
             </>
