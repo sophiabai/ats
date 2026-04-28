@@ -2,6 +2,7 @@ import { Link, Outlet, useLocation } from "react-router";
 import { AppSidebar } from "@/components/app-sidebar";
 import { DockedChatPanel } from "@/components/docked-chat-panel";
 import { TopNav } from "@/components/top-nav";
+import { VariantDropdown } from "@/components/custom/variant-dropdown";
 import { useChatBarStore } from "@/stores/chat-bar-store";
 import {
   Breadcrumb,
@@ -144,6 +145,9 @@ export function RootLayout() {
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
+            <div className="ml-auto">
+              <VariantDropdown />
+            </div>
           </header>
           <div className="flex w-full flex-1 flex-col gap-6 overflow-y-auto px-17 pt-6 pb-20">
             <Outlet />

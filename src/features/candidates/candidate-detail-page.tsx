@@ -1,7 +1,7 @@
-import { VariantSwitcher } from "@/components/custom/variant-switcher";
 import { CandidateDetailDefault } from "@/features/candidates/variants/default";
 import { CandidateDetailV1 } from "@/features/candidates/variants/v1";
 import { useVariant } from "@/hooks/use-variant";
+import { useSetVariants } from "@/stores/variant-registry-store";
 
 type Variant = "default" | "v1";
 
@@ -11,18 +11,9 @@ const VARIANT_OPTIONS: { value: Variant; label: string }[] = [
 ];
 
 export function Component() {
-  const [variant, setVariant] = useVariant<Variant>("default");
+  const [variant] = useVariant<Variant>("default");
 
-  return (
-    <div>
-      <div className="mb-4 flex justify-end">
-        <VariantSwitcher
-          value={variant}
-          onChange={setVariant}
-          options={VARIANT_OPTIONS}
-        />
-      </div>
-      {variant === "v1" ? <CandidateDetailV1 /> : <CandidateDetailDefault />}
-    </div>
-  );
+  useSetVariants({ defaultVariant: "default", options: VARIANT_OPTIONS });
+
+  return variant === "v1" ? <CandidateDetailV1 /> : <CandidateDetailDefault />;
 }
