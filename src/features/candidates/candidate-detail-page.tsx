@@ -11,9 +11,9 @@ const VARIANT_OPTIONS: { value: Variant; label: string }[] = [
 ];
 
 export function Component() {
-  const [variant] = useVariant<Variant>("v1");
+  const [variant] = useVariant<Variant>("v2");
 
-  useSetVariants({ defaultVariant: "v1", options: VARIANT_OPTIONS });
+  useSetVariants({ defaultVariant: "v2", options: VARIANT_OPTIONS });
 
-  return variant === "v2" ? <CandidateDetailV2 /> : <CandidateDetailV1 />;
+  return variant === "v1" ? <CandidateDetailV1 /> : <CandidateDetailV2 />;
 }

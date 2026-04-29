@@ -11,21 +11,53 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-const TabsValueContext = React.createContext<string | undefined>(undefined)
+interface TabsContextValue {
+  value: string | undefined
+  setValue: (value: string) => void
+}
+
+const TabsValueContext = React.createContext<TabsContextValue>({
+  value: undefined,
+  setValue: () => {},
+})
 
 function Tabs({
   className,
   orientation = "horizontal",
-  value,
+  value: valueProp,
+  defaultValue,
+  onValueChange,
   ...props
 }: React.ComponentProps<typeof TabsPrimitive.Root>) {
+  const [uncontrolledValue, setUncontrolledValue] = React.useState<
+    string | undefined
+  >(defaultValue as string | undefined)
+  const isControlled = valueProp !== undefined
+  const value = (isControlled ? valueProp : uncontrolledValue) as
+    | string
+    | undefined
+
+  const setValue = React.useCallback(
+    (next: string) => {
+      if (!isControlled) setUncontrolledValue(next)
+      onValueChange?.(next)
+    },
+    [isControlled, onValueChange]
+  )
+
+  const ctx = React.useMemo<TabsContextValue>(
+    () => ({ value, setValue }),
+    [value, setValue]
+  )
+
   return (
-    <TabsValueContext.Provider value={value as string | undefined}>
+    <TabsValueContext.Provider value={ctx}>
       <TabsPrimitive.Root
         data-slot="tabs"
         data-orientation={orientation}
         orientation={orientation}
         value={value}
+        onValueChange={setValue}
         className={cn(
           "group/tabs flex gap-2 data-[orientation=horizontal]:flex-col",
           className
@@ -65,11 +97,8 @@ function TabsList({
   VariantProps<typeof tabsListVariants>) {
   const outerRef = React.useRef<HTMLDivElement>(null)
   const measureRef = React.useRef<HTMLDivElement>(null)
-  const hiddenTriggersRef = React.useRef<Map<string, HTMLButtonElement>>(
-    new Map()
-  )
   const [visibleCount, setVisibleCount] = React.useState(Infinity)
-  const activeValue = React.useContext(TabsValueContext)
+  const { value: activeValue, setValue } = React.useContext(TabsValueContext)
 
   const childArray = React.Children.toArray(children).filter(
     (
@@ -129,7 +158,7 @@ function TabsList({
     : false
 
   return (
-    <div ref={outerRef} className="relative min-w-0">
+    <div ref={outerRef} className="relative w-full min-w-0">
       <div
         ref={measureRef}
         aria-hidden
@@ -157,29 +186,13 @@ function TabsList({
       >
         {visible}
 
-        {overflow.map((child) => {
-          const value = child.props.value
-          return (
-            <TabsPrimitive.Trigger
-              key={`hidden-${value}`}
-              ref={(el: HTMLButtonElement | null) => {
-                if (el) hiddenTriggersRef.current.set(value, el)
-                else hiddenTriggersRef.current.delete(value)
-              }}
-              value={value}
-              className="sr-only"
-              tabIndex={-1}
-            />
-          )
-        })}
-
         {hasOverflow && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
                 className={cn(
-                  "inline-flex h-[calc(100%-1px)] items-center gap-1 rounded-md px-2 py-1 text-sm font-medium whitespace-nowrap transition-[color,box-shadow] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                  "inline-flex h-[calc(100%-1px)] cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-sm font-medium whitespace-nowrap transition-[color,box-shadow] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
                   "group-data-[variant=file-labels]/tabs-list:h-auto group-data-[variant=file-labels]/tabs-list:rounded-none group-data-[variant=file-labels]/tabs-list:px-3 group-data-[variant=file-labels]/tabs-list:py-1.5",
                   isActiveInOverflow
                     ? "bg-background text-foreground shadow-sm"
@@ -199,9 +212,7 @@ function TabsList({
                     className={cn(
                       value === activeValue && "bg-accent font-medium"
                     )}
-                    onSelect={() =>
-                      hiddenTriggersRef.current.get(value)?.click()
-                    }
+                    onSelect={() => setValue(value)}
                   >
                     {child.props.children}
                   </DropdownMenuItem>

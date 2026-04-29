@@ -1,4 +1,5 @@
 import { useState, useRef, useMemo, useCallback } from "react"
+import { SendSplitButton } from "@/features/candidates/components/send-button"
 import {
   Calendar,
   Check,
@@ -7,6 +8,7 @@ import {
   ChevronRight,
   ChevronUp,
   Clock,
+  DoorOpen,
   Pencil,
   X,
 } from "lucide-react"
@@ -32,6 +34,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 import {
   Tooltip,
@@ -39,6 +46,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { EmailComposer } from "@/features/candidates/components/email-composer"
 
 // ---------------------------------------------------------------------------
 // Types
@@ -526,6 +534,13 @@ function formatHour(h: number): string {
   return min > 0 ? `${h12}:${String(min).padStart(2, "0")} ${period}` : `${h12}:00 ${period}`
 }
 
+function formatHourShort(h: number): string {
+  const hour = Math.floor(h)
+  const min = Math.round((h - hour) * 60)
+  const h12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
+  return min > 0 ? `${h12}:${String(min).padStart(2, "0")}` : `${h12}:00`
+}
+
 function hourToSlotIndex(hour: number): number {
   if (hour >= HOURS[0]) return hour - HOURS[0]
   return hour + 24 - HOURS[0]
@@ -709,9 +724,13 @@ function TimezoneColumn({
 function InterviewerCalendarGrid({
   selectedDate,
   calendarEvents,
+  onPrev,
+  onNext,
 }: {
   selectedDate: ScheduleDateOption
   calendarEvents?: Record<string, CalendarEvent[]>
+  onPrev?: () => void
+  onNext?: () => void
 }) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const events = calendarEvents ?? selectedDate.calendarEvents
@@ -721,7 +740,7 @@ function InterviewerCalendarGrid({
       <div className="flex items-center gap-2 px-4 py-3">
         <span className="flex-1 text-lg font-semibold text-foreground">{selectedDate.date}</span>
         <Select defaultValue="pdt">
-          <SelectTrigger className="h-7 w-[212px] text-sm shadow-xs">
+          <SelectTrigger size="sm" className="!h-7 w-[212px] text-xs">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -730,10 +749,22 @@ function InterviewerCalendarGrid({
           </SelectContent>
         </Select>
         <div className="flex items-center rounded-lg border shadow-xs">
-          <Button variant="ghost" size="icon" className="size-7 rounded-r-none border-r">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-7 rounded-r-none border-r"
+            onClick={onPrev}
+            disabled={!onPrev}
+          >
             <ChevronLeft className="size-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="size-7 rounded-l-none">
+          <Button
+            variant="ghost"
+            className="h-7 gap-0.5 rounded-l-none px-2 text-xs"
+            onClick={onNext}
+            disabled={!onNext}
+          >
+            Next
             <ChevronRight className="size-4" />
           </Button>
         </div>
@@ -794,16 +825,7 @@ function ParticipantBadge({
 function RoomBadge({ room }: { room: string }) {
   return (
     <Badge variant="secondary" className="gap-1 text-[11px] font-medium">
-      <svg
-        className="size-3"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth={2}
-      >
-        <rect x="2" y="3" width="20" height="14" rx="2" />
-        <path d="M8 21h8M12 17v4" />
-      </svg>
+      <DoorOpen className="size-3" />
       {room}
     </Badge>
   )
@@ -819,10 +841,18 @@ function ScheduleDateCard({
   onSelect: () => void
 }) {
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onSelect}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault()
+          onSelect()
+        }
+      }}
       className={cn(
-        "w-full rounded-xl border bg-card p-4 text-left shadow-sm transition-shadow",
+        "w-full cursor-pointer rounded-xl border bg-card p-4 text-left shadow-sm transition-shadow outline-none focus-visible:ring-2 focus-visible:ring-ring",
         selected ? "border-ring shadow-md" : "border-border hover:shadow-md",
       )}
     >
@@ -869,7 +899,7 @@ function ScheduleDateCard({
           </div>
         ))}
       </div>
-    </button>
+    </div>
   )
 }
 
@@ -977,19 +1007,35 @@ function InterviewSessionExpanded({
 
       <div className="flex flex-col gap-1">
         <span className="px-1 text-sm font-medium">Interviewer</span>
-        <Select
-          value={interview.participants[0]?.name ?? ""}
-          onValueChange={(v) => onUpdate({ participants: [{ name: v }] })}
-        >
-          <SelectTrigger className="w-full rounded-lg">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {ALL_INTERVIEWERS.map((name) => (
-              <SelectItem key={name} value={name}>{name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="w-full justify-start rounded-lg font-normal shadow-xs">
+              {interview.participants.length === 0
+                ? "Select interviewers"
+                : interview.participants.map((p) => p.name).join(", ")}
+              <ChevronDown className="ml-auto size-4 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-2" align="start">
+            {ALL_INTERVIEWERS.map((name) => {
+              const checked = interview.participants.some((p) => p.name === name)
+              return (
+                <label key={name} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent">
+                  <Checkbox
+                    checked={checked}
+                    onCheckedChange={(v) => {
+                      const next = v
+                        ? [...interview.participants, { name }]
+                        : interview.participants.filter((p) => p.name !== name)
+                      onUpdate({ participants: next })
+                    }}
+                  />
+                  {name}
+                </label>
+              )
+            })}
+          </PopoverContent>
+        </Popover>
       </div>
 
       <div className="flex items-end gap-6">
@@ -1031,18 +1077,11 @@ function InterviewSessionCollapsed({
   const participantLabel =
     interview.participants.length === 0
       ? "No interviewer"
-      : interview.participants.length === 1
-        ? interview.participants[0].name
-        : `${interview.participants[0].name} +${interview.participants.length - 1}`
-
-  const dur = interview.durationMinutes
-  const durationLabel = dur >= 60
-    ? `${Math.floor(dur / 60)}h${dur % 60 > 0 ? ` ${dur % 60}m` : ""}`
-    : `${dur} min`
+      : interview.participants.map((p) => p.name).join(", ")
 
   return (
-    <p className="text-sm text-muted-foreground">
-      {dateShort} {formatHour(interview.startHour)}  ·  {durationLabel}  ·  {participantLabel}
+    <p className="text-left text-sm text-muted-foreground">
+      {dateShort} · {participantLabel}
     </p>
   )
 }
@@ -1071,17 +1110,13 @@ function ConfirmDetailsPanel({
 
   const dateShort = (() => {
     const parts = selectedDate.date.match(/\w+,\s+(\w+)\s+(\d+),\s+(\d+)/)
-    if (!parts) return "05 / 05 / 2025"
-    const monthMap: Record<string, string> = {
-      January: "01", February: "02", March: "03", April: "04",
-      May: "05", June: "06", July: "07", August: "08",
-      September: "09", October: "10", November: "11", December: "12",
-    }
-    return `${monthMap[parts[1]] ?? "01"} / ${parts[2].padStart(2, "0")} / ${parts[3]}`
+    if (!parts) return "May 5, 2025"
+    const month = parts[1].slice(0, 3)
+    return `${month} ${parseInt(parts[2])}, ${parts[3]}`
   })()
 
   return (
-    <div className="flex w-1/2 shrink-0 flex-col gap-6 overflow-y-auto bg-muted px-8 py-6">
+    <div className="flex w-[460px] shrink-0 flex-col gap-6 overflow-y-auto bg-muted px-8 py-6">
       <h3 className="text-lg font-semibold">Step 2 of 3: Confirm details</h3>
 
       <div className="flex flex-col gap-1">
@@ -1111,12 +1146,12 @@ function ConfirmDetailsPanel({
                 <CollapsibleTrigger className="flex w-full items-center justify-between px-5 py-4">
                   {isExpanded ? (
                     <span className="text-sm font-medium">
-                      {formatHour(interview.startHour)} {interview.title}
+                      {formatHourShort(interview.startHour)} – {interview.title} ({interview.durationMinutes} min)
                     </span>
                   ) : (
                     <div className="flex flex-1 flex-col items-start gap-0.5">
-                      <span className="text-sm font-medium">
-                        {interview.title}
+                      <span className="text-left text-sm font-medium">
+                        {formatHourShort(interview.startHour)} – {interview.title} ({interview.durationMinutes} min)
                       </span>
                       <InterviewSessionCollapsed interview={interview} dateShort={dateShort} />
                     </div>
@@ -1166,6 +1201,7 @@ export function ScheduleInterviewDialog({
   const [editedInterviews, setEditedInterviews] = useState<EditableInterview[]>(() =>
     initEditableInterviews(selectedDate),
   )
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([])
 
   const handleGoToStep2 = useCallback(() => {
     setEditedInterviews(initEditableInterviews(selectedDate))
@@ -1196,7 +1232,7 @@ export function ScheduleInterviewDialog({
         </DialogDescription>
 
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border px-8 py-4">
+        <div className="flex items-center justify-between border-b border-border bg-white px-8 py-4">
           <h2 className="text-lg font-semibold">
             Scheduling interview for {candidateName} — {reqTitle}
           </h2>
@@ -1228,12 +1264,13 @@ export function ScheduleInterviewDialog({
 
               <div className="space-y-3">
                 {SCHEDULE_DATES.map((option, i) => (
-                  <ScheduleDateCard
-                    key={i}
-                    option={option}
-                    selected={selectedDateIdx === i}
-                    onSelect={() => setSelectedDateIdx(i)}
-                  />
+                  <div key={i} ref={(el) => { cardRefs.current[i] = el }}>
+                    <ScheduleDateCard
+                      option={option}
+                      selected={selectedDateIdx === i}
+                      onSelect={() => setSelectedDateIdx(i)}
+                    />
+                  </div>
                 ))}
               </div>
             </div>
@@ -1247,16 +1284,50 @@ export function ScheduleInterviewDialog({
             />
           )}
 
-          {/* Right panel — calendar grid */}
-          <InterviewerCalendarGrid
-            selectedDate={selectedDate}
-            calendarEvents={derivedEvents}
-          />
+          {step === 3 && (
+            <div className="flex w-full flex-col items-center gap-5 overflow-y-auto bg-muted px-8 py-5">
+              <div className="flex w-full max-w-2xl flex-col gap-5">
+              <h3 className="text-lg font-semibold">Step 3 of 3: Send confirmation</h3>
+
+              <EmailComposer
+                initialTemplate="confirmation"
+                recipientName={candidateName}
+                recipientEmail={`${candidateName.toLowerCase().replace(/\s+/g, "")}@gmail.com`}
+                context={{
+                  candidateName,
+                  candidateEmail: `${candidateName.toLowerCase().replace(/\s+/g, "")}@gmail.com`,
+                  jobTitle: reqTitle,
+                  companyName: "ACME AI",
+                  senderName: "Anne Montgomery",
+                  recruiterName: "Anne Montgomery",
+                }}
+              />
+              </div>
+            </div>
+          )}
+
+          {/* Right panel — calendar grid (steps 1 & 2 only) */}
+          {step !== 3 && (
+            <InterviewerCalendarGrid
+              selectedDate={selectedDate}
+              calendarEvents={derivedEvents}
+              onPrev={selectedDateIdx > 0 ? () => {
+                const next = selectedDateIdx - 1
+                setSelectedDateIdx(next)
+                cardRefs.current[next]?.scrollIntoView({ behavior: "smooth", block: "nearest" })
+              } : undefined}
+              onNext={selectedDateIdx < SCHEDULE_DATES.length - 1 ? () => {
+                const next = selectedDateIdx + 1
+                setSelectedDateIdx(next)
+                cardRefs.current[next]?.scrollIntoView({ behavior: "smooth", block: "nearest" })
+              } : undefined}
+            />
+          )}
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-8 py-3">
-          {step === 1 ? (
+        <div className="flex items-center justify-between bg-white px-8 py-3">
+          {step === 1 && (
             <>
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
@@ -1265,12 +1336,28 @@ export function ScheduleInterviewDialog({
                 Next: Confirm details
               </Button>
             </>
-          ) : (
+          )}
+          {step === 2 && (
             <>
               <Button variant="outline" onClick={() => setStep(1)}>
                 Back
               </Button>
-              <Button>Next</Button>
+              <Button onClick={() => setStep(3)}>
+                Next: Send confirmation
+              </Button>
+            </>
+          )}
+          {step === 3 && (
+            <>
+              <Button variant="outline" onClick={() => setStep(2)}>
+                Back
+              </Button>
+              <SendSplitButton
+                label="Schedule and send"
+                successMessage="Interview scheduled and confirmation sent"
+                scheduleLabel="Schedule now and send message later"
+                onSend={() => onOpenChange(false)}
+              />
             </>
           )}
         </div>

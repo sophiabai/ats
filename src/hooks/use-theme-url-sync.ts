@@ -1,41 +1,60 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useSearchParams } from "react-router";
-import { isValidTheme, useThemeStore } from "@/stores/theme-store";
+import {
+  parseThemeParam,
+  serializeThemeParam,
+  useThemeStore,
+} from "@/stores/theme-store";
 
 const PARAM = "theme";
 
 /**
- * Keeps the `?theme=` URL param in sync with the theme store in both
- * directions. System (the default) stays absent from the URL so links
- * remain clean, while any explicit theme choice is reflected so the URL
- * is shareable.
+ * Keeps the `?theme=<brand>-<mode>` URL param in sync with the theme store in
+ * both directions. URL is authoritative only when it actually changes (e.g.
+ * navigation or shared link), while local toggles flow store → URL. The
+ * default combination (default + light) stays absent from the URL so links
+ * remain clean.
  */
 export function useThemeUrlSync() {
   const [searchParams, setSearchParams] = useSearchParams();
   const theme = useThemeStore((s) => s.theme);
+  const mode = useThemeStore((s) => s.mode);
   const setTheme = useThemeStore((s) => s.setTheme);
+  const setMode = useThemeStore((s) => s.setMode);
+
+  const prevSearchParamsRef = useRef(searchParams);
 
   useEffect(() => {
-    const urlTheme = searchParams.get(PARAM);
-    const validUrlTheme = isValidTheme(urlTheme) ? urlTheme : null;
+    const searchParamsChanged = prevSearchParamsRef.current !== searchParams;
+    prevSearchParamsRef.current = searchParams;
 
-    // URL is authoritative when it carries a valid theme that differs from the store
-    if (validUrlTheme && validUrlTheme !== theme) {
-      setTheme(validUrlTheme);
-      return;
-    }
+    const raw = searchParams.get(PARAM);
+    const parsed = parseThemeParam(raw);
 
-    // Otherwise keep the URL reflective of the current theme
-    if (theme === "system") {
-      if (urlTheme !== null) {
-        const next = new URLSearchParams(searchParams);
-        next.delete(PARAM);
-        setSearchParams(next, { replace: true });
+    // URL is authoritative only when it changed externally (navigation, initial load)
+    if (searchParamsChanged) {
+      let updated = false;
+      if (parsed.theme && parsed.theme !== theme) {
+        setTheme(parsed.theme);
+        updated = true;
       }
-    } else if (urlTheme !== theme) {
-      const next = new URLSearchParams(searchParams);
-      next.set(PARAM, theme);
-      setSearchParams(next, { replace: true });
+      if (parsed.mode && parsed.mode !== mode) {
+        setMode(parsed.mode);
+        updated = true;
+      }
+      if (updated) return;
     }
-  }, [searchParams, theme, setTheme, setSearchParams]);
+
+    // Sync store → URL
+    const desired = serializeThemeParam(theme, mode);
+    if (desired === raw) return;
+
+    const next = new URLSearchParams(searchParams);
+    if (desired === null) {
+      next.delete(PARAM);
+    } else {
+      next.set(PARAM, desired);
+    }
+    setSearchParams(next, { replace: true });
+  }, [searchParams, theme, mode, setTheme, setMode, setSearchParams]);
 }

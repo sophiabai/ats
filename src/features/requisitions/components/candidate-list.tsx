@@ -51,21 +51,33 @@ function buildLinkState(
   };
 }
 
+const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
+  active: {
+    label: "To be scheduled",
+    className: "bg-amber-500/15 text-amber-700",
+  },
+  hired: {
+    label: "Hired",
+    className: "bg-blue-500/15 text-blue-700",
+  },
+  rejected: {
+    label: "Rejected",
+    className: "bg-destructive/15 text-destructive",
+  },
+  withdrawn: {
+    label: "Withdrawn",
+    className: "bg-muted text-muted-foreground",
+  },
+};
+
 function StatusBadgeInline({ status }: { status: string }) {
+  const config = STATUS_CONFIG[status] ?? {
+    label: status.charAt(0).toUpperCase() + status.slice(1),
+    className: "bg-amber-500/15 text-amber-700",
+  };
   return (
-    <Badge
-      variant="outline"
-      className={
-        status === "active"
-          ? "bg-emerald-500/15 text-emerald-700"
-          : status === "hired"
-            ? "bg-blue-500/15 text-blue-700"
-            : status === "rejected"
-              ? "bg-destructive/15 text-destructive"
-              : "bg-amber-500/15 text-amber-700"
-      }
-    >
-      {status.charAt(0).toUpperCase() + status.slice(1)}
+    <Badge variant="outline" className={config.className}>
+      {config.label}
     </Badge>
   );
 }

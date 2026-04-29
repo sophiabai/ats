@@ -14,7 +14,6 @@ import {
   Paperclip,
   Phone,
   Search,
-  Send,
   SendHorizontal,
   UserCheck,
 } from "lucide-react";
@@ -94,16 +93,14 @@ export function CandidateDetailV1() {
 
   const tabsValue = VALID_TABS.includes(tabParam ?? "")
     ? tabParam!
-    : preselectedAppId && apps.some((a) => a.id === preselectedAppId)
-      ? "applications"
-      : "profile";
+    : "applications";
 
   const setActiveTab = useCallback(
     (tab: string) => {
       setSearchParams(
         (prev) => {
           const next = new URLSearchParams(prev);
-          if (tab === "profile") {
+          if (tab === "applications") {
             next.delete("tab");
           } else {
             next.set("tab", tab);
@@ -717,12 +714,6 @@ function JobApplicationsTabContent({
 }
 
 const CANDIDATE_ACTIVITIES = [
-  {
-    icon: Send,
-    action: "Outreach email sent",
-    detail: "Personalized cold email drafted by Outreach agent",
-    time: "2 hours ago",
-  },
   {
     icon: MessageSquare,
     action: "Candidate replied",

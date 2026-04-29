@@ -2,7 +2,7 @@
 -- Automatically run by `supabase db reset`
 
 -- ============================================================
--- Candidates (25 candidates with stable UUIDs)
+-- Candidates (27 candidates with stable UUIDs)
 -- ============================================================
 INSERT INTO candidates (id, first_name, last_name, email, phone, location, headline, years_experience, current_company, current_title, skills, tags) VALUES
   -- Engineering candidates
@@ -33,7 +33,9 @@ INSERT INTO candidates (id, first_name, last_name, email, phone, location, headl
   ('c0000000-0000-0000-0000-000000000022', 'Hannah', 'Wells', 'hannah.w@email.com', '512-555-0122', 'Austin', 'Demand gen and content marketing leader', 8, 'Marketo', 'Senior Content Lead', ARRAY['Content Marketing','Demand Gen','Marketing Automation','Analytics'], ARRAY['senior','referral']),
   ('c0000000-0000-0000-0000-000000000023', 'Ryan', 'O''Connor', 'ryan.oc@email.com', '646-555-0123', 'New York', 'Journalist turned content marketer', 4, 'The Verge', 'Staff Writer', ARRAY['Writing','Editing','SEO','Social Media'], ARRAY['career-changer','careers_page']),
   ('c0000000-0000-0000-0000-000000000024', 'Zoe', 'Martinez', 'zoe.m@email.com', '415-555-0124', 'San Francisco', 'Brand storyteller with startup experience', 6, 'Notion', 'Head of Content', ARRAY['Brand Strategy','Content Strategy','Video','Podcasting'], ARRAY['senior','agency']),
-  ('c0000000-0000-0000-0000-000000000025', 'Isaac', 'Lee', 'isaac.l@email.com', '206-555-0125', 'Seattle', 'Technical content writer for developer audiences', 3, 'Vercel', 'Technical Writer', ARRAY['Technical Writing','Developer Marketing','MDX','SEO'], ARRAY['mid-level','linkedin']);
+  ('c0000000-0000-0000-0000-000000000025', 'Isaac', 'Lee', 'isaac.l@email.com', '206-555-0125', 'Seattle', 'Technical content writer for developer audiences', 3, 'Vercel', 'Technical Writer', ARRAY['Technical Writing','Developer Marketing','MDX','SEO'], ARRAY['mid-level','linkedin']),
+  ('c0000000-0000-0000-0000-000000000026', 'Jane', 'Warren', 'jane.w@email.com', '415-555-0126', 'San Francisco', 'Frontend engineer with design systems expertise', 6, 'Vercel', 'Senior Frontend Engineer', ARRAY['React','TypeScript','Next.js','Tailwind','Design Systems'], ARRAY['senior','referral']),
+  ('c0000000-0000-0000-0000-000000000027', 'Marco', 'Alvarez', 'marco.a@email.com', '628-555-0127', 'San Francisco', 'Frontend platform engineer with micro-frontend expertise', 7, 'Shopify', 'Staff Frontend Engineer', ARRAY['React','TypeScript','Webpack','Micro-Frontends','Node.js'], ARRAY['senior','linkedin']);
 
 -- ============================================================
 -- Candidate work history, education & last activity
@@ -354,6 +356,30 @@ education = '[
 ]'::jsonb
 WHERE id = 'c0000000-0000-0000-0000-000000000025';
 
+-- 26. Jane Warren – Senior Frontend Engineer at Vercel
+UPDATE candidates SET last_activity_action = 'Interview scheduled', last_activity_at = '2026-04-20T10:00:00Z',
+work_history = '[
+  {"company":"Vercel","title":"Senior Frontend Engineer","location":"San Francisco, CA","start_date":"2023-01","end_date":null,"description":"Lead developer on the Next.js dashboard experience. Built the new deployment analytics UI and contributed to the Vercel design system."},
+  {"company":"Stripe","title":"Frontend Engineer","location":"San Francisco, CA","start_date":"2020-06","end_date":"2022-12","description":"Developed Stripe Dashboard components used by millions of merchants. Led the migration from styled-components to Tailwind CSS."},
+  {"company":"Airbnb","title":"Software Engineer","location":"San Francisco, CA","start_date":"2018-08","end_date":"2020-05","description":"Built search and booking UI components for the Airbnb web platform using React and TypeScript."}
+]'::jsonb,
+education = '[
+  {"institution":"UC Berkeley","degree":"B.S. Computer Science","start_date":"2014-09","end_date":"2018-05"}
+]'::jsonb
+WHERE id = 'c0000000-0000-0000-0000-000000000026';
+
+-- 27. Marco Alvarez – Staff Frontend Engineer at Shopify
+UPDATE candidates SET last_activity_action = 'Interview scheduled', last_activity_at = '2026-04-22T11:00:00Z',
+work_history = '[
+  {"company":"Shopify","title":"Staff Frontend Engineer","location":"San Francisco, CA","start_date":"2022-03","end_date":null,"description":"Architect of Shopify''s micro-frontend platform powering the admin dashboard. Led migration from monolithic SPA to module federation, reducing deploy times by 60%. Mentors 4 frontend engineers."},
+  {"company":"Square","title":"Senior Frontend Engineer","location":"San Francisco, CA","start_date":"2019-06","end_date":"2022-02","description":"Built the Square Dashboard component library and led frontend performance initiatives. Reduced bundle size by 45% through code splitting and tree shaking."},
+  {"company":"Atlassian","title":"Frontend Engineer","location":"Sydney, Australia","start_date":"2017-01","end_date":"2019-05","description":"Developed Jira''s board view using React and TypeScript. Implemented drag-and-drop functionality and real-time collaboration features."}
+]'::jsonb,
+education = '[
+  {"institution":"University of Melbourne","degree":"B.S. Software Engineering","start_date":"2013-02","end_date":"2016-11"}
+]'::jsonb
+WHERE id = 'c0000000-0000-0000-0000-000000000027';
+
 -- ============================================================
 -- Requisitions (5 reqs with stable UUIDs)
 -- ============================================================
@@ -485,60 +511,66 @@ INSERT INTO req_stages (id, req_id, milestone, name, sort_order) VALUES
 -- ============================================================
 -- Senior Frontend Engineer
 INSERT INTO req_interviews (id, req_id, stage_id, title, interview_type, duration_minutes, interviewer_name, order_position) VALUES
-  ('f0000000-0000-0001-0000-000000000001', 'b0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0001-000000000002', 'Recruiter screen',         'standard',         30, 'Taylor Brooks', 0),
-  ('f0000000-0000-0001-0000-000000000002', 'b0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0001-000000000003', 'Hiring manager screen',    'standard',         45, 'Sarah Chen',    0),
-  ('f0000000-0000-0001-0000-000000000003', 'b0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0001-000000000004', 'System Design',                    'technical',        60, 'Jerome Bell',       0),
-  ('f0000000-0000-0001-0000-000000000004', 'b0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0001-000000000004', 'Algorithms and Data Structures',   'technical',        45, 'Javier Ramirez',    1),
-  ('f0000000-0000-0001-0000-000000000008', 'b0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0001-000000000004', 'Break',                            'other',            15, NULL,                2),
-  ('f0000000-0000-0001-0000-000000000005', 'b0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0001-000000000004', 'Culture Fit',                      'behavioral',       30, 'Cameron Williamson', 3),
-  ('f0000000-0000-0001-0000-000000000006', 'b0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0001-000000000004', 'Hiring Manager Close-up',          'behavioral',       30, 'Leslie Alexander',  4),
-  ('f0000000-0000-0001-0000-000000000007', 'b0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0001-000000000006', 'Reference check debrief',  'reference_check',  30, 'Taylor Brooks', 0);
+  ('f0000000-0000-0001-0000-000000000001', 'b0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0001-000000000002', 'Recruiter screen',               'standard',        30, 'Taylor Brooks',                 0),
+  ('f0000000-0000-0001-0000-000000000002', 'b0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0001-000000000003', 'Hiring manager screen',          'standard',        45, 'Sarah Chen',                    0),
+  ('f0000000-0000-0001-0000-000000000003', 'b0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0001-000000000004', 'System Design',                  'technical',       60, 'Jerome Bell, Marvin McKinney',  0),
+  ('f0000000-0000-0001-0000-000000000004', 'b0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0001-000000000004', 'Algorithms and Data Structures', 'technical',       45, 'Javier Ramirez',                1),
+  ('f0000000-0000-0001-0000-000000000008', 'b0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0001-000000000004', 'Break',                          'other',           15, NULL,                            2),
+  ('f0000000-0000-0001-0000-000000000005', 'b0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0001-000000000004', 'Culture Fit',                    'behavioral',      30, 'Cameron Williamson',            3),
+  ('f0000000-0000-0001-0000-000000000006', 'b0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0001-000000000004', 'Hiring Manager Close-up',        'behavioral',      30, 'Leslie Alexander',              4),
+  ('f0000000-0000-0001-0000-000000000007', 'b0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0001-000000000006', 'Reference check debrief',        'reference_check', 30, 'Taylor Brooks',                 0);
 -- Account Executive
 INSERT INTO req_interviews (id, req_id, stage_id, title, interview_type, duration_minutes, interviewer_name, order_position) VALUES
-  ('f0000000-0000-0002-0000-000000000001', 'b0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0002-000000000002', 'Recruiter screen',         'standard',         30, 'Jordan Lee',    0),
-  ('f0000000-0000-0002-0000-000000000002', 'b0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0002-000000000003', 'Hiring manager screen',    'standard',         45, 'Diana Kim',     0),
-  ('f0000000-0000-0002-0000-000000000003', 'b0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0002-000000000004', 'Presentation',             'presentation',     45, 'Anne Montgomery', 0),
-  ('f0000000-0000-0002-0000-000000000004', 'b0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0002-000000000004', 'Mock sales pitch',         'case_study',       60, 'Anne Montgomery', 1),
-  ('f0000000-0000-0002-0000-000000000005', 'b0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0002-000000000004', 'Deal strategy deep-dive',  'behavioral',       60, 'Anne Montgomery', 2),
-  ('f0000000-0000-0002-0000-000000000006', 'b0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0002-000000000004', 'Hiring manager close-up',  'behavioral',       30, 'Diana Kim',     3),
-  ('f0000000-0000-0002-0000-000000000007', 'b0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0002-000000000006', 'Reference check debrief',  'reference_check',  30, 'Jordan Lee',    0);
+  ('f0000000-0000-0002-0000-000000000001', 'b0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0002-000000000002', 'Recruiter screen',               'standard',        30, 'Jordan Lee',                    0),
+  ('f0000000-0000-0002-0000-000000000002', 'b0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0002-000000000003', 'Hiring manager screen',          'standard',        45, 'Diana Kim',                     0),
+  ('f0000000-0000-0002-0000-000000000003', 'b0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0002-000000000004', 'System Design',                  'technical',       60, 'Jerome Bell, Marvin McKinney',  0),
+  ('f0000000-0000-0002-0000-000000000004', 'b0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0002-000000000004', 'Algorithms and Data Structures', 'technical',       45, 'Javier Ramirez',                1),
+  ('f0000000-0000-0002-0000-000000000008', 'b0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0002-000000000004', 'Break',                          'other',           15, NULL,                            2),
+  ('f0000000-0000-0002-0000-000000000005', 'b0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0002-000000000004', 'Culture Fit',                    'behavioral',      30, 'Cameron Williamson',            3),
+  ('f0000000-0000-0002-0000-000000000006', 'b0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0002-000000000004', 'Hiring Manager Close-up',        'behavioral',      30, 'Leslie Alexander',              4),
+  ('f0000000-0000-0002-0000-000000000007', 'b0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0002-000000000006', 'Reference check debrief',        'reference_check', 30, 'Jordan Lee',                    0);
 -- Senior Product Designer
 INSERT INTO req_interviews (id, req_id, stage_id, title, interview_type, duration_minutes, interviewer_name, order_position) VALUES
-  ('f0000000-0000-0003-0000-000000000001', 'b0000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0003-000000000002', 'Recruiter screen',         'standard',         30, 'Taylor Brooks', 0),
-  ('f0000000-0000-0003-0000-000000000002', 'b0000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0003-000000000003', 'Hiring manager screen',    'standard',         45, 'James Ortiz',   0),
-  ('f0000000-0000-0003-0000-000000000003', 'b0000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0003-000000000004', 'Presentation',             'presentation',     45, 'Anne Montgomery', 0),
-  ('f0000000-0000-0003-0000-000000000004', 'b0000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0003-000000000004', 'Portfolio deep-dive',      'portfolio_review', 60, 'Anne Montgomery', 1),
-  ('f0000000-0000-0003-0000-000000000005', 'b0000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0003-000000000004', 'Design exercise',          'case_study',       60, 'Anne Montgomery', 2),
-  ('f0000000-0000-0003-0000-000000000006', 'b0000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0003-000000000004', 'Hiring manager close-up',  'behavioral',       30, 'James Ortiz',   3),
-  ('f0000000-0000-0003-0000-000000000007', 'b0000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0003-000000000006', 'Reference check debrief',  'reference_check',  30, 'Taylor Brooks', 0);
+  ('f0000000-0000-0003-0000-000000000001', 'b0000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0003-000000000002', 'Recruiter screen',               'standard',        30, 'Taylor Brooks',                 0),
+  ('f0000000-0000-0003-0000-000000000002', 'b0000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0003-000000000003', 'Hiring manager screen',          'standard',        45, 'James Ortiz',                   0),
+  ('f0000000-0000-0003-0000-000000000003', 'b0000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0003-000000000004', 'System Design',                  'technical',       60, 'Jerome Bell, Marvin McKinney',  0),
+  ('f0000000-0000-0003-0000-000000000004', 'b0000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0003-000000000004', 'Algorithms and Data Structures', 'technical',       45, 'Javier Ramirez',                1),
+  ('f0000000-0000-0003-0000-000000000008', 'b0000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0003-000000000004', 'Break',                          'other',           15, NULL,                            2),
+  ('f0000000-0000-0003-0000-000000000005', 'b0000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0003-000000000004', 'Culture Fit',                    'behavioral',      30, 'Cameron Williamson',            3),
+  ('f0000000-0000-0003-0000-000000000006', 'b0000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0003-000000000004', 'Hiring Manager Close-up',        'behavioral',      30, 'Leslie Alexander',              4),
+  ('f0000000-0000-0003-0000-000000000007', 'b0000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0003-000000000006', 'Reference check debrief',        'reference_check', 30, 'Taylor Brooks',                 0);
 -- Machine Learning Engineer
 INSERT INTO req_interviews (id, req_id, stage_id, title, interview_type, duration_minutes, interviewer_name, order_position) VALUES
-  ('f0000000-0000-0004-0000-000000000001', 'b0000000-0000-0000-0000-000000000004', 'e0000000-0000-0000-0004-000000000002', 'Recruiter screen',         'standard',         30, 'Taylor Brooks', 0),
-  ('f0000000-0000-0004-0000-000000000002', 'b0000000-0000-0000-0000-000000000004', 'e0000000-0000-0000-0004-000000000003', 'Hiring manager screen',    'standard',         45, 'Sarah Chen',    0),
-  ('f0000000-0000-0004-0000-000000000003', 'b0000000-0000-0000-0000-000000000004', 'e0000000-0000-0000-0004-000000000004', 'Presentation',             'presentation',     45, 'Anne Montgomery', 0),
-  ('f0000000-0000-0004-0000-000000000004', 'b0000000-0000-0000-0000-000000000004', 'e0000000-0000-0000-0004-000000000004', 'Coding exercise',          'technical',        60, 'Anne Montgomery', 1),
-  ('f0000000-0000-0004-0000-000000000005', 'b0000000-0000-0000-0000-000000000004', 'e0000000-0000-0000-0004-000000000004', 'ML system design',         'technical',        60, 'Anne Montgomery', 2),
-  ('f0000000-0000-0004-0000-000000000006', 'b0000000-0000-0000-0000-000000000004', 'e0000000-0000-0000-0004-000000000004', 'Hiring manager close-up',  'behavioral',       30, 'Sarah Chen',    3),
-  ('f0000000-0000-0004-0000-000000000007', 'b0000000-0000-0000-0000-000000000004', 'e0000000-0000-0000-0004-000000000006', 'Reference check debrief',  'reference_check',  30, 'Taylor Brooks', 0);
+  ('f0000000-0000-0004-0000-000000000001', 'b0000000-0000-0000-0000-000000000004', 'e0000000-0000-0000-0004-000000000002', 'Recruiter screen',               'standard',        30, 'Taylor Brooks',                 0),
+  ('f0000000-0000-0004-0000-000000000002', 'b0000000-0000-0000-0000-000000000004', 'e0000000-0000-0000-0004-000000000003', 'Hiring manager screen',          'standard',        45, 'Sarah Chen',                    0),
+  ('f0000000-0000-0004-0000-000000000003', 'b0000000-0000-0000-0000-000000000004', 'e0000000-0000-0000-0004-000000000004', 'System Design',                  'technical',       60, 'Jerome Bell, Marvin McKinney',  0),
+  ('f0000000-0000-0004-0000-000000000004', 'b0000000-0000-0000-0000-000000000004', 'e0000000-0000-0000-0004-000000000004', 'Algorithms and Data Structures', 'technical',       45, 'Javier Ramirez',                1),
+  ('f0000000-0000-0004-0000-000000000008', 'b0000000-0000-0000-0000-000000000004', 'e0000000-0000-0000-0004-000000000004', 'Break',                          'other',           15, NULL,                            2),
+  ('f0000000-0000-0004-0000-000000000005', 'b0000000-0000-0000-0000-000000000004', 'e0000000-0000-0000-0004-000000000004', 'Culture Fit',                    'behavioral',      30, 'Cameron Williamson',            3),
+  ('f0000000-0000-0004-0000-000000000006', 'b0000000-0000-0000-0000-000000000004', 'e0000000-0000-0000-0004-000000000004', 'Hiring Manager Close-up',        'behavioral',      30, 'Leslie Alexander',              4),
+  ('f0000000-0000-0004-0000-000000000007', 'b0000000-0000-0000-0000-000000000004', 'e0000000-0000-0000-0004-000000000006', 'Reference check debrief',        'reference_check', 30, 'Taylor Brooks',                 0);
 -- Content Marketing Lead
 INSERT INTO req_interviews (id, req_id, stage_id, title, interview_type, duration_minutes, interviewer_name, order_position) VALUES
-  ('f0000000-0000-0005-0000-000000000001', 'b0000000-0000-0000-0000-000000000005', 'e0000000-0000-0000-0005-000000000002', 'Recruiter screen',         'standard',         30, 'Jordan Lee',    0),
-  ('f0000000-0000-0005-0000-000000000002', 'b0000000-0000-0000-0000-000000000005', 'e0000000-0000-0000-0005-000000000003', 'Hiring manager screen',    'standard',         45, 'Ravi Gupta',    0),
-  ('f0000000-0000-0005-0000-000000000003', 'b0000000-0000-0000-0000-000000000005', 'e0000000-0000-0000-0005-000000000004', 'Presentation',             'presentation',     45, 'Anne Montgomery', 0),
-  ('f0000000-0000-0005-0000-000000000004', 'b0000000-0000-0000-0000-000000000005', 'e0000000-0000-0000-0005-000000000004', 'Content strategy exercise','case_study',       60, 'Anne Montgomery', 1),
-  ('f0000000-0000-0005-0000-000000000005', 'b0000000-0000-0000-0000-000000000005', 'e0000000-0000-0000-0005-000000000004', 'Editorial review',         'other',            60, 'Anne Montgomery', 2),
-  ('f0000000-0000-0005-0000-000000000006', 'b0000000-0000-0000-0000-000000000005', 'e0000000-0000-0000-0005-000000000004', 'Hiring manager close-up',  'behavioral',       30, 'Ravi Gupta',    3),
-  ('f0000000-0000-0005-0000-000000000007', 'b0000000-0000-0000-0000-000000000005', 'e0000000-0000-0000-0005-000000000006', 'Reference check debrief',  'reference_check',  30, 'Jordan Lee',    0);
+  ('f0000000-0000-0005-0000-000000000001', 'b0000000-0000-0000-0000-000000000005', 'e0000000-0000-0000-0005-000000000002', 'Recruiter screen',               'standard',        30, 'Jordan Lee',                    0),
+  ('f0000000-0000-0005-0000-000000000002', 'b0000000-0000-0000-0000-000000000005', 'e0000000-0000-0000-0005-000000000003', 'Hiring manager screen',          'standard',        45, 'Ravi Gupta',                    0),
+  ('f0000000-0000-0005-0000-000000000003', 'b0000000-0000-0000-0000-000000000005', 'e0000000-0000-0000-0005-000000000004', 'System Design',                  'technical',       60, 'Jerome Bell, Marvin McKinney',  0),
+  ('f0000000-0000-0005-0000-000000000004', 'b0000000-0000-0000-0000-000000000005', 'e0000000-0000-0000-0005-000000000004', 'Algorithms and Data Structures', 'technical',       45, 'Javier Ramirez',                1),
+  ('f0000000-0000-0005-0000-000000000008', 'b0000000-0000-0000-0000-000000000005', 'e0000000-0000-0000-0005-000000000004', 'Break',                          'other',           15, NULL,                            2),
+  ('f0000000-0000-0005-0000-000000000005', 'b0000000-0000-0000-0000-000000000005', 'e0000000-0000-0000-0005-000000000004', 'Culture Fit',                    'behavioral',      30, 'Cameron Williamson',            3),
+  ('f0000000-0000-0005-0000-000000000006', 'b0000000-0000-0000-0000-000000000005', 'e0000000-0000-0000-0005-000000000004', 'Hiring Manager Close-up',        'behavioral',      30, 'Leslie Alexander',              4),
+  ('f0000000-0000-0005-0000-000000000007', 'b0000000-0000-0000-0000-000000000005', 'e0000000-0000-0000-0005-000000000006', 'Reference check debrief',        'reference_check', 30, 'Jordan Lee',                    0);
 
 -- ============================================================
 -- Applications (each req gets 4-6 candidates at various stages)
 -- ============================================================
--- Senior Frontend Engineer (5 candidates)
+-- Senior Frontend Engineer (7 candidates)
 INSERT INTO applications (candidate_id, req_id, applied_date, source, current_milestone, current_stage_id, status) VALUES
   ('c0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000001', '2026-02-10', 'referral',     'final_interview', 'e0000000-0000-0000-0001-000000000004', 'active'),
   ('c0000000-0000-0000-0000-000000000003', 'b0000000-0000-0000-0000-000000000001', '2026-02-12', 'referral',     'screen',          'e0000000-0000-0000-0001-000000000003', 'active'),
   ('c0000000-0000-0000-0000-000000000004', 'b0000000-0000-0000-0000-000000000001', '2026-02-15', 'linkedin',     'offer',           'e0000000-0000-0000-0001-000000000005', 'active'),
-  ('c0000000-0000-0000-0000-000000000005', 'b0000000-0000-0000-0000-000000000001', '2026-02-18', 'careers_page', 'screen',          'e0000000-0000-0000-0001-000000000002', 'active');
+  ('c0000000-0000-0000-0000-000000000005', 'b0000000-0000-0000-0000-000000000001', '2026-02-18', 'careers_page', 'screen',          'e0000000-0000-0000-0001-000000000002', 'active'),
+  ('c0000000-0000-0000-0000-000000000026', 'b0000000-0000-0000-0000-000000000001', '2026-02-14', 'referral',     'final_interview', 'e0000000-0000-0000-0001-000000000004', 'active'),
+  ('c0000000-0000-0000-0000-000000000027', 'b0000000-0000-0000-0000-000000000001', '2026-02-16', 'linkedin',     'final_interview', 'e0000000-0000-0000-0001-000000000004', 'active');
 INSERT INTO applications (candidate_id, req_id, applied_date, source, current_milestone, current_stage_id, status, rejected_reason) VALUES
   ('c0000000-0000-0000-0000-000000000009', 'b0000000-0000-0000-0000-000000000001', '2026-02-20', 'careers_page', 'application',     'e0000000-0000-0000-0001-000000000001', 'rejected', 'Not enough experience with design systems');
 
@@ -840,6 +872,18 @@ INSERT INTO criteria_evaluations (req_id, candidate_id, criterion, met, reasonin
   ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000009', 'Experience building design systems or component libraries', true, 'Contributed to Google''s Material Design component library.'),
   ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000009', 'Strong understanding of web performance and accessibility', true, 'Strong accessibility focus at Google; led WCAG compliance audits.'),
   ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000009', 'Experience mentoring engineers or leading technical initiatives', false, 'IC contributor; no documented mentoring or leadership scope.'),
+  -- c026: Jane Warren – Senior Frontend Engineer at Vercel
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000026', '5+ years of professional frontend development experience', true, 'Has 6+ years across Vercel, Stripe, and Airbnb building frontend experiences.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000026', 'Deep expertise in React, TypeScript, and modern CSS', true, 'Core stack at Vercel and Stripe. Led Tailwind CSS migration at Stripe.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000026', 'Experience building design systems or component libraries', true, 'Contributed to the Vercel design system used across all product surfaces.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000026', 'Strong understanding of web performance and accessibility', true, 'Built deployment analytics UI with performance-first architecture at Vercel.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000026', 'Experience mentoring engineers or leading technical initiatives', false, 'Senior IC role; no explicit mentoring experience documented.'),
+  -- c027: Marco Alvarez – Staff Frontend Engineer at Shopify
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000027', '5+ years of professional frontend development experience', true, 'Over 7 years across Shopify, Square, and Atlassian with deep frontend focus.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000027', 'Deep expertise in React, TypeScript, and modern CSS', true, 'Primary stack across all roles. Architected Shopify admin with React and TypeScript.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000027', 'Experience building design systems or component libraries', true, 'Built the Square Dashboard component library used by 20+ engineering teams.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000027', 'Strong understanding of web performance and accessibility', true, 'Reduced bundle size by 45% at Square. Led performance initiatives across the platform.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000027', 'Experience mentoring engineers or leading technical initiatives', true, 'Mentors 4 frontend engineers at Shopify. Led micro-frontend platform architecture.'),
 
   -- ── Account Executive (b002) ──
   -- c010: James O''Brien – Enterprise AE at Datadog

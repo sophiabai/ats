@@ -1,6 +1,5 @@
 import { Link, Outlet, useLocation } from "react-router";
 import { AppSidebar } from "@/components/app-sidebar";
-import { ChatBar } from "@/components/chat-bar";
 import { VariantDropdown } from "@/components/custom/variant-dropdown";
 import { DockedChatPanel } from "@/components/docked-chat-panel";
 import { TopNav } from "@/components/top-nav";
@@ -20,6 +19,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { Toaster } from "@/components/ui/sonner";
 import { usePageTitleStore } from "@/stores/page-title-store";
 
 export interface BreadcrumbState {
@@ -111,9 +111,7 @@ function useBreadcrumbs(): { crumbs: Crumb[]; page: string } {
 
 export function RootLayout() {
   const { crumbs, page } = useBreadcrumbs();
-  const { pathname } = useLocation();
   const docked = useChatBarStore((s) => s.docked);
-  const hideChatBar = pathname.startsWith("/workflows");
 
   useThemeUrlSync();
 
@@ -158,10 +156,10 @@ export function RootLayout() {
           <div className="flex w-full flex-1 flex-col gap-6 overflow-y-auto px-17 pt-6">
             <Outlet />
           </div>
-          {!hideChatBar && <ChatBar />}
         </SidebarInset>
         {docked && <DockedChatPanel />}
       </SidebarProvider>
+      <Toaster position="bottom-center" />
     </div>
   );
 }

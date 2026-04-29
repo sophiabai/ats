@@ -1,5 +1,13 @@
-import { useMemo } from "react";
-import { Calendar, Check, CheckCircle2, MoreHorizontal, XCircle } from "lucide-react";
+import { useMemo, useState } from "react";
+import {
+  Calendar,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  MoreHorizontal,
+  XCircle,
+} from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Tooltip,
@@ -76,27 +84,122 @@ export function StageIcon({ status }: { status: StageStatus }) {
 export function InterviewTimeline({ interviews }: { interviews: ReqInterview[] }) {
   return (
     <div className="pt-1">
-      {interviews.map((iv, idx) => {
-        const isLast = idx === interviews.length - 1;
-        return (
-          <div key={iv.id} className="flex gap-2">
-            <div className="flex flex-col items-center">
-              <div className="flex size-5 shrink-0 items-center justify-center rounded bg-stone-200/30 text-muted-foreground">
-                <Calendar className="size-4" />
+      {interviews.map((iv, idx) => (
+        <InterviewRow
+          key={iv.id}
+          interview={iv}
+          isLast={idx === interviews.length - 1}
+        />
+      ))}
+    </div>
+  );
+}
+
+const TECHNICAL_INTERVIEW_TYPES = new Set(["technical", "pair_programming"]);
+
+const DEFAULT_INTERVIEWER_NOTES =
+  "Target level: L8 IC - Staff Software Engineer.\nTips: (1) Don't be late (2) Ask open questions.";
+
+function feedbackFormLabel(title: string) {
+  return title.split(" (")[0];
+}
+
+function InterviewRow({
+  interview,
+  isLast,
+}: {
+  interview: ReqInterview;
+  isLast: boolean;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const interviewers = (interview.interviewer_name ?? "")
+    .split(",")
+    .map((n) => n.trim())
+    .filter(Boolean);
+  const isTechnical = TECHNICAL_INTERVIEW_TYPES.has(interview.interview_type);
+  const notes = interview.instructions || DEFAULT_INTERVIEWER_NOTES;
+
+  return (
+    <div className="flex gap-2">
+      <div className="flex flex-col items-center">
+        <div className="flex size-5 shrink-0 items-center justify-center rounded bg-stone-200/30 text-muted-foreground">
+          <Calendar className="size-4" />
+        </div>
+        {!isLast && <div className="w-px flex-1 bg-border" />}
+      </div>
+      <div className={cn("min-w-0 flex-1", !isLast && "pb-3")}>
+        <button
+          type="button"
+          onClick={() => setExpanded((prev) => !prev)}
+          className="flex items-center gap-1.5 text-left focus-visible:outline-none"
+        >
+          <span className="text-sm leading-5 font-medium text-foreground">
+            {interview.title} ({interview.duration_minutes} min)
+          </span>
+          {expanded ? (
+            <ChevronDown className="size-3 text-muted-foreground" />
+          ) : (
+            <ChevronRight className="size-3 text-muted-foreground" />
+          )}
+        </button>
+        {interviewers.length > 0 ? (
+          interviewers.map((name) => (
+            <p
+              key={name}
+              className="text-sm leading-5 text-muted-foreground"
+            >
+              {name}
+            </p>
+          ))
+        ) : (
+          <p className="text-sm leading-5 text-muted-foreground">
+            No interviewers
+          </p>
+        )}
+        <div
+          className={cn(
+            "stage-collapse grid",
+            expanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+          )}
+        >
+          <div className="min-h-0 overflow-hidden">
+            <div className="mt-3 space-y-3">
+              <div>
+                <p className="text-sm leading-5 font-medium text-foreground">
+                  Notes to interviewers
+                </p>
+                <p className="text-sm leading-5 whitespace-pre-line text-muted-foreground">
+                  {notes}
+                </p>
               </div>
-              {!isLast && <div className="w-px flex-1 bg-border" />}
-            </div>
-            <div className={cn("pb-3", isLast && "pb-0")}>
-              <p className="text-sm leading-5 text-foreground">
-                {iv.title} ({iv.duration_minutes} min)
-              </p>
-              <p className="text-sm leading-5 text-muted-foreground">
-                {iv.interviewer_name || "No interviewers"}
-              </p>
+              <div>
+                <p className="text-sm leading-5 font-medium text-foreground">
+                  Feedback form
+                </p>
+                <a
+                  href="#"
+                  className="text-sm leading-5 text-blue-600 underline underline-offset-2 hover:text-blue-700 dark:text-blue-400"
+                >
+                  {feedbackFormLabel(interview.title)}
+                </a>
+              </div>
+              {isTechnical && (
+                <div>
+                  <p className="text-sm leading-5 font-medium text-foreground">
+                    CodePair link
+                  </p>
+                  <a
+                    href="#"
+                    className="text-sm leading-5 text-blue-600 underline underline-offset-2 hover:text-blue-700 dark:text-blue-400"
+                  >
+                    CodePair
+                  </a>
+                </div>
+              )}
             </div>
           </div>
-        );
-      })}
+        </div>
+      </div>
     </div>
   );
 }

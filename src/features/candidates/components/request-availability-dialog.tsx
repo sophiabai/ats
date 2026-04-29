@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, Clock, X } from "lucide-react";
+import { Clock, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,27 +15,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
-
-function VariableBadge({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 rounded-full bg-black/10 px-2 py-0.5 text-xs font-medium text-primary",
-        className,
-      )}
-    >
-      {children}
-      <X className="size-3 cursor-pointer" />
-    </span>
-  );
-}
+import { EmailComposer } from "@/features/candidates/components/email-composer";
+import { SendSplitButton } from "@/features/candidates/components/send-button";
 
 export function RequestAvailabilityDialog({
   open,
@@ -45,6 +26,7 @@ export function RequestAvailabilityDialog({
   reqTitle,
   companyName,
   senderName,
+  onSent,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -53,6 +35,7 @@ export function RequestAvailabilityDialog({
   reqTitle: string;
   companyName: string;
   senderName: string;
+  onSent?: () => void;
 }) {
   const [duration, setDuration] = useState("195");
   const [availWindow, setAvailWindow] = useState("2-weeks");
@@ -66,7 +49,7 @@ export function RequestAvailabilityDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="flex h-[calc(100vh-80px)] max-h-[720px] w-[calc(100vw-80px)] max-w-[1360px] flex-col gap-0 overflow-hidden p-0 sm:max-w-[1360px]"
+        className="flex h-[calc(100vh-40px)] w-[calc(100vw-40px)] max-w-none sm:max-w-none flex-col gap-0 overflow-hidden p-0"
       >
         <DialogTitle className="sr-only">Request availability</DialogTitle>
         <DialogDescription className="sr-only">
@@ -91,7 +74,7 @@ export function RequestAvailabilityDialog({
         {/* Body */}
         <div className="flex min-h-0 flex-1 gap-10 overflow-y-auto bg-muted px-8 pt-6 pb-8">
           {/* Left: Request details */}
-          <div className="flex w-[456px] shrink-0 flex-col gap-5">
+          <div className="flex w-[460px] shrink-0 flex-col gap-5">
             <h3 className="text-lg font-semibold">Request details</h3>
 
             <div className="space-y-1">
@@ -213,69 +196,19 @@ export function RequestAvailabilityDialog({
           <div className="flex min-w-0 flex-1 flex-col gap-5">
             <h3 className="text-lg font-semibold">Request email</h3>
 
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border bg-card">
-              {/* Template bar */}
-              <div className="flex items-center border-b px-3 py-2.5">
-                <button
-                  type="button"
-                  className="flex items-center gap-1 text-sm text-foreground"
-                >
-                  Template: Request availability default
-                  <ChevronDown className="size-3.5" />
-                </button>
-              </div>
-
-              {/* To field */}
-              <div className="flex items-center gap-2 border-b px-4 py-2.5">
-                <div className="flex flex-1 flex-wrap items-center gap-2 px-2">
-                  <VariableBadge>
-                    {candidateName} ({candidateEmail})
-                  </VariableBadge>
-                </div>
-                <button
-                  type="button"
-                  className="shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-primary"
-                >
-                  CC/BCC
-                </button>
-              </div>
-
-              {/* Email body */}
-              <div className="flex-1 overflow-y-auto px-4 py-3">
-                <div className="space-y-4 text-base leading-relaxed text-black">
-                  <p>
-                    Hi <VariableBadge>{candidateName}</VariableBadge> ,
-                  </p>
-                  <p>
-                    We&apos;re excited to move forward with your candidacy for the{" "}
-                    <VariableBadge>{reqTitle}</VariableBadge> at{" "}
-                    <VariableBadge>{companyName}</VariableBadge> ! Please use the
-                    link below to share your availability for an interview.
-                  </p>
-                  <p>Looking forward to speaking with you!</p>
-
-                  <div className="rounded-lg bg-muted p-3">
-                    <VariableBadge>
-                      Enter your availability here &gt;&gt;
-                    </VariableBadge>
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      Send the email to generate the scheduling link. (Only visible
-                      to you)
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Signature */}
-              <div className="px-4 py-3">
-                <div className="text-base text-black">
-                  <p>Best,</p>
-                  <div className="mt-1">
-                    <VariableBadge>{senderName}</VariableBadge>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <EmailComposer
+              initialTemplate="availability-default"
+              recipientName={candidateName}
+              recipientEmail={candidateEmail}
+              context={{
+                candidateName,
+                candidateEmail,
+                jobTitle: reqTitle,
+                companyName,
+                senderName,
+                recruiterName: senderName,
+              }}
+            />
           </div>
         </div>
 
@@ -284,16 +217,12 @@ export function RequestAvailabilityDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <div className="flex items-stretch">
-            <Button className="rounded-r-none">Send</Button>
-            <div className="w-px bg-card" />
-            <Button
-              className="rounded-l-none px-3"
-              aria-label="More send options"
-            >
-              <ChevronDown className="size-4" />
-            </Button>
-          </div>
+          <SendSplitButton
+            onSend={() => {
+              onSent?.();
+              onOpenChange(false);
+            }}
+          />
         </div>
       </DialogContent>
     </Dialog>

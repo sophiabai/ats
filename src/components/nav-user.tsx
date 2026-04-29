@@ -1,9 +1,11 @@
 import {
   ChevronsUpDown,
   FlaskConical,
+  Gem,
   LogOut,
   Monitor,
   Moon,
+  Palette,
   Sun,
 } from "lucide-react"
 
@@ -27,7 +29,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { useThemeStore, type Theme } from "@/stores/theme-store"
+import { useThemeStore, type Mode, type Theme } from "@/stores/theme-store"
 
 export function NavUser({
   user,
@@ -39,9 +41,14 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar()
-  const { theme, setTheme } = useThemeStore()
+  const { theme, setTheme, mode, setMode } = useThemeStore()
 
   const themeOptions: { value: Theme; label: string; icon: typeof Sun }[] = [
+    { value: "default", label: "Default", icon: Palette },
+    { value: "rippling", label: "Rippling", icon: Gem },
+  ]
+
+  const modeOptions: { value: Mode; label: string; icon: typeof Sun }[] = [
     { value: "system", label: "System", icon: Monitor },
     { value: "light", label: "Light", icon: Sun },
     { value: "dark", label: "Dark", icon: Moon },
@@ -95,6 +102,22 @@ export function NavUser({
                   key={opt.value}
                   onClick={() => setTheme(opt.value)}
                   className={theme === opt.value ? "font-medium text-foreground" : "text-muted-foreground"}
+                >
+                  <opt.icon />
+                  {opt.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">
+                Mode
+              </DropdownMenuLabel>
+              {modeOptions.map((opt) => (
+                <DropdownMenuItem
+                  key={opt.value}
+                  onClick={() => setMode(opt.value)}
+                  className={mode === opt.value ? "font-medium text-foreground" : "text-muted-foreground"}
                 >
                   <opt.icon />
                   {opt.label}

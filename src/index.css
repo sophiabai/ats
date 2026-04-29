@@ -170,13 +170,26 @@
 }
 
 .rippling {
-    --top-nav: #4A0039;
+    --top-nav: var(--color-berry-700);
     --top-nav-foreground: oklch(1 0 0 / 0.9);
     --top-nav-muted: rgba(255, 255, 255, 0.12);
-    --primary: #7A005D;
+    --primary: var(--color-berry-600);
     --primary-foreground: oklch(1 0 0);
-    --ring: #CE71BB;
-    --sidebar-primary: #9F1E7A;
+    --ring: var(--color-berry-300);
+    --sidebar-primary: var(--color-berry-500);
+    --brand: var(--color-berry-500);
+}
+
+.rippling.dark {
+    --top-nav: var(--color-berry-900);
+    --top-nav-foreground: oklch(1 0 0 / 0.9);
+    --top-nav-muted: rgba(255, 255, 255, 0.08);
+    --primary: var(--color-berry-300);
+    --primary-foreground: var(--color-berry-900);
+    --ring: var(--color-berry-400);
+    --sidebar-primary: var(--color-berry-400);
+    --sidebar-primary-foreground: var(--color-berry-900);
+    --brand: var(--color-berry-300);
 }
 
 @keyframes cand-fade-up {
@@ -207,6 +220,16 @@
 }
 .cand-fade-in {
   animation: cand-fade-in 250ms var(--ease-out-quint) both;
+}
+
+.stage-collapse {
+  transition: grid-template-rows 200ms var(--ease-out-quint);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage-collapse {
+    transition: none;
+  }
 }
 .customer-brand {
     color-scheme: light;
@@ -251,6 +274,64 @@
     animation-timing-function: var(--ease-out-quint);
   }
 
+  /*
+   * Restore pointer cursor on interactive elements (Tailwind v4 no longer
+   * does this by default). Utility classes like `cursor-text`,
+   * `cursor-not-allowed`, `cursor-grab`, etc. win via higher specificity.
+   */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [role="tab"]:not([aria-disabled="true"]),
+  [role="menuitem"]:not([aria-disabled="true"]),
+  [role="menuitemcheckbox"]:not([aria-disabled="true"]),
+  [role="menuitemradio"]:not([aria-disabled="true"]),
+  [role="option"]:not([aria-disabled="true"]),
+  [role="switch"]:not([aria-disabled="true"]),
+  [role="checkbox"]:not([aria-disabled="true"]),
+  [role="radio"]:not([aria-disabled="true"]),
+  [role="combobox"]:not([aria-disabled="true"]),
+  a[href],
+  summary,
+  label[for],
+  select:not(:disabled),
+  input[type="submit"]:not(:disabled),
+  input[type="button"]:not(:disabled),
+  input[type="reset"]:not(:disabled),
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled),
+  input[type="color"]:not(:disabled),
+  input[type="file"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+.email-composer-body ul {
+  list-style: disc;
+  padding-left: 1.5rem;
+  margin: 0.25rem 0;
+}
+.email-composer-body ol {
+  list-style: decimal;
+  padding-left: 1.5rem;
+  margin: 0.25rem 0;
+}
+.email-composer-body li {
+  margin: 0.15rem 0;
+}
+.email-composer-body p {
+  min-height: 1em;
+}
+.email-composer-body p + p,
+.email-composer-body p + ul,
+.email-composer-body p + ol,
+.email-composer-body p + div,
+.email-composer-body div + p,
+.email-composer-body ul + p,
+.email-composer-body ol + p {
+  margin-top: 0.75rem;
+}
+.email-composer-body [data-variable-chip] {
+  white-space: nowrap;
 }
 
 @media (prefers-reduced-motion: reduce) {

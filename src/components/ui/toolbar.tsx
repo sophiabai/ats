@@ -106,7 +106,7 @@ const dropdownArrowVariants = cva(
         default:
           'bg-transparent hover:bg-muted hover:text-muted-foreground aria-checked:bg-accent aria-checked:text-accent-foreground',
         outline:
-          'border border-input border-l-0 bg-transparent hover:bg-accent hover:text-accent-foreground',
+          'border border-input border-l-0 bg-transparent shadow-xs hover:bg-accent hover:text-accent-foreground',
       },
     },
   }
