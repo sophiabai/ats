@@ -2,6 +2,7 @@ import Markdown from "react-markdown";
 import type { ChatMessage, ReqDraftFormData } from "@/types";
 import { ReqDraftCard } from "@/features/chat/components/req-draft-card";
 import { ScheduleCard } from "@/features/chat/components/schedule-card";
+import { EmailDraftCard } from "@/features/chat/components/email-draft-card";
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -14,7 +15,7 @@ export function MessageBubble({ message, onOpenReqDraft }: MessageBubbleProps) {
   if (isUser) {
     return (
       <div className="flex items-start justify-end">
-        <div className="max-w-[75%] rounded-2xl bg-muted px-4 py-2.5 text-sm leading-relaxed text-foreground">
+        <div className="max-w-[75%] rounded-2xl bg-white dark:bg-muted px-4 py-2.5 text-sm leading-relaxed text-foreground">
           <p className="whitespace-pre-wrap">
             {message.command && (
               <span className="mr-1.5 inline-flex items-center rounded-md bg-foreground/10 px-1.5 py-0.5 text-xs font-medium">
@@ -30,6 +31,8 @@ export function MessageBubble({ message, onOpenReqDraft }: MessageBubbleProps) {
 
   const reqDraft = message.metadata?.type === "req_draft" ? message.metadata : null;
   const schedule = message.metadata?.type === "schedule" ? message.metadata : null;
+  const emailDraft =
+    message.metadata?.type === "email_draft" ? message.metadata : null;
 
   return (
     <div>
@@ -55,6 +58,7 @@ export function MessageBubble({ message, onOpenReqDraft }: MessageBubbleProps) {
       {schedule && (
         <ScheduleCard date={schedule.date} slots={schedule.slots} />
       )}
+      {emailDraft && <EmailDraftCard draft={emailDraft} />}
     </div>
   );
 }

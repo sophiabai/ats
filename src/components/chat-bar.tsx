@@ -24,6 +24,10 @@ import { useChatStore } from "@/features/chat/stores/chat-store"
 import { useParseRequisition } from "@/features/requisitions/api/use-parse-requisition"
 import { CreateRequisitionDialog } from "@/features/requisitions/components/create-requisition-dialog"
 import type { FormState } from "@/features/requisitions/components/create-requisition-dialog"
+import {
+  EMAIL_INTENT_RE,
+  useEmailIntent,
+} from "@/features/chat/hooks/use-email-intent"
 import type { ChatMessage, ReqDraftFormData } from "@/types"
 import { useGlobalSearch } from "@/hooks/use-global-search"
 import { useChatBarStore } from "@/stores/chat-bar-store"
@@ -83,6 +87,7 @@ export function ChatBar() {
   const [activeCommand, setActiveCommand] = useState<string | null>(null)
   const [reqDialogOpen, setReqDialogOpen] = useState(false)
   const [reqInitialData, setReqInitialData] = useState<Partial<FormState> | undefined>()
+  const { handleEmailIntent, isPending: isDraftingEmail } = useEmailIntent()
 
   const dropdownItems = useMemo(() => {
     const items: DropdownItem[] = []
@@ -213,7 +218,7 @@ export function ChatBar() {
   }
 
   function handleSend(content: string) {
-    if (chat.isPending || parseReq.isPending) return
+    if (chat.isPending || parseReq.isPending || isDraftingEmail) return
 
     // Active command chip flow (e.g. "/create req" chip is shown)
     if (activeCommand === "Create req") {
@@ -265,6 +270,12 @@ export function ChatBar() {
     const createMatch = CREATE_REQ_RE.test(trimmed)
     if (createMatch) {
       setActiveCommand("Create req")
+      return
+    }
+
+    if (EMAIL_INTENT_RE.test(trimmed)) {
+      setValue("")
+      void handleEmailIntent(trimmed)
       return
     }
 
@@ -334,7 +345,7 @@ export function ChatBar() {
         value={value}
         onChange={setValue}
         onSend={handleSend}
-        disabled={chat.isPending || parseReq.isPending}
+        disabled={chat.isPending || parseReq.isPending || isDraftingEmail}
         inputRef={inputRef}
         onKeyDown={handleInputKeyDown}
         activeCommand={activeCommand}
@@ -449,7 +460,9 @@ export function ChatBar() {
                         onOpenReqDraft={openReqDialog}
                       />
                     ))}
-                    {(chat.isPending || parseReq.isPending) && <MessageSkeleton />}
+                    {(chat.isPending || parseReq.isPending || isDraftingEmail) && (
+                      <MessageSkeleton />
+                    )}
                     <div ref={bottomRef} />
                   </div>
                 )}
@@ -470,6 +483,7 @@ export function ChatBar() {
         navigate(`/requisitions/${id}`)
       }}
     />
+
   </>
   )
 }

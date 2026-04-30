@@ -5,10 +5,19 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronRight,
+  Copy,
   MoreHorizontal,
+  Pencil,
   XCircle,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Tooltip,
   TooltipContent,
@@ -81,18 +90,37 @@ export function StageIcon({ status }: { status: StageStatus }) {
   );
 }
 
-export function InterviewTimeline({ interviews }: { interviews: ReqInterview[] }) {
+export function InterviewTimeline({
+  interviews,
+  scheduledByTitle,
+}: {
+  interviews: ReqInterview[];
+  scheduledByTitle?: Record<string, Date>;
+}) {
   return (
-    <div className="pt-1">
+    <div className="pt-3">
       {interviews.map((iv, idx) => (
         <InterviewRow
           key={iv.id}
           interview={iv}
           isLast={idx === interviews.length - 1}
+          scheduledAt={scheduledByTitle?.[iv.title]}
         />
       ))}
     </div>
   );
+}
+
+function formatScheduledTime(date: Date) {
+  const month = date.toLocaleString("en-US", { month: "short" });
+  const day = date.getDate();
+  const year = date.getFullYear();
+  let hour = date.getHours();
+  const minute = date.getMinutes();
+  const period = hour >= 12 ? "PM" : "AM";
+  hour = hour % 12 || 12;
+  const minuteStr = minute.toString().padStart(2, "0");
+  return `${month} ${day}, ${year} ${hour}:${minuteStr} ${period} PST`;
 }
 
 const TECHNICAL_INTERVIEW_TYPES = new Set(["technical", "pair_programming"]);
@@ -107,9 +135,11 @@ function feedbackFormLabel(title: string) {
 function InterviewRow({
   interview,
   isLast,
+  scheduledAt,
 }: {
   interview: ReqInterview;
   isLast: boolean;
+  scheduledAt?: Date;
 }) {
   const [expanded, setExpanded] = useState(false);
   const interviewers = (interview.interviewer_name ?? "")
@@ -127,35 +157,41 @@ function InterviewRow({
         </div>
         {!isLast && <div className="w-px flex-1 bg-border" />}
       </div>
-      <div className={cn("min-w-0 flex-1", !isLast && "pb-3")}>
+      <div className={cn("min-w-0 flex-1", !isLast && "pb-5")}>
         <button
           type="button"
           onClick={() => setExpanded((prev) => !prev)}
-          className="flex items-center gap-1.5 text-left focus-visible:outline-none"
+          className="flex items-center gap-1.5 text-left hover:text-muted-foreground focus-visible:outline-none"
         >
-          <span className="text-sm leading-5 font-medium text-foreground">
+          <span className="text-sm leading-5 font-medium">
             {interview.title} ({interview.duration_minutes} min)
           </span>
           {expanded ? (
-            <ChevronDown className="size-3 text-muted-foreground" />
+            <ChevronDown className="size-3.5 stroke-[2.5] text-muted-foreground" />
           ) : (
-            <ChevronRight className="size-3 text-muted-foreground" />
+            <ChevronRight className="size-3.5 stroke-[2.5] text-muted-foreground" />
           )}
         </button>
-        {interviewers.length > 0 ? (
-          interviewers.map((name) => (
-            <p
-              key={name}
-              className="text-sm leading-5 text-muted-foreground"
-            >
-              {name}
-            </p>
-          ))
-        ) : (
+        {scheduledAt && (
           <p className="text-sm leading-5 text-muted-foreground">
-            No interviewers
+            {formatScheduledTime(scheduledAt)}
           </p>
         )}
+        {!expanded &&
+          (interviewers.length > 0 ? (
+            interviewers.map((name) => (
+              <p
+                key={name}
+                className="text-sm leading-5 text-muted-foreground"
+              >
+                {name}
+              </p>
+            ))
+          ) : (
+            <p className="text-sm leading-5 text-muted-foreground">
+              No interviewers
+            </p>
+          ))}
         <div
           className={cn(
             "stage-collapse grid",
@@ -163,39 +199,118 @@ function InterviewRow({
           )}
         >
           <div className="min-h-0 overflow-hidden">
-            <div className="mt-3 space-y-3">
-              <div>
-                <p className="text-sm leading-5 font-medium text-foreground">
-                  Notes to interviewers
-                </p>
+            <div className="mt-3 space-y-4">
+              <div className="group">
+                <div className="flex items-center gap-1">
+                  <p className="text-sm leading-5 font-medium text-foreground">
+                    Interviewers
+                  </p>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-6 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+                  >
+                    <Pencil className="size-3" />
+                  </Button>
+                </div>
+                {interviewers.length > 0 ? (
+                  interviewers.map((name) => (
+                    <p
+                      key={name}
+                      className="text-sm leading-5 text-muted-foreground"
+                    >
+                      {name}
+                    </p>
+                  ))
+                ) : (
+                  <p className="text-sm leading-5 text-muted-foreground">
+                    No interviewers
+                  </p>
+                )}
+              </div>
+              <div className="group">
+                <div className="flex items-center gap-1">
+                  <p className="text-sm leading-5 font-medium text-foreground">
+                    Notes to interviewers
+                  </p>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-6 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+                  >
+                    <Pencil className="size-3" />
+                  </Button>
+                </div>
                 <p className="text-sm leading-5 whitespace-pre-line text-muted-foreground">
                   {notes}
                 </p>
               </div>
-              <div>
+              <div className="group">
                 <p className="text-sm leading-5 font-medium text-foreground">
                   Feedback form
                 </p>
-                <a
-                  href="#"
-                  className="text-sm leading-5 text-blue-600 underline underline-offset-2 hover:text-blue-700 dark:text-blue-400"
-                >
-                  {feedbackFormLabel(interview.title)}
-                </a>
-              </div>
-              {isTechnical && (
-                <div>
-                  <p className="text-sm leading-5 font-medium text-foreground">
-                    CodePair link
-                  </p>
+                <div className="flex items-center gap-1">
                   <a
                     href="#"
                     className="text-sm leading-5 text-blue-600 underline underline-offset-2 hover:text-blue-700 dark:text-blue-400"
                   >
-                    CodePair
+                    {feedbackFormLabel(interview.title)}
                   </a>
+                  <div className="flex items-center">
+                    <Button variant="ghost" size="icon" className="size-7">
+                      <Copy className="size-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-7 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+                    >
+                      <Pencil className="size-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+              {isTechnical && (
+                <div className="group">
+                  <p className="text-sm leading-5 font-medium text-foreground">
+                    CodePair link
+                  </p>
+                  <div className="flex items-center gap-1">
+                    <a
+                      href="#"
+                      className="text-sm leading-5 text-blue-600 underline underline-offset-2 hover:text-blue-700 dark:text-blue-400"
+                    >
+                      CodePair
+                    </a>
+                    <div className="flex items-center">
+                      <Button variant="ghost" size="icon" className="size-7">
+                        <Copy className="size-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-7 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+                      >
+                        <Pencil className="size-3.5" />
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               )}
+            </div>
+            <div className="mt-3 flex items-center border-t border-border/60 pt-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm">
+                    More actions
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem>Add note</DropdownMenuItem>
+                  <DropdownMenuItem>Reschedule interview</DropdownMenuItem>
+                  <DropdownMenuItem>Cancel interview</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>

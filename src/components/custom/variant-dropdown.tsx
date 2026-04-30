@@ -27,10 +27,10 @@ export function VariantDropdown() {
         <Button
           variant="ghost"
           size="xs"
-          className="text-muted-foreground hover:text-foreground"
+          className="font-normal text-muted-foreground/60 hover:text-muted-foreground"
         >
           {current?.label ?? "Layout"}
-          <ChevronDown />
+          <ChevronDown className="opacity-60" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-36">

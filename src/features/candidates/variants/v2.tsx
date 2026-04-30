@@ -1,14 +1,18 @@
-import { useCallback, useMemo, useState } from "react";
-import { useParams, useSearchParams } from "react-router";
-import { format } from "date-fns";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router";
+import { format, formatDistanceToNow, isToday } from "date-fns";
+import { toast } from "sonner";
 import {
   ArrowRight,
   Briefcase,
   Calendar,
+  CalendarCheck,
   Check,
   CheckCircle2,
   ChevronDown,
+  ChevronRight,
   CornerUpLeft,
+  Download,
   Ellipsis,
   FileText,
   Forward,
@@ -19,12 +23,14 @@ import {
   MapPin,
   MessageSquare,
   Paperclip,
+  Pencil,
   Phone,
   Reply,
   ReplyAll,
   Search,
   Send,
   SendHorizontal,
+  Trash2,
   UserCheck,
   Workflow,
   X,
@@ -68,21 +74,36 @@ import {
   MILESTONE_ORDER,
   StageIcon,
 } from "@/features/candidates/components/application-tab-content";
-import { EmailComposer } from "@/features/candidates/components/email-composer";
+import { CandidateFormDialog } from "@/features/candidates/components/candidate-form-dialog";
+import {
+  EmailComposer,
+  EMAIL_TEMPLATE_LABELS,
+  renderEmailTemplatePlain,
+  type EmailContext,
+  type EmailTemplateKey,
+} from "@/features/candidates/components/email-composer";
+import { EmailDialog } from "@/features/candidates/components/email-dialog";
+import { CandidateSelfScheduleDialog } from "@/features/candidates/components/candidate-self-schedule-dialog";
 import { RequestAvailabilityDialog } from "@/features/candidates/components/request-availability-dialog";
 import { ScheduleInterviewDialog } from "@/features/candidates/components/schedule-interview-dialog";
 import { SendSplitButton } from "@/features/candidates/components/send-button";
+import { useCandidateActivities } from "@/features/candidates/api/use-candidate-activities";
+import { useCreateActivity, type CreateActivityInput } from "@/features/candidates/api/use-create-activity";
+import { useDeleteCandidate } from "@/features/candidates/api/use-candidate-mutations";
 import { useSetPageTitle } from "@/stores/page-title-store";
 import type { Milestone } from "@/types/database";
 
 type RaSentEvent = {
   id: string;
+  kind?: "request_availability" | "email";
   candidateName: string;
   recipientEmail: string;
   reqTitle: string;
   companyName: string;
   senderName: string;
   sentAt: Date;
+  templateKey?: EmailTemplateKey;
+  emailContext?: EmailContext;
 };
 
 function ProfileSkeleton() {
@@ -100,8 +121,14 @@ function ProfileSkeleton() {
 export function CandidateDetailV2() {
   const { candidateId } = useParams<{ candidateId: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const preselectedAppId = searchParams.get("app");
   const tabParam = searchParams.get("tab");
+
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const deleteCandidate = useDeleteCandidate();
+  const createActivity = useCreateActivity();
 
   const {
     data: candidate,
@@ -115,7 +142,25 @@ export function CandidateDetailV2() {
 
   const VALID_TABS = ["profile", "applications", "documents", "messages", "activities"];
   const apps = candidate?.applications ?? [];
+  const candidateFullName = candidate ? `${candidate.first_name} ${candidate.last_name}` : "";
   const [raSentEvents, setRaSentEvents] = useState<RaSentEvent[]>([]);
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (candidateFullName === "Jane Warren" && !seededRef.current) {
+      seededRef.current = true;
+      setRaSentEvents([
+        {
+          id: "seed-ra-jane-warren",
+          candidateName: "Jane Warren",
+          recipientEmail: "jane.w@email.com",
+          reqTitle: "1000 · Senior Frontend Engineer",
+          companyName: "ACME AI",
+          senderName: "Anne Montgomery",
+          sentAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+        },
+      ]);
+    }
+  }, [candidateFullName]);
 
   const tabsValue = VALID_TABS.includes(tabParam ?? "")
     ? tabParam!
@@ -154,10 +199,30 @@ export function CandidateDetailV2() {
     );
   }
 
+  const resolvedCandidateId = candidate.id;
+  const handleDeleteCandidate = () => {
+    if (
+      !window.confirm(
+        `Delete ${candidateFullName}? This cannot be undone.`,
+      )
+    ) {
+      return;
+    }
+    deleteCandidate.mutate(resolvedCandidateId, {
+      onSuccess: () => {
+        toast.success("Candidate deleted");
+        navigate("/candidates");
+      },
+      onError: (err) => {
+        toast.error(`Failed to delete: ${err.message}`);
+      },
+    });
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <div className="min-w-0">
+      <div className="flex items-start gap-3">
+        <div className="min-w-0 flex-1">
           <h1 className="text-2xl font-semibold ">
             {candidate.first_name} {candidate.last_name}
           </h1>
@@ -207,6 +272,48 @@ export function CandidateDetailV2() {
             </a>
           </div>
         </div>
+        <div className="flex shrink-0 items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-8"
+            aria-label="Email candidate"
+            onClick={() => setEmailDialogOpen(true)}
+          >
+            <Mail className="size-4" />
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-8"
+                aria-label="More actions"
+              >
+                <Ellipsis className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => setEditDialogOpen(true)}>
+                <Pencil />
+                Edit candidate
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => toast.success("PDF downloaded")}
+              >
+                <Download />
+                Download PDF
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                variant="destructive"
+                onSelect={handleDeleteCandidate}
+              >
+                <Trash2 />
+                Delete candidate
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
 
@@ -228,7 +335,9 @@ export function CandidateDetailV2() {
             apps={apps}
             preselectedAppId={preselectedAppId}
             candidateName={`${candidate.first_name} ${candidate.last_name}`}
+            candidateId={candidateId!}
             onRaSent={(evt) => setRaSentEvents((prev) => [evt, ...prev])}
+            onCreateActivity={(input) => createActivity.mutate(input)}
           />
         </TabsContent>
 
@@ -245,9 +354,45 @@ export function CandidateDetailV2() {
         </TabsContent>
 
         <TabsContent value="activities" className="mt-4">
-          <ActivitiesTabContent apps={apps} raSentEvents={raSentEvents} />
+          <ActivitiesTabContent
+            apps={apps}
+            raSentEvents={raSentEvents}
+            candidateId={candidateId!}
+            onCreateActivity={(input) => createActivity.mutate(input)}
+          />
         </TabsContent>
       </Tabs>
+
+      <EmailDialog
+        open={emailDialogOpen}
+        onOpenChange={setEmailDialogOpen}
+        candidateName={candidateFullName}
+        candidateEmail={candidate.email}
+        companyName="Your company"
+        senderName="You"
+        jobTitle={apps[0]?.requisitions?.title ?? ""}
+        onSent={(payload) => {
+          const evt: RaSentEvent = {
+            id: `email-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+            kind: "email",
+            candidateName: payload.candidateName,
+            recipientEmail: payload.candidateEmail,
+            reqTitle: payload.context.jobTitle,
+            companyName: payload.context.companyName,
+            senderName: payload.context.senderName,
+            sentAt: new Date(),
+            templateKey: payload.templateKey,
+            emailContext: payload.context,
+          };
+          setRaSentEvents((prev) => [evt, ...prev]);
+        }}
+      />
+
+      <CandidateFormDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        candidate={candidate}
+      />
     </div>
   );
 }
@@ -381,11 +526,25 @@ const STATUS_LABEL: Record<string, string> = {
   withdrawn: "Withdrawn",
 };
 
-function ApplicationDetailPanel({ app, candidateName, onAvailabilitySent }: { app: ApplicationDetail; candidateName: string; onAvailabilitySent: () => void }) {
+const MONTH_INDEX: Record<string, number> = {
+  January: 0, February: 1, March: 2, April: 3, May: 4, June: 5,
+  July: 6, August: 7, September: 8, October: 9, November: 10, December: 11,
+};
+
+function parseScheduleDate(input: string): Date {
+  const match = input.match(/\w+,\s+(\w+)\s+(\d+),\s+(\d+)/);
+  if (!match) return new Date(input);
+  const [, monthName, day, year] = match;
+  const monthIdx = MONTH_INDEX[monthName] ?? 0;
+  return new Date(parseInt(year), monthIdx, parseInt(day));
+}
+
+function ApplicationDetailPanel({ app, candidateName, onAvailabilitySent, schedulingStatus, onScheduled }: { app: ApplicationDetail; candidateName: string; onAvailabilitySent: () => void; schedulingStatus: SchedulingStatus; onScheduled?: () => void }) {
   const [subTab, setSubTab] = useState("interviews");
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [requestAvailOpen, setRequestAvailOpen] = useState(false);
-  const [pendingAvailability, setPendingAvailability] = useState(false);
+  const [selfScheduleOpen, setSelfScheduleOpen] = useState(false);
+  const [scheduledByTitle, setScheduledByTitle] = useState<Record<string, Date>>({});
   const allStages = app.requisitions?.req_stages ?? [];
   const reqTitle = formatReqTitle(app.requisitions.req_number, app.requisitions.title);
 
@@ -427,7 +586,7 @@ function ApplicationDetailPanel({ app, candidateName, onAvailabilitySent }: { ap
 
         <Card className={cn("flex min-h-0 flex-1 flex-col overflow-hidden", subTab === "home" && "rounded-tl-none")}>
           <TabsContent value="interviews" className="mt-0 flex-1 overflow-y-auto p-4">
-            <div className="space-y-0.5">
+            <div className="space-y-4">
               {MILESTONE_ORDER.map((ms, msIdx) => (
                 <PipelineMilestone
                   key={ms}
@@ -440,7 +599,9 @@ function ApplicationDetailPanel({ app, candidateName, onAvailabilitySent }: { ap
                   onSelectStage={setSelectedStageId}
                   onSchedule={() => setScheduleOpen(true)}
                   onRequestAvailability={() => setRequestAvailOpen(true)}
-                  pendingAvailability={pendingAvailability}
+                  onSelfSchedule={() => setSelfScheduleOpen(true)}
+                  schedulingStatus={schedulingStatus}
+                  scheduledByTitle={scheduledByTitle}
                 />
               ))}
             </div>
@@ -464,6 +625,19 @@ function ApplicationDetailPanel({ app, candidateName, onAvailabilitySent }: { ap
         onOpenChange={setScheduleOpen}
         candidateName={candidateName}
         reqTitle={reqTitle}
+        onScheduled={(payload) => {
+          const base = parseScheduleDate(payload.date);
+          const next: Record<string, Date> = {};
+          for (const iv of payload.interviews) {
+            const hours = Math.floor(iv.startHour);
+            const minutes = Math.round((iv.startHour - hours) * 60);
+            const d = new Date(base);
+            d.setHours(hours, minutes, 0, 0);
+            next[iv.title] = d;
+          }
+          setScheduledByTitle((prev) => ({ ...prev, ...next }));
+          onScheduled?.();
+        }}
       />
 
       <RequestAvailabilityDialog
@@ -474,10 +648,15 @@ function ApplicationDetailPanel({ app, candidateName, onAvailabilitySent }: { ap
         reqTitle={reqTitle}
         companyName="ACME AI"
         senderName="Anne Montgomery"
-        onSent={() => {
-          setPendingAvailability(true);
-          onAvailabilitySent();
-        }}
+        onSent={onAvailabilitySent}
+      />
+
+      <CandidateSelfScheduleDialog
+        open={selfScheduleOpen}
+        onOpenChange={setSelfScheduleOpen}
+        candidateName={candidateName}
+        reqTitle={reqTitle}
+        onSent={onAvailabilitySent}
       />
     </div>
   );
@@ -493,7 +672,9 @@ function PipelineMilestone({
   onSelectStage,
   onSchedule,
   onRequestAvailability,
-  pendingAvailability,
+  onSelfSchedule,
+  schedulingStatus: schStatus,
+  scheduledByTitle,
 }: {
   milestone: Milestone;
   index: number;
@@ -504,10 +685,13 @@ function PipelineMilestone({
   onSelectStage: (id: string | null) => void;
   onSchedule: () => void;
   onRequestAvailability: () => void;
-  pendingAvailability: boolean;
+  onSelfSchedule: () => void;
+  schedulingStatus: SchedulingStatus;
+  scheduledByTitle?: Record<string, Date>;
 }) {
+  const [availExpanded, setAvailExpanded] = useState(false);
   return (
-    <div className="space-y-0.5">
+    <div className="space-y-1">
       <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground/70">
         Milestone {index + 1}: {MILESTONE_LABELS[milestone]}
       </div>
@@ -564,86 +748,164 @@ function PipelineMilestone({
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onSelect={onSchedule}>Schedule</DropdownMenuItem>
                         <DropdownMenuItem onSelect={onRequestAvailability}>Request availability</DropdownMenuItem>
-                        <DropdownMenuItem>Candidate self-schedule</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={onSelfSchedule}>Candidate self-schedule</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   )}
                 </div>
-                {isCurrent && pendingAvailability && (
-                  <div className="flex items-start gap-2 px-2 py-2">
-                    <div className="flex shrink-0 items-center py-2">
-                      <div className="flex size-5 items-center justify-center rounded bg-amber-500/10">
-                        <Mail className="size-4 text-amber-600 dark:text-amber-400" />
+                <div className="px-2">
+                  {isCurrent && schStatus === "pending_availability" && (
+                    <div className="flex items-start gap-2 py-2">
+                      <div className="flex shrink-0 items-center py-2">
+                        <div className="flex size-5 items-center justify-center rounded bg-amber-500/10">
+                          <Mail className="size-4 text-amber-600 dark:text-amber-400" />
+                        </div>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-sm font-medium text-amber-600 dark:text-amber-400">
+                            Pending candidate availability
+                          </span>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="size-7 text-amber-600 dark:text-amber-400"
+                              >
+                                <Ellipsis className="size-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start">
+                              <DropdownMenuItem>
+                                <Link2 className="mr-2 size-4" />
+                                Copy availability link
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <Send className="mr-2 size-4" />
+                                Resend
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                        <p className="text-sm text-amber-600/70 dark:text-amber-400/70">
+                          Sent on {format(new Date(), "MMMM d, yyyy")}
+                        </p>
                       </div>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-sm font-medium text-amber-600 dark:text-amber-400">
-                          Pending candidate availability
-                        </span>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
+                  )}
+                  {isCurrent && schStatus === "availability_received" && (
+                    <div className="py-2">
+                      <div className="flex items-start gap-2">
+                        <div className="flex shrink-0 items-center py-2">
+                          <div className="flex size-5 items-center justify-center rounded bg-emerald-500/10">
+                            <CalendarCheck className="size-4 text-emerald-600 dark:text-emerald-400" />
+                          </div>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              className="flex items-center gap-1 text-sm font-medium text-emerald-600 hover:text-emerald-500 dark:text-emerald-400 dark:hover:text-emerald-300"
+                              onClick={() => setAvailExpanded(!availExpanded)}
+                            >
+                              Availability received
+                              {availExpanded ? (
+                                <ChevronDown className="size-3.5 stroke-[2.5]" />
+                              ) : (
+                                <ChevronRight className="size-3.5 stroke-[2.5]" />
+                              )}
+                            </button>
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="size-5 text-amber-600 dark:text-amber-400"
+                              className="size-7 text-muted-foreground"
+                              title="Copy availabilities"
                             >
-                              <Ellipsis className="size-3" />
+                              <Calendar className="size-4" />
                             </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start">
-                            <DropdownMenuItem>
-                              <Link2 className="mr-2 size-4" />
-                              Copy availability link
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Send className="mr-2 size-4" />
-                              Resend
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-7 text-muted-foreground"
+                              title="Request new availability"
+                            >
+                              <Mail className="size-4" />
+                            </Button>
+                          </div>
+                          <p className="text-sm text-emerald-600/70 dark:text-emerald-400/70">
+                            Received on {format(new Date(), "MMMM d, yyyy")}
+                          </p>
+                        </div>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        Sent on {format(new Date(), "MMMM d, yyyy")}
-                      </p>
+                      <div
+                        className={cn(
+                          "stage-collapse grid",
+                          availExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+                        )}
+                      >
+                        <div className="min-h-0 overflow-hidden">
+                          <div className="mt-2 ml-7 space-y-1.5">
+                            {[
+                              { day: "Mon, May 5", slots: ["9:00 AM – 12:30 PM"] },
+                              { day: "Tue, May 6", slots: ["10:00 AM – 1:30 PM", "2:00 PM – 5:30 PM"] },
+                              { day: "Wed, May 7", slots: ["9:00 AM – 12:30 PM"] },
+                              { day: "Thu, May 8", slots: ["1:00 PM – 4:30 PM"] },
+                            ].map((d) => (
+                              <div key={d.day} className="flex gap-3 text-sm">
+                                <span className="w-24 shrink-0 font-medium text-foreground">{d.day}</span>
+                                <div className="flex flex-col">
+                                  {d.slots.map((s) => (
+                                    <span key={s} className="text-muted-foreground">{s}</span>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                )}
-                <div
-                  className={cn(
-                    "stage-collapse grid",
-                    isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
                   )}
-                >
-                  <div className="min-h-0 overflow-hidden">
-                    {stage.req_interviews.length > 0 && (
-                      <div className="pb-2 pl-2 pr-2">
-                        <InterviewTimeline interviews={stage.req_interviews} />
-                      </div>
+                  <div
+                    className={cn(
+                      "stage-collapse grid",
+                      isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
                     )}
-                    <div className="flex items-center gap-2 border-t border-border/60 px-2 py-2">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <Ellipsis className="size-3.5" />
-                            More actions
+                  >
+                    <div className="min-h-0 overflow-hidden">
+                      {stage.req_interviews.length > 0 && (
+                        <div className="pb-2">
+                          <InterviewTimeline
+                            interviews={stage.req_interviews}
+                            scheduledByTitle={scheduledByTitle}
+                          />
+                        </div>
+                      )}
+                      {status !== "completed" && (
+                        <div className="flex items-center gap-2 border-t border-border/60 py-2">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                More actions
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start">
+                              <DropdownMenuItem>Add note</DropdownMenuItem>
+                              <DropdownMenuItem>Add feedback</DropdownMenuItem>
+                              <DropdownMenuItem>Reassign stage</DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                          <div className="flex-1" />
+                          <Button variant="outline" size="sm">
+                            <X className="size-3.5" />
+                            Reject
                           </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start">
-                          <DropdownMenuItem>Add note</DropdownMenuItem>
-                          <DropdownMenuItem>Add feedback</DropdownMenuItem>
-                          <DropdownMenuItem>Reassign stage</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                      <div className="flex-1" />
-                      <Button variant="outline" size="sm">
-                        <X className="size-3.5" />
-                        Reject
-                      </Button>
-                      <Button variant="success" size="sm">
-                        Move forward
-                        <ArrowRight className="size-3.5" />
-                      </Button>
+                          <Button variant="success" size="sm">
+                            Move forward
+                            <ArrowRight className="size-3.5" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -757,12 +1019,21 @@ function CommentsCard() {
   );
 }
 
+type SchedulingStatus = "to_be_scheduled" | "pending_availability" | "availability_received";
+
 const STATUS_BADGE_CLASSES: Record<string, string> = {
   active: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
   rejected: "bg-red-500/10 text-red-700 dark:text-red-400",
   hired: "bg-blue-500/10 text-blue-700 dark:text-blue-400",
   to_be_scheduled: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
   pending_availability: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
+  availability_received: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+};
+
+const SCHEDULING_STATUS_LABELS: Record<SchedulingStatus, string> = {
+  to_be_scheduled: "To be scheduled",
+  pending_availability: "Pending candidate availability",
+  availability_received: "Availability received",
 };
 
 function formatStatusLabel(status: string, date: string) {
@@ -776,12 +1047,16 @@ function JobApplicationsTabContent({
   apps,
   preselectedAppId,
   candidateName,
+  candidateId,
   onRaSent,
+  onCreateActivity,
 }: {
   apps: ApplicationDetail[];
   preselectedAppId: string | null;
   candidateName: string;
+  candidateId: string;
   onRaSent: (evt: RaSentEvent) => void;
+  onCreateActivity: (input: CreateActivityInput) => void;
 }) {
   const defaultAppId =
     preselectedAppId && apps.some((a) => a.id === preselectedAppId)
@@ -793,7 +1068,14 @@ function JobApplicationsTabContent({
   const selectedApp =
     apps.find((a) => a.id === selectedAppId) ?? apps[0] ?? null;
 
-  const [schedulingStatus, setSchedulingStatus] = useState<Record<string, "to_be_scheduled" | "pending_availability">>({});
+  const [schedulingStatus, setSchedulingStatus] = useState<Record<string, SchedulingStatus>>(() => {
+    if (candidateName === "Jane Warren") {
+      const initial: Record<string, SchedulingStatus> = {};
+      for (const a of apps) initial[a.id] = "availability_received";
+      return initial;
+    }
+    return {};
+  });
 
   if (apps.length === 0) {
     return (
@@ -821,9 +1103,7 @@ function JobApplicationsTabContent({
                 "bg-muted text-muted-foreground",
             )}
           >
-            {schedulingStatus[selectedApp.id] === "pending_availability"
-              ? "Pending candidate availability"
-              : "To be scheduled"}
+            {SCHEDULING_STATUS_LABELS[schedulingStatus[selectedApp.id] ?? "to_be_scheduled"]}
           </Badge>
         </div>
       )}
@@ -834,6 +1114,7 @@ function JobApplicationsTabContent({
             key={selectedApp.id}
             app={selectedApp}
             candidateName={candidateName}
+            schedulingStatus={schedulingStatus[selectedApp.id] ?? "to_be_scheduled"}
             onAvailabilitySent={() => {
               setSchedulingStatus((prev) => ({
                 ...prev,
@@ -847,6 +1128,14 @@ function JobApplicationsTabContent({
                 companyName: "ACME AI",
                 senderName: "Anne Montgomery",
                 sentAt: new Date(),
+              });
+              onCreateActivity({
+                candidateId,
+                applicationId: selectedApp.id,
+                activityType: "communication",
+                action: "Request availability sent",
+                detail: `To: ${candidateName}`,
+                metadata: { reqTitle: formatReqTitle(selectedApp.requisitions.req_number, selectedApp.requisitions.title) },
               });
             }}
           />
@@ -952,6 +1241,14 @@ type ActivitySeed = {
 
 const ACTIVITY_SEEDS: ActivitySeed[] = [
   {
+    icon: CalendarCheck,
+    action: "Availability received",
+    detail: "Candidate submitted 4 time slots across Mon–Thu next week",
+    time: "6 hours ago",
+    type: "interviews_and_feedbacks",
+    appIndex: 0,
+  },
+  {
     icon: MessageSquare,
     action: "Candidate replied",
     detail: "Expressed interest in the role, asked about team size",
@@ -1017,7 +1314,19 @@ const ACTIVITY_SEEDS: ActivitySeed[] = [
   },
 ];
 
-function ActivitiesTabContent({ apps, raSentEvents }: { apps: ApplicationDetail[]; raSentEvents: RaSentEvent[] }) {
+const ACTIVITY_TYPE_ICON: Record<string, React.ComponentType<{ className?: string }>> = {
+  application_events: FileText,
+  interviews_and_feedbacks: Calendar,
+  communication: Send,
+  data_changes: Search,
+  imported_activity_feed: CheckCircle2,
+  application_moved: ArrowRight,
+  pipeline_plan_updated: Workflow,
+};
+
+function ActivitiesTabContent({ apps, raSentEvents, candidateId, onCreateActivity }: { apps: ApplicationDetail[]; raSentEvents: RaSentEvent[]; candidateId: string; onCreateActivity: (input: CreateActivityInput) => void }) {
+  const { data: dbActivities } = useCandidateActivities(candidateId);
+
   const reqOptions = useMemo(() => {
     const seen = new Set<string>();
     const out: { value: string; label: string }[] = [];
@@ -1039,13 +1348,60 @@ function ActivitiesTabContent({ apps, raSentEvents }: { apps: ApplicationDetail[
     return map;
   }, [reqOptions]);
 
-  const activities = useMemo(() => {
-    if (apps.length === 0) return [];
-    return ACTIVITY_SEEDS.map((seed) => {
-      const app = apps[seed.appIndex % apps.length];
-      return { ...seed, reqId: app.requisitions.id };
-    });
+  // Map application_id to req_id for DB activities
+  const appIdToReqId = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const a of apps) map.set(a.id, a.requisitions.id);
+    return map;
   }, [apps]);
+
+  const activities = useMemo(() => {
+    type UnifiedActivity = {
+      id: string;
+      icon: React.ComponentType<{ className?: string }>;
+      action: string;
+      detail: string;
+      time: string;
+      type: ActivityType;
+      reqId: string;
+    };
+
+    const items: UnifiedActivity[] = [];
+
+    // DB activities first (already sorted by created_at desc from query)
+    if (dbActivities) {
+      for (const row of dbActivities) {
+        const reqId = row.application_id ? (appIdToReqId.get(row.application_id) ?? "") : (apps[0]?.requisitions.id ?? "");
+        items.push({
+          id: row.id,
+          icon: ACTIVITY_TYPE_ICON[row.activity_type] ?? FileText,
+          action: row.action,
+          detail: row.detail ?? "",
+          time: formatDistanceToNow(new Date(row.created_at), { addSuffix: true }),
+          type: row.activity_type as ActivityType,
+          reqId,
+        });
+      }
+    }
+
+    // Demo seed activities appended (kept in their defined order)
+    if (apps.length > 0) {
+      for (const seed of ACTIVITY_SEEDS) {
+        const app = apps[seed.appIndex % apps.length];
+        items.push({
+          id: `seed-${seed.action}-${seed.appIndex}`,
+          icon: seed.icon,
+          action: seed.action,
+          detail: seed.detail,
+          time: seed.time,
+          type: seed.type,
+          reqId: app.requisitions.id,
+        });
+      }
+    }
+
+    return items;
+  }, [apps, dbActivities, appIdToReqId]);
 
   const [selectedTypes, setSelectedTypes] = useState<Set<string>>(
     () => new Set(ACTIVITY_TYPES.map((t) => t.value)),
@@ -1069,6 +1425,7 @@ function ActivitiesTabContent({ apps, raSentEvents }: { apps: ApplicationDetail[
           selected={selectedTypes}
           onSelectedChange={setSelectedTypes}
           searchPlaceholder="Search types"
+          allLabel="All activity types"
         />
         {reqOptions.length > 0 && (
           <MultiSelectFilter
@@ -1077,6 +1434,7 @@ function ActivitiesTabContent({ apps, raSentEvents }: { apps: ApplicationDetail[
             selected={selectedReqs}
             onSelectedChange={setSelectedReqs}
             searchPlaceholder="Search reqs"
+            allLabel="All job requisitions"
           />
         )}
       </div>
@@ -1101,7 +1459,7 @@ function ActivitiesTabContent({ apps, raSentEvents }: { apps: ApplicationDetail[
                 <X className="size-4" />
               </Button>
             </div>
-            <div className="p-4">
+            <div>
               <EmailComposer
                 initialTemplate="availability-default"
                 context={{
@@ -1118,7 +1476,17 @@ function ActivitiesTabContent({ apps, raSentEvents }: { apps: ApplicationDetail[
               />
             </div>
             <div className="flex items-center border-t px-4 py-3">
-              <SendSplitButton onSend={() => setReplyingToId(null)} />
+              <SendSplitButton onSend={() => {
+                onCreateActivity({
+                  candidateId,
+                  applicationId: apps[0]?.id ?? null,
+                  activityType: "communication",
+                  action: "Reply sent",
+                  detail: `To: ${evt.candidateName}`,
+                  metadata: { recipientEmail: evt.recipientEmail },
+                });
+                setReplyingToId(null);
+              }} />
             </div>
           </div>
         );
@@ -1143,7 +1511,7 @@ function ActivitiesTabContent({ apps, raSentEvents }: { apps: ApplicationDetail[
       ) : (
         <div className="space-y-0">
           {filtered.map((activity, i) => (
-            <div key={i} className="flex gap-3 py-3">
+            <div key={activity.id} className="flex gap-3 py-3">
               <div className="relative flex flex-col items-center">
                 <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted">
                   <activity.icon className="size-3.5 text-muted-foreground" />
@@ -1188,7 +1556,20 @@ function EmailActivityItem({
   showConnector?: boolean;
 }) {
   const [hovered, setHovered] = useState(false);
-  const formattedDate = format(event.sentAt, "MM/dd/yyyy h:mm a") + " PST";
+  const formattedDate = isToday(event.sentAt)
+    ? format(event.sentAt, "h:mm a")
+    : format(event.sentAt, "MM/dd/yyyy h:mm a");
+
+  const isEmailKind = event.kind === "email";
+  const title = isEmailKind
+    ? event.templateKey
+      ? EMAIL_TEMPLATE_LABELS[event.templateKey]
+      : "Email"
+    : "Request availability";
+
+  const recipientLabel = event.reqTitle
+    ? `To: ${event.candidateName} · ${event.reqTitle}`
+    : `To: ${event.candidateName}`;
 
   return (
     <div className="flex gap-3 py-3">
@@ -1201,7 +1582,7 @@ function EmailActivityItem({
       <div
         className={cn(
           "min-w-0 flex-1 cursor-pointer rounded-lg pb-1 transition-colors",
-          hovered && "bg-muted",
+          hovered ? "bg-muted" : "bg-card",
         )}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
@@ -1218,70 +1599,87 @@ function EmailActivityItem({
           }}
           className="px-3 pt-1"
         >
-          <div className="flex items-start justify-between gap-2">
-            <div>
-              <p className="text-xs text-muted-foreground">{formattedDate}</p>
-              <p className="text-sm font-semibold">Request availability</p>
-              <p className="text-xs text-muted-foreground">
-                To: {event.candidateName}
-              </p>
-            </div>
-            {hovered && (
-              <div className="flex items-center gap-1">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-sm font-medium">{title}</span>
+            <div className="relative flex shrink-0 items-center">
+              <div className={cn("flex items-center gap-0.5", hovered ? "opacity-100" : "opacity-0")}>
                 <Button
                   variant="ghost"
-                  size="icon"
-                  className="size-7"
+                  size="sm"
+                  className="h-7 gap-1.5 px-2 text-xs text-muted-foreground"
                   onClick={(e) => {
                     e.stopPropagation();
                     onReply();
                   }}
                 >
                   <Reply className="size-3.5" />
+                  Reply
                 </Button>
                 <Button
                   variant="ghost"
-                  size="icon"
-                  className="size-7"
+                  size="sm"
+                  className="h-7 gap-1.5 px-2 text-xs text-muted-foreground"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <ReplyAll className="size-3.5" />
+                  Reply all
                 </Button>
                 <Button
                   variant="ghost"
-                  size="icon"
-                  className="size-7"
+                  size="sm"
+                  className="h-7 gap-1.5 px-2 text-xs text-muted-foreground"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <Forward className="size-3.5" />
+                  Forward
                 </Button>
               </div>
-            )}
+              <span className={cn(
+                "absolute inset-0 flex items-center justify-end text-[11px] text-muted-foreground transition-opacity",
+                hovered ? "opacity-0" : "opacity-100",
+              )}>
+                {formattedDate}
+              </span>
+            </div>
           </div>
+          <p className="text-xs text-muted-foreground">{recipientLabel}</p>
         </div>
 
         {expanded && (
           <div className="px-3 pb-3 pt-2">
-            <div className="space-y-3 text-sm leading-relaxed">
-              <p>Hi {event.candidateName},</p>
-              <p>
-                We&apos;re excited to move forward with your candidacy for the{" "}
-                {event.reqTitle} at {event.companyName}! Please use the link below
-                to share your availability for an interview.
-              </p>
-              <p>Looking forward to speaking with you!</p>
-              <p>
-                <a
-                  href="#"
-                  className="text-primary underline underline-offset-2 hover:text-primary/80"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  Enter your availability here &gt;&gt;&gt;
-                </a>
-              </p>
-              <p>Best,</p>
-              <p>{event.senderName}</p>
-            </div>
+            {isEmailKind && event.templateKey && event.emailContext ? (
+              <div
+                className="space-y-3 text-sm leading-relaxed [&_p]:my-0"
+                onClick={(e) => e.stopPropagation()}
+                dangerouslySetInnerHTML={{
+                  __html: renderEmailTemplatePlain(
+                    event.templateKey,
+                    event.emailContext,
+                  ),
+                }}
+              />
+            ) : (
+              <div className="space-y-3 text-sm leading-relaxed">
+                <p>Hi {event.candidateName},</p>
+                <p>
+                  We&apos;re excited to move forward with your candidacy for the{" "}
+                  {event.reqTitle} at {event.companyName}! Please use the link
+                  below to share your availability for an interview.
+                </p>
+                <p>Looking forward to speaking with you!</p>
+                <p>
+                  <a
+                    href="#"
+                    className="text-primary underline underline-offset-2 hover:text-primary/80"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    Enter your availability here &gt;&gt;&gt;
+                  </a>
+                </p>
+                <p>Best,</p>
+                <p>{event.senderName}</p>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -1295,12 +1693,14 @@ function MultiSelectFilter({
   selected,
   onSelectedChange,
   searchPlaceholder = "Search",
+  allLabel = "All",
 }: {
   label: string;
   options: { value: string; label: string }[];
   selected: Set<string>;
   onSelectedChange: (next: Set<string>) => void;
   searchPlaceholder?: string;
+  allLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -1312,7 +1712,7 @@ function MultiSelectFilter({
 
   const chipLabel = (() => {
     if (count === 0) return "None";
-    if (allSelected) return "All";
+    if (allSelected) return allLabel;
     if (count === 1) {
       const [only] = selected;
       return options.find((o) => o.value === only)?.label ?? "1 selected";
@@ -1351,7 +1751,6 @@ function MultiSelectFilter({
             open && "ring-2 ring-ring",
           )}
         >
-          <Search className="size-3.5 shrink-0 text-muted-foreground" />
           <span className="inline-flex max-w-[180px] items-center gap-1 rounded border bg-muted px-1.5 py-0.5 text-xs text-foreground">
             <span className="truncate">{chipLabel}</span>
             <span

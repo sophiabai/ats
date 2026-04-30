@@ -5,6 +5,7 @@ export type {
   ReqDraftFormData,
   ScheduleMetadata,
   ScheduleSlot,
+  EmailDraftMetadata,
 } from "@/features/chat/types";
 
 export type {

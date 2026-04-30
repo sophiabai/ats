@@ -988,3 +988,29 @@ INSERT INTO criteria_evaluations (req_id, candidate_id, criterion, met, reasonin
   ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000025', 'Ability to distill complex technical concepts into clear narratives', true, 'Excels at making framework concepts accessible through migration guides and tutorials.'),
   ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000025', 'Familiarity with SEO, content analytics, and distribution strategies', false, 'Technical documentation focus; no marketing distribution or SEO experience.'),
   ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000025', 'Experience marketing to software developers', true, 'Writes exclusively for a developer audience at Vercel.');
+
+-- ============================================================
+-- Candidate activities (demo timeline for Jane Warren)
+-- ============================================================
+
+INSERT INTO candidate_activities (candidate_id, application_id, activity_type, action, detail, metadata, created_at)
+SELECT
+  'c0000000-0000-0000-0000-000000000026',
+  a.id,
+  v.activity_type,
+  v.action,
+  v.detail,
+  v.metadata::jsonb,
+  v.created_at::timestamptz
+FROM applications a
+CROSS JOIN (VALUES
+  ('application_events', 'Application received', 'Applied via referral for Senior Frontend Engineer', '{}', '2026-02-14T09:00:00Z'),
+  ('application_events', 'Application reviewed', 'Recommended for phone screen by Applicant review agent', '{}', '2026-02-15T14:30:00Z'),
+  ('data_changes', 'Profile enriched', 'Cross-referenced LinkedIn, GitHub, and internal DB', '{}', '2026-02-16T11:00:00Z'),
+  ('communication', 'Request availability sent', 'To: Jane Warren', '{"reqTitle":"(1000) Senior Frontend Engineer"}', '2026-04-01T13:05:00Z'),
+  ('interviews_and_feedbacks', 'Phone screen scheduled', 'Thursday, Apr 10 at 2:00 PM with Leslie Alexander', '{}', '2026-04-02T10:00:00Z'),
+  ('application_moved', 'Moved to Phone screen stage', 'Advanced from Application review by Anne Montgomery', '{}', '2026-04-02T10:05:00Z'),
+  ('interviews_and_feedbacks', 'Interview scheduled', 'Confirmation sent to Jane Warren', '{"reqTitle":"(1000) Senior Frontend Engineer"}', '2026-04-20T10:00:00Z')
+) AS v(activity_type, action, detail, metadata, created_at)
+WHERE a.candidate_id = 'c0000000-0000-0000-0000-000000000026'
+  AND a.req_id = 'b0000000-0000-0000-0000-000000000001';

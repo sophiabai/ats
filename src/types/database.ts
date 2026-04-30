@@ -56,6 +56,26 @@ export type EmailType =
   | "follow_up"
   | "custom";
 
+export type CandidateActivityType =
+  | "application_events"
+  | "interviews_and_feedbacks"
+  | "communication"
+  | "data_changes"
+  | "imported_activity_feed"
+  | "application_moved"
+  | "pipeline_plan_updated";
+
+export interface CandidateActivity {
+  id: string;
+  created_at: string;
+  candidate_id: string;
+  application_id: string | null;
+  activity_type: CandidateActivityType;
+  action: string;
+  detail: string | null;
+  metadata: Record<string, unknown>;
+}
+
 export interface Candidate {
   id: string;
   created_at: string;

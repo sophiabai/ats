@@ -31,9 +31,17 @@ export interface ScheduleMetadata {
   slots: ScheduleSlot[];
 }
 
+export interface EmailDraftMetadata {
+  type: "email_draft";
+  candidateName: string;
+  candidateEmail: string;
+  jobTitle: string;
+  bodyHtml: string;
+}
+
 export interface ChatMessage {
   role: MessageRole;
   content: string;
   command?: string;
-  metadata?: ReqDraftMetadata | ScheduleMetadata;
+  metadata?: ReqDraftMetadata | ScheduleMetadata | EmailDraftMetadata;
 }

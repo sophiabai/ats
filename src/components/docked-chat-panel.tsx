@@ -13,6 +13,10 @@ import { CreateRequisitionDialog } from "@/features/requisitions/components/crea
 import type { FormState } from "@/features/requisitions/components/create-requisition-dialog"
 import type { ChatMessage, ReqDraftFormData } from "@/types"
 import { useChatBarStore } from "@/stores/chat-bar-store"
+import {
+  EMAIL_INTENT_RE,
+  useEmailIntent,
+} from "@/features/chat/hooks/use-email-intent"
 
 const CREATE_REQ_RE = /^\/?\s*create\s+(?:a\s+)?req(?:uisition)?\s*/i
 const SKIP_PHRASES = /^(empty|skip|blank|i'll fill it in|fill it myself)/i
@@ -23,6 +27,7 @@ export function DockedChatPanel() {
   const { messages, addMessage } = useChatStore()
   const chat = useChat()
   const parseReq = useParseRequisition()
+  const { handleEmailIntent, isPending: isDraftingEmail } = useEmailIntent()
   const navigate = useNavigate()
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -66,7 +71,7 @@ export function DockedChatPanel() {
   }
 
   function handleSend(content: string) {
-    if (chat.isPending || parseReq.isPending) return
+    if (chat.isPending || parseReq.isPending || isDraftingEmail) return
 
     if (activeCommand === "Create req") {
       const trimmed = content.trim()
@@ -114,6 +119,11 @@ export function DockedChatPanel() {
 
     if (CREATE_REQ_RE.test(trimmed)) {
       setActiveCommand("Create req")
+      return
+    }
+
+    if (EMAIL_INTENT_RE.test(trimmed)) {
+      void handleEmailIntent(trimmed)
       return
     }
 
@@ -165,7 +175,9 @@ export function DockedChatPanel() {
                   onOpenReqDraft={openReqDialog}
                 />
               ))}
-              {(chat.isPending || parseReq.isPending) && <MessageSkeleton />}
+              {(chat.isPending || parseReq.isPending || isDraftingEmail) && (
+                <MessageSkeleton />
+              )}
               <div ref={bottomRef} />
             </div>
           )}
@@ -183,7 +195,7 @@ export function DockedChatPanel() {
             value={value}
             onChange={setValue}
             onSend={handleSend}
-            disabled={chat.isPending || parseReq.isPending}
+            disabled={chat.isPending || parseReq.isPending || isDraftingEmail}
             inputRef={inputRef}
             onKeyDown={handleInputKeyDown}
             activeCommand={activeCommand}

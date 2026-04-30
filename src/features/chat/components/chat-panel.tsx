@@ -6,19 +6,35 @@ import { useChat } from "@/features/chat/api/use-chat";
 import { MessageBubble } from "@/features/chat/components/message-bubble";
 import { MessageSkeleton } from "@/features/chat/components/message-skeleton";
 import { ChatInput } from "@/features/chat/components/chat-input";
+import {
+  EMAIL_INTENT_RE,
+  useEmailIntent,
+} from "@/features/chat/hooks/use-email-intent";
 
 export function ChatPanel() {
   const { messages, addMessage, clearMessages } = useChatStore();
   const chat = useChat();
+  const { handleEmailIntent, isPending: isDraftingEmail } = useEmailIntent();
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  const isPending = chat.isPending || isDraftingEmail;
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, chat.isPending]);
+  }, [messages, isPending]);
 
   function handleSend(content: string) {
-    const userMessage = { role: "user" as const, content };
+    if (isPending) return;
+    const trimmed = content.trim();
+    if (!trimmed) return;
+
+    const userMessage = { role: "user" as const, content: trimmed };
     addMessage(userMessage);
+
+    if (EMAIL_INTENT_RE.test(trimmed)) {
+      void handleEmailIntent(trimmed);
+      return;
+    }
 
     const updatedMessages = [...messages, userMessage];
     chat.mutate(updatedMessages, {
@@ -45,7 +61,7 @@ export function ChatPanel() {
       </div>
 
       <ScrollArea className="flex-1 px-4 py-4">
-        {messages.length === 0 && !chat.isPending && (
+        {messages.length === 0 && !isPending && (
           <div className="flex h-full items-center justify-center py-20">
             <p className="text-sm text-muted-foreground">
               Send a message to start a conversation.
@@ -57,7 +73,7 @@ export function ChatPanel() {
           {messages.map((msg, idx) => (
             <MessageBubble key={idx} message={msg} />
           ))}
-          {chat.isPending && <MessageSkeleton />}
+          {isPending && <MessageSkeleton />}
           <div ref={bottomRef} />
         </div>
       </ScrollArea>
@@ -69,7 +85,7 @@ export function ChatPanel() {
       )}
 
       <div className="border-t p-4">
-        <ChatInput onSend={handleSend} disabled={chat.isPending} />
+        <ChatInput onSend={handleSend} disabled={isPending} />
       </div>
     </div>
   );

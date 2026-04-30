@@ -114,6 +114,14 @@ function compactHtml(html: string): string {
 // Templates
 // ---------------------------------------------------------------------------
 
+export const EMAIL_TEMPLATE_LABELS: Record<EmailTemplateKey, string> = {
+  "availability-default": "Request availability default",
+  "availability-followup": "Request availability follow-up",
+  confirmation: "Interview confirmation",
+  reminder: "Interview reminder",
+  rejection: "Candidate rejection",
+};
+
 const TEMPLATES: Record<EmailTemplateKey, EmailTemplate> = {
   "availability-default": {
     label: "Request availability default",
@@ -168,6 +176,60 @@ const TEMPLATES: Record<EmailTemplateKey, EmailTemplate> = {
     `,
   },
 };
+
+// Renders a template as plain HTML with variable chips replaced by their bold
+// text values — suitable for read-only contexts like the activity log.
+export function renderEmailTemplatePlain(
+  key: EmailTemplateKey,
+  context: EmailContext,
+): string {
+  const plainChip = (value: string) =>
+    `<strong>${escapeHtml(value)}</strong>`;
+  const plainLocked = (labelText: string) =>
+    `<p><a href="#" class="text-primary underline underline-offset-2 hover:text-primary/80">${labelText}</a></p>`;
+
+  const renderers: Record<EmailTemplateKey, (ctx: EmailContext) => string> = {
+    "availability-default": (ctx) => `
+      <p>Hi ${plainChip(ctx.candidateName)},</p>
+      <p>We're excited to move forward with your candidacy for the ${plainChip(ctx.jobTitle)} at ${plainChip(ctx.companyName)}! Please use the link below to share your availability for an interview.</p>
+      <p>Looking forward to speaking with you!</p>
+      ${plainLocked("Enter your availability here &gt;&gt;&gt;")}
+      <p>Best,</p>
+      <p>${plainChip(ctx.senderName)}</p>
+    `,
+    "availability-followup": (ctx) => `
+      <p>Hi ${plainChip(ctx.candidateName)},</p>
+      <p>Just following up on our earlier note about scheduling your interview for the ${plainChip(ctx.jobTitle)} role at ${plainChip(ctx.companyName)}. When you have a moment, please share a few times that work for you.</p>
+      ${plainLocked("Enter your availability here &gt;&gt;&gt;")}
+      <p>Thanks,</p>
+      <p>${plainChip(ctx.senderName)}</p>
+    `,
+    confirmation: (ctx) => `
+      <p>Hi ${plainChip(ctx.candidateName)},</p>
+      <p>We're pleased to confirm your interview for the ${plainChip(ctx.jobTitle)} position at ${plainChip(ctx.companyName)}.</p>
+      <p>Please find the details below. If you need to reschedule, reply to this email and we'll find another time.</p>
+      ${plainLocked("Interview details &gt;&gt;&gt;")}
+      <p>Looking forward to meeting you!</p>
+      <p>Best,</p>
+      <p>${plainChip(ctx.senderName)}</p>
+    `,
+    reminder: (ctx) => `
+      <p>Hi ${plainChip(ctx.candidateName)},</p>
+      <p>A quick reminder that your interview for the ${plainChip(ctx.jobTitle)} role at ${plainChip(ctx.companyName)} is coming up soon. Please reach out if you have any questions.</p>
+      <p>Best,</p>
+      <p>${plainChip(ctx.recruiterName)}</p>
+    `,
+    rejection: (ctx) => `
+      <p>Hi ${plainChip(ctx.candidateName)},</p>
+      <p>Thank you so much for taking the time to interview for the ${plainChip(ctx.jobTitle)} role at ${plainChip(ctx.companyName)}. After careful consideration, we've decided to move forward with other candidates for this role.</p>
+      <p>We truly appreciated learning about your experience and wish you the best in your job search.</p>
+      <p>Warm regards,</p>
+      <p>${plainChip(ctx.senderName)}</p>
+    `,
+  };
+
+  return renderers[key](context);
+}
 
 // ---------------------------------------------------------------------------
 // Selection helpers
@@ -281,12 +343,17 @@ function ToolbarIconButton({
 function FormatToolbar({
   onExec,
   onInsertVariable,
+  leading,
+  trailing,
 }: {
   onExec: (cmd: string) => void;
   onInsertVariable: (key: EmailVariableKey) => void;
+  leading?: React.ReactNode;
+  trailing?: React.ReactNode;
 }) {
   return (
     <div className="flex items-center gap-0.5 border-t bg-background px-2 py-1.5">
+      {leading}
       <ToolbarIconButton tooltip="Bold (⌘B)" onClick={() => onExec("bold")}>
         <Bold className="size-4" />
       </ToolbarIconButton>
@@ -354,6 +421,8 @@ function FormatToolbar({
           ))}
         </DropdownMenuContent>
       </DropdownMenu>
+
+      {trailing && <div className="ml-auto flex items-center">{trailing}</div>}
     </div>
   );
 }
@@ -368,26 +437,46 @@ export function EmailComposer({
   recipientName,
   recipientEmail,
   className,
+  footerLeading,
+  footerTrailing,
+  onTemplateChange,
+  customBodyHtml,
 }: {
   initialTemplate: EmailTemplateKey;
   context: EmailContext;
   recipientName: string;
   recipientEmail: string;
   className?: string;
+  footerLeading?: React.ReactNode;
+  footerTrailing?: React.ReactNode;
+  onTemplateChange?: (key: EmailTemplateKey) => void;
+  /** When provided, the initial body uses this HTML instead of the template.
+   * The template dropdown shows "Custom draft" until the user picks a preset. */
+  customBodyHtml?: string;
 }) {
   const [templateKey, setTemplateKey] =
     useState<EmailTemplateKey>(initialTemplate);
+  const [isCustom, setIsCustom] = useState(customBodyHtml != null);
   const [renderKey, setRenderKey] = useState(0);
   const editorRef = useRef<HTMLDivElement>(null);
   const savedRangeRef = useRef<Range | null>(null);
 
-  const initialHtml = compactHtml(TEMPLATES[templateKey].render(context));
+  const initialHtml = compactHtml(
+    isCustom && customBodyHtml
+      ? customBodyHtml
+      : TEMPLATES[templateKey].render(context),
+  );
 
-  const handleTemplateChange = useCallback((key: EmailTemplateKey) => {
-    savedRangeRef.current = null;
-    setTemplateKey(key);
-    setRenderKey((k) => k + 1);
-  }, []);
+  const handleTemplateChange = useCallback(
+    (key: EmailTemplateKey) => {
+      savedRangeRef.current = null;
+      setTemplateKey(key);
+      setIsCustom(false);
+      setRenderKey((k) => k + 1);
+      onTemplateChange?.(key);
+    },
+    [onTemplateChange],
+  );
 
   const saveSelection = useCallback(() => {
     const editor = editorRef.current;
@@ -469,7 +558,7 @@ export function EmailComposer({
               type="button"
               className="flex items-center gap-1 text-sm text-foreground outline-none"
             >
-              Template: {TEMPLATES[templateKey].label}
+              Template: {isCustom ? "Custom draft" : TEMPLATES[templateKey].label}
               <ChevronDown className="size-3.5" />
             </button>
           </DropdownMenuTrigger>
@@ -520,7 +609,12 @@ export function EmailComposer({
       />
 
       {/* Format toolbar */}
-      <FormatToolbar onExec={exec} onInsertVariable={insertVariable} />
+      <FormatToolbar
+        onExec={exec}
+        onInsertVariable={insertVariable}
+        leading={footerLeading}
+        trailing={footerTrailing}
+      />
     </div>
   );
 }

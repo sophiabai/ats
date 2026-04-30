@@ -56,6 +56,7 @@ import {
   MILESTONE_ORDER,
   StageIcon,
 } from "@/features/candidates/components/application-tab-content";
+import { CandidateSelfScheduleDialog } from "@/features/candidates/components/candidate-self-schedule-dialog";
 import { ScheduleInterviewDialog } from "@/features/candidates/components/schedule-interview-dialog";
 import { useSetPageTitle } from "@/stores/page-title-store";
 import type { Milestone } from "@/types/database";
@@ -350,6 +351,7 @@ const STATUS_LABEL: Record<string, string> = {
 function ApplicationDetailPanel({ app, candidateName }: { app: ApplicationDetail; candidateName: string }) {
   const [subTab, setSubTab] = useState("interviews");
   const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [selfScheduleOpen, setSelfScheduleOpen] = useState(false);
   const allStages = app.requisitions?.req_stages ?? [];
   const reqTitle = formatReqTitle(app.requisitions.req_number, app.requisitions.title);
 
@@ -406,6 +408,7 @@ function ApplicationDetailPanel({ app, candidateName }: { app: ApplicationDetail
                   selectedStageId={selectedStageId}
                   onSelectStage={setSelectedStageId}
                   onSchedule={() => setScheduleOpen(true)}
+                  onSelfSchedule={() => setSelfScheduleOpen(true)}
                 />
               ))}
             </div>
@@ -430,6 +433,13 @@ function ApplicationDetailPanel({ app, candidateName }: { app: ApplicationDetail
         candidateName={candidateName}
         reqTitle={reqTitle}
       />
+
+      <CandidateSelfScheduleDialog
+        open={selfScheduleOpen}
+        onOpenChange={setSelfScheduleOpen}
+        candidateName={candidateName}
+        reqTitle={reqTitle}
+      />
     </div>
   );
 }
@@ -443,6 +453,7 @@ function PipelineMilestone({
   selectedStageId,
   onSelectStage,
   onSchedule,
+  onSelfSchedule,
 }: {
   milestone: Milestone;
   index: number;
@@ -452,6 +463,7 @@ function PipelineMilestone({
   selectedStageId: string | null;
   onSelectStage: (id: string | null) => void;
   onSchedule: () => void;
+  onSelfSchedule: () => void;
 }) {
   return (
     <div>
@@ -490,7 +502,7 @@ function PipelineMilestone({
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onSelect={onSchedule}>Schedule</DropdownMenuItem>
                         <DropdownMenuItem>Request availability</DropdownMenuItem>
-                        <DropdownMenuItem>Candidate self-schedule</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={onSelfSchedule}>Candidate self-schedule</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   )}

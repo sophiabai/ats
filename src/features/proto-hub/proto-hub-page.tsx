@@ -29,7 +29,7 @@ const sections: Section[] = [
       {
         title: "1. RA",
         description: "Candidate detail scheduling view",
-        href: "http://192.168.0.245:5173/candidates/c0000000-0000-0000-0000-000000000001",
+        href: "/candidates/c0000000-0000-0000-0000-000000000001",
       },
       {
         title: "2. Candidate provides availability",
@@ -39,7 +39,7 @@ const sections: Section[] = [
       {
         title: "3. Candidate self-scheduling",
         description: "Candidate-facing self-scheduling flow",
-        href: "http://192.168.0.245:5173/candidate-email/schedule-interview-acme-ai",
+        href: "/candidate-email/schedule-interview-acme-ai",
       },
     ],
   },

@@ -12,13 +12,19 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const inputWrapperBaseClass = cn(
-  "flex items-center gap-2 rounded-2xl border px-4 py-4 shadow-2xl",
+  "rounded-2xl border shadow-2xl",
   "focus-within:ring-2 focus-within:ring-ring/50",
 );
 
-const inputWrapperClass = cn(inputWrapperBaseClass, "bg-background");
+const inputWrapperClass = cn(
+  inputWrapperBaseClass,
+  "flex items-center gap-2 px-4 py-4 bg-background",
+);
 
-const inputBarWrapperClass = cn(inputWrapperBaseClass, "bg-card");
+const inputBarWrapperClass = cn(
+  inputWrapperBaseClass,
+  "flex flex-col gap-2 px-3 py-2.5 bg-card",
+);
 
 const textareaClass = cn(
   "flex-1 resize-none bg-transparent py-1.5 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
@@ -221,6 +227,39 @@ export function ChatInput({
   if (variant === "bar") {
     return (
       <div className={inputBarWrapperClass}>
+        <div className="flex shrink-0 items-center gap-0.5">
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            className="text-muted-foreground"
+            type="button"
+          >
+            <Paperclip className="size-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            className="text-muted-foreground"
+            type="button"
+          >
+            <Mic className="size-4" />
+          </Button>
+          {(trimmed || commandText) && (
+            <Button
+              size="icon-xs"
+              className="ml-auto"
+              onClick={() => {
+                onSend(trimmed);
+                if (!isControlled) setInternalValue("");
+                else onChange?.("");
+              }}
+              disabled={disabled}
+              type="button"
+            >
+              <ArrowUp className="size-3.5" />
+            </Button>
+          )}
+        </div>
         <div className="relative min-w-0 flex-1">
           {commandText && (
             <div
@@ -259,39 +298,6 @@ export function ChatInput({
             )}
             style={{ maxHeight: "40vh" }}
           />
-        </div>
-        <div className="flex shrink-0 items-center gap-0.5">
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            className="text-muted-foreground"
-            type="button"
-          >
-            <Paperclip className="size-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            className="text-muted-foreground"
-            type="button"
-          >
-            <Mic className="size-4" />
-          </Button>
-          {(trimmed || commandText) && (
-            <Button
-              size="icon-xs"
-              className="ml-0.5"
-              onClick={() => {
-                onSend(trimmed);
-                if (!isControlled) setInternalValue("");
-                else onChange?.("");
-              }}
-              disabled={disabled}
-              type="button"
-            >
-              <ArrowUp className="size-3.5" />
-            </Button>
-          )}
         </div>
       </div>
     );
