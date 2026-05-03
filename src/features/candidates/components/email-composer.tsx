@@ -354,6 +354,7 @@ function FormatToolbar({
   return (
     <div className="flex items-center gap-0.5 border-t bg-background px-2 py-1.5">
       {leading}
+      {leading && <Separator orientation="vertical" className="mx-1 !h-5" />}
       <ToolbarIconButton tooltip="Bold (⌘B)" onClick={() => onExec("bold")}>
         <Bold className="size-4" />
       </ToolbarIconButton>

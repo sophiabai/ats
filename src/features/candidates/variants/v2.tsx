@@ -11,7 +11,6 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronRight,
-  CornerUpLeft,
   Download,
   Ellipsis,
   FileText,
@@ -57,6 +56,11 @@ import {
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1445,49 +1449,51 @@ function ActivitiesTabContent({ apps, raSentEvents, candidateId, onCreateActivit
         if (!evt) return null;
         return (
           <div className="rounded-2xl border bg-card">
-            <div className="flex items-center justify-between border-b px-4 py-2">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <CornerUpLeft className="size-3.5" />
-                <span>Replying to {evt.candidateName}</span>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-7"
-                onClick={() => setReplyingToId(null)}
-              >
-                <X className="size-4" />
-              </Button>
-            </div>
-            <div>
-              <EmailComposer
-                initialTemplate="availability-default"
-                context={{
-                  candidateName: evt.candidateName,
-                  candidateEmail: evt.recipientEmail,
-                  jobTitle: evt.reqTitle,
-                  companyName: evt.companyName,
-                  senderName: evt.senderName,
-                  recruiterName: evt.senderName,
-                }}
-                recipientName={evt.candidateName}
-                recipientEmail={evt.recipientEmail}
-                className="border-0 rounded-none shadow-none"
-              />
-            </div>
-            <div className="flex items-center border-t px-4 py-3">
-              <SendSplitButton onSend={() => {
-                onCreateActivity({
-                  candidateId,
-                  applicationId: apps[0]?.id ?? null,
-                  activityType: "communication",
-                  action: "Reply sent",
-                  detail: `To: ${evt.candidateName}`,
-                  metadata: { recipientEmail: evt.recipientEmail },
-                });
-                setReplyingToId(null);
-              }} />
-            </div>
+            <EmailComposer
+              initialTemplate="availability-default"
+              context={{
+                candidateName: evt.candidateName,
+                candidateEmail: evt.recipientEmail,
+                jobTitle: evt.reqTitle,
+                companyName: evt.companyName,
+                senderName: evt.senderName,
+                recruiterName: evt.senderName,
+              }}
+              recipientName={evt.candidateName}
+              recipientEmail={evt.recipientEmail}
+              className="border-0 rounded-none shadow-none"
+              footerLeading={
+                <SendSplitButton
+                  size="xs"
+                  onSend={() => {
+                    onCreateActivity({
+                      candidateId,
+                      applicationId: apps[0]?.id ?? null,
+                      activityType: "communication",
+                      action: "Reply sent",
+                      detail: `To: ${evt.candidateName}`,
+                      metadata: { recipientEmail: evt.recipientEmail },
+                    });
+                    setReplyingToId(null);
+                  }}
+                />
+              }
+              footerTrailing={
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-7"
+                      onClick={() => setReplyingToId(null)}
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Discard draft</TooltipContent>
+                </Tooltip>
+              }
+            />
           </div>
         );
       })()}
@@ -1587,62 +1593,57 @@ function EmailActivityItem({
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >
-        <div
-          role="button"
-          tabIndex={0}
-          onClick={onToggle}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              onToggle();
-            }
-          }}
-          className="px-3 pt-1"
-        >
-          <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center justify-between gap-2 px-3 pt-1">
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={onToggle}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onToggle();
+              }
+            }}
+            className="min-w-0 flex-1"
+          >
             <span className="text-sm font-medium">{title}</span>
-            <div className="relative flex shrink-0 items-center">
-              <div className={cn("flex items-center gap-0.5", hovered ? "opacity-100" : "opacity-0")}>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 gap-1.5 px-2 text-xs text-muted-foreground"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onReply();
-                  }}
-                >
-                  <Reply className="size-3.5" />
-                  Reply
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 gap-1.5 px-2 text-xs text-muted-foreground"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <ReplyAll className="size-3.5" />
-                  Reply all
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 gap-1.5 px-2 text-xs text-muted-foreground"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <Forward className="size-3.5" />
-                  Forward
-                </Button>
-              </div>
-              <span className={cn(
-                "absolute inset-0 flex items-center justify-end text-[11px] text-muted-foreground transition-opacity",
-                hovered ? "opacity-0" : "opacity-100",
-              )}>
-                {formattedDate}
-              </span>
-            </div>
+            <p className="text-xs text-muted-foreground">{recipientLabel}</p>
           </div>
-          <p className="text-xs text-muted-foreground">{recipientLabel}</p>
+          <div className="relative flex shrink-0 items-center">
+            <div className={cn("flex items-center gap-0.5", hovered ? "opacity-100" : "pointer-events-none opacity-0")}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 gap-1.5 px-2 text-xs text-muted-foreground"
+                onClick={onReply}
+              >
+                <Reply className="size-3.5" />
+                Reply
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 gap-1.5 px-2 text-xs text-muted-foreground"
+              >
+                <ReplyAll className="size-3.5" />
+                Reply all
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 gap-1.5 px-2 text-xs text-muted-foreground"
+              >
+                <Forward className="size-3.5" />
+                Forward
+              </Button>
+            </div>
+            <span className={cn(
+              "absolute inset-0 flex items-center justify-end text-[11px] text-muted-foreground transition-opacity pointer-events-none",
+              hovered ? "opacity-0" : "opacity-100",
+            )}>
+              {formattedDate}
+            </span>
+          </div>
         </div>
 
         {expanded && (

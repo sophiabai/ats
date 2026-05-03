@@ -1,5 +1,4 @@
 import { useMutation } from "@tanstack/react-query"
-import OpenAI from "openai"
 import type { Node, Edge } from "@xyflow/react"
 import { apiClient } from "@/lib/api-client"
 import { API_ENDPOINTS, DEFAULT_MODEL } from "@/lib/constants"
@@ -49,13 +48,22 @@ Rules:
 Respond with ONLY valid JSON. No other text.`
 
 async function generateViaApi(steps: SopStep[]): Promise<GenerateWorkflowResult> {
-  return apiClient<GenerateWorkflowResult>(API_ENDPOINTS.generateWorkflow, {
-    method: "POST",
-    body: { steps },
-  })
+  const { content } = await apiClient<{ content: string }>(
+    API_ENDPOINTS.aiGenerate,
+    {
+      method: "POST",
+      body: {
+        prompt: `${SYSTEM_PROMPT}\n\nSOP steps:\n${JSON.stringify(steps)}`,
+      },
+    },
+  )
+  const match = content.match(/\{[\s\S]*\}/)
+  if (!match) throw new Error("Failed to parse workflow response")
+  return JSON.parse(match[0]) as GenerateWorkflowResult
 }
 
 async function generateDirect(steps: SopStep[]): Promise<GenerateWorkflowResult> {
+  const { default: OpenAI } = await import("openai")
   const client = new OpenAI({
     apiKey: import.meta.env.VITE_OPENAI_API_KEY,
     dangerouslyAllowBrowser: true,

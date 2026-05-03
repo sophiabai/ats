@@ -1,0 +1,8 @@
+User-agent: *
+Disallow: /api/
+Disallow: /candidate-email
+Disallow: /candidate-availability-acme-ai
+Disallow: /candidate-schedule-acme-ai
+Disallow: /proto-hub
+Disallow: /pipeline-automation
+Disallow: /careers

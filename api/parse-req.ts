@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 
-export const config = { runtime: "edge" };
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 const SYSTEM_PROMPT = `You are a recruiting assistant that parses natural language job requisition descriptions into structured data.
 
@@ -43,7 +43,7 @@ export default async function handler(req: Request) {
   }
 
   try {
-    const { messages, model = "gpt-4o" } = await req.json();
+    const { messages, model = "gpt-4o-mini" } = await req.json();
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return new Response(
@@ -52,7 +52,6 @@ export default async function handler(req: Request) {
       );
     }
 
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const response = await openai.chat.completions.create({
       model,
       messages: [

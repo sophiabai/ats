@@ -1,5 +1,4 @@
 import { useMutation } from "@tanstack/react-query"
-import OpenAI from "openai"
 import { apiClient } from "@/lib/api-client"
 import { API_ENDPOINTS, DEFAULT_MODEL } from "@/lib/constants"
 import type { SopStep } from "../types"
@@ -30,13 +29,22 @@ Guidelines:
 Respond with ONLY valid JSON — an array of step objects. No other text.`
 
 async function generateViaApi(input: string): Promise<SopStep[]> {
-  return apiClient<SopStep[]>(API_ENDPOINTS.generateSop, {
-    method: "POST",
-    body: { input },
-  })
+  const { content } = await apiClient<{ content: string }>(
+    API_ENDPOINTS.aiGenerate,
+    {
+      method: "POST",
+      body: {
+        prompt: `${SYSTEM_PROMPT}\n\nUser input:\n${input}`,
+      },
+    },
+  )
+  const match = content.match(/\[[\s\S]*\]/)
+  if (!match) throw new Error("Failed to parse SOP response")
+  return JSON.parse(match[0]) as SopStep[]
 }
 
 async function generateDirect(input: string): Promise<SopStep[]> {
+  const { default: OpenAI } = await import("openai")
   const client = new OpenAI({
     apiKey: import.meta.env.VITE_OPENAI_API_KEY,
     dangerouslyAllowBrowser: true,

@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 
-export const config = { runtime: "edge" };
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export default async function handler(req: Request) {
   if (req.method !== "POST") {
@@ -17,7 +17,6 @@ export default async function handler(req: Request) {
       );
     }
 
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const completion = await openai.chat.completions.create({
       model,
       messages,

@@ -1,5 +1,4 @@
 import { useMutation } from "@tanstack/react-query";
-import OpenAI from "openai";
 import { apiClient } from "@/lib/api-client";
 import { API_ENDPOINTS, DEFAULT_MODEL } from "@/lib/constants";
 import type { ChatMessage } from "@/types";
@@ -56,6 +55,8 @@ async function sendViaApi(messages: ChatMessage[]): Promise<ChatResponse> {
 }
 
 async function sendDirect(messages: ChatMessage[]): Promise<ChatResponse> {
+  // Dynamic import keeps the openai SDK out of the production bundle.
+  const { default: OpenAI } = await import("openai");
   const client = new OpenAI({
     apiKey: import.meta.env.VITE_OPENAI_API_KEY,
     dangerouslyAllowBrowser: true,

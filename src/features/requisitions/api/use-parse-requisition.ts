@@ -1,5 +1,4 @@
 import { useMutation } from "@tanstack/react-query";
-import OpenAI from "openai";
 import { apiClient } from "@/lib/api-client";
 import { API_ENDPOINTS, DEFAULT_MODEL } from "@/lib/constants";
 import type { ChatMessage, ReqDraftFormData } from "@/types";
@@ -56,6 +55,7 @@ async function parseViaApi(
 async function parseDirect(
   messages: ChatMessage[],
 ): Promise<ParseReqResult> {
+  const { default: OpenAI } = await import("openai");
   const client = new OpenAI({
     apiKey: import.meta.env.VITE_OPENAI_API_KEY,
     dangerouslyAllowBrowser: true,

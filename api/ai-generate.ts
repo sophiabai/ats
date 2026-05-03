@@ -1,6 +1,9 @@
 import OpenAI from "openai";
 
-export const config = { runtime: "edge" };
+// Node runtime on Fluid Compute bills active CPU only, so the long await on
+// OpenAI doesn't accrue duration cost. Hoisting the client lets warm
+// invocations reuse it.
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export default async function handler(req: Request) {
   if (req.method !== "POST") {
@@ -8,7 +11,7 @@ export default async function handler(req: Request) {
   }
 
   try {
-    const { prompt, model = "gpt-4o" } = await req.json();
+    const { prompt, model = "gpt-4o-mini" } = await req.json();
 
     if (!prompt || typeof prompt !== "string") {
       return new Response(
@@ -17,7 +20,6 @@ export default async function handler(req: Request) {
       );
     }
 
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const response = await openai.chat.completions.create({
       model,
       messages: [{ role: "user", content: prompt }],

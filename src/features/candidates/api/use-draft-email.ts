@@ -1,5 +1,4 @@
 import { useMutation } from "@tanstack/react-query";
-import OpenAI from "openai";
 import { apiClient } from "@/lib/api-client";
 import { API_ENDPOINTS, DEFAULT_MODEL } from "@/lib/constants";
 
@@ -46,6 +45,7 @@ async function draftViaApi(input: DraftEmailInput): Promise<DraftEmailResult> {
 }
 
 async function draftDirect(input: DraftEmailInput): Promise<DraftEmailResult> {
+  const { default: OpenAI } = await import("openai");
   const client = new OpenAI({
     apiKey: import.meta.env.VITE_OPENAI_API_KEY,
     dangerouslyAllowBrowser: true,

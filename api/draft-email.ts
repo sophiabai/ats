@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 
-export const config = { runtime: "edge" };
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 const SYSTEM_PROMPT = `You are a recruiting assistant that drafts outreach emails from natural language instructions.
 
@@ -42,7 +42,7 @@ export default async function handler(req: Request) {
       prompt,
       senderName = "You",
       companyName = "Your company",
-      model = "gpt-4o",
+      model = "gpt-4o-mini",
     } = (await req.json()) as DraftEmailBody;
 
     if (!prompt || typeof prompt !== "string") {
@@ -52,7 +52,6 @@ export default async function handler(req: Request) {
       );
     }
 
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const response = await openai.chat.completions.create({
       model,
       messages: [

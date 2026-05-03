@@ -108,11 +108,13 @@ export function SendSplitButton({
   label = "Send",
   successMessage = "Availability request email sent successfully",
   scheduleLabel = "Schedule message",
+  size,
 }: {
   onSend?: () => void;
   label?: string;
   successMessage?: string;
   scheduleLabel?: string;
+  size?: "default" | "sm" | "lg" | "icon" | "xs";
 }) {
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
@@ -131,14 +133,15 @@ export function SendSplitButton({
   return (
     <>
       <div className="flex items-stretch">
-        <Button className="rounded-r-none" onClick={handleSendNow}>
+        <Button size={size} className="rounded-r-none" onClick={handleSendNow}>
           {label}
         </Button>
         <div className="w-px bg-card" />
         <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
           <PopoverTrigger asChild>
             <Button
-              className="rounded-l-none px-3"
+              size={size}
+              className="rounded-l-none px-2"
               aria-label="More send options"
             >
               <ChevronDown className="size-4" />
