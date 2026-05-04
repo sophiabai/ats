@@ -1,8 +1,10 @@
+import { Sparkles } from "lucide-react";
 import { Link, Outlet, useLocation } from "react-router";
 import { AppSidebar } from "@/components/app-sidebar";
+import { CommandBar } from "@/components/command-bar";
 import { VariantDropdown } from "@/components/custom/variant-dropdown";
 import { DockedChatPanel } from "@/components/docked-chat-panel";
-import { TopNav } from "@/components/top-nav";
+import { Button } from "@/components/ui/button";
 import { useChatBarStore } from "@/stores/chat-bar-store";
 import { useThemeUrlSync } from "@/hooks/use-theme-url-sync";
 import {
@@ -112,13 +114,13 @@ function useBreadcrumbs(): { crumbs: Crumb[]; page: string } {
 export function RootLayout() {
   const { crumbs, page } = useBreadcrumbs();
   const docked = useChatBarStore((s) => s.docked);
+  const toggleDocked = useChatBarStore((s) => s.toggleDocked);
 
   useThemeUrlSync();
 
   return (
     <div className="flex h-svh flex-col">
-      <TopNav />
-      <SidebarProvider className="min-h-0 flex-1 rounded-t-3xl overflow-hidden">
+      <SidebarProvider className="min-h-0 flex-1 overflow-hidden">
         <AppSidebar />
         <SidebarInset className="relative min-w-0 min-h-0 overflow-hidden bg-white dark:bg-stone-950">
           <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-in-out-quart group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
@@ -149,8 +151,21 @@ export function RootLayout() {
                 </BreadcrumbList>
               </Breadcrumb>
             </div>
-            <div className="ml-auto px-4">
+            <div className="ml-auto flex items-center gap-2 pr-4 pl-2">
               <VariantDropdown />
+              <Separator
+                orientation="vertical"
+                className="data-[orientation=vertical]:h-4"
+              />
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={toggleDocked}
+                title="AI"
+              >
+                <Sparkles className="size-4" />
+                <span className="sr-only">AI</span>
+              </Button>
             </div>
           </header>
           <div className="flex w-full flex-1 flex-col gap-6 overflow-y-auto px-17 pt-6">
@@ -159,6 +174,7 @@ export function RootLayout() {
         </SidebarInset>
         {docked && <DockedChatPanel />}
       </SidebarProvider>
+      <CommandBar />
       <Toaster position="bottom-center" />
     </div>
   );

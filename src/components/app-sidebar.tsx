@@ -3,6 +3,7 @@
 import * as React from "react"
 import {
   BarChart3,
+  Bell,
   Bot,
   Briefcase,
   ClipboardList,
@@ -18,8 +19,11 @@ import {
   Vote,
   Workflow,
 } from "lucide-react"
+import logoUrl from "@/assets/Logo.svg"
+import { NavAllApps } from "@/components/nav-all-apps"
 import { NavMain, type NavMainItem } from "@/components/nav-main"
 import { NavProjects } from "@/components/nav-projects"
+import { NavUser } from "@/components/nav-user"
 import { useChatBarStore } from "@/stores/chat-bar-store"
 import { useStarredRequisitionsStore } from "@/stores/starred-requisitions-store"
 import { useCandidatePools } from "@/features/candidates/api/use-candidate-pools"
@@ -27,9 +31,19 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
 import { formatReqTitle } from "@/lib/utils"
+
+const user = {
+  name: "Sophia Bai",
+  email: "sophia@example.com",
+  avatar: "/avatars/sophia.jpg",
+}
 
 const data = {
   quickAccess: [
@@ -147,7 +161,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar collapsible="icon" {...props}>
+      <SidebarHeader className="items-start px-5 pt-5 pb-3 group-data-[collapsible=icon]:px-1.5 group-data-[collapsible=icon]:pt-3">
+        <img
+          src={logoUrl}
+          alt="Logo"
+          className="h-6 w-auto brightness-0 dark:brightness-100 [.rippling_&]:brightness-100 group-data-[collapsible=icon]:h-5"
+        />
+      </SidebarHeader>
       <SidebarContent className="pt-2">
+        <NavAllApps />
         <NavMain label="Quick Access" items={quickAccess} />
         <NavProjects
           label="Recruiting"
@@ -155,7 +177,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           overflow={data.recruitingOverflow}
         />
       </SidebarContent>
-      <SidebarFooter />
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton tooltip="Notifications">
+              <Bell />
+              <span>Notifications</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+        <NavUser user={user} />
+      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   )
