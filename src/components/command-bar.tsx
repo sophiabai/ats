@@ -2,7 +2,6 @@ import {
   useState,
   useRef,
   useEffect,
-  useCallback,
   useMemo,
   type KeyboardEvent,
 } from "react"
@@ -16,6 +15,13 @@ import {
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { ChatInput } from "@/features/chat/components/chat-input"
 import { MessageBubble } from "@/features/chat/components/message-bubble"
 import { MessageSkeleton } from "@/features/chat/components/message-skeleton"
@@ -69,8 +75,8 @@ const GROUP_LABELS: Record<string, string> = {
   action: "Actions",
 }
 
-export function ChatBar() {
-  const { open, docked, setDocked } = useChatBarStore()
+export function CommandBar() {
+  const { open, setOpen, docked, setDocked } = useChatBarStore()
   const [expanded, setExpanded] = useState(false)
   const [value, setValue] = useState("")
   const { messages, addMessage } = useChatStore()
@@ -78,7 +84,6 @@ export function ChatBar() {
   const parseReq = useParseRequisition()
   const navigate = useNavigate()
   const bottomRef = useRef<HTMLDivElement>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const searchQuery = expanded ? "" : value
   const { data: searchResults } = useGlobalSearch(searchQuery)
@@ -93,7 +98,6 @@ export function ChatBar() {
     const items: DropdownItem[] = []
     const query = value.trim()
 
-    // Slash commands: show actions when input starts with /
     if (query.startsWith("/")) {
       const filter = query.slice(1).toLowerCase()
       for (const action of quickActions) {
@@ -115,9 +119,7 @@ export function ChatBar() {
         id: `candidate-${c.id}`,
         type: "candidate",
         label: `${c.first_name} ${c.last_name}`,
-        sublabel: [c.headline, c.current_company]
-          .filter(Boolean)
-          .join(" · "),
+        sublabel: [c.headline, c.current_company].filter(Boolean).join(" · "),
         to: `/candidates/${c.id}`,
       })
     }
@@ -147,52 +149,35 @@ export function ChatBar() {
 
   const showDropdown = dropdownItems.length > 0
 
-  // Cmd+K global shortcut — just focus the input
   useEffect(() => {
     function onKeyDown(e: globalThis.KeyboardEvent) {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault()
-        inputRef.current?.focus()
+        setOpen(!useChatBarStore.getState().open)
       }
     }
     document.addEventListener("keydown", onKeyDown)
     return () => document.removeEventListener("keydown", onKeyDown)
-  }, [])
+  }, [setOpen])
 
   useEffect(() => {
     if (open) {
       requestAnimationFrame(() => inputRef.current?.focus())
+    } else {
+      setExpanded(false)
+      setValue("")
+      setActiveCommand(null)
+      reqModeRef.current = false
     }
   }, [open])
 
-  // Reset selection when query changes
   useEffect(() => {
     setSelectedIndex(0)
   }, [value])
 
-  // Auto-scroll to latest message
   useEffect(() => {
     if (expanded) bottomRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages, chat.isPending, expanded])
-
-  const handleClickOutside = useCallback(
-    (e: MouseEvent) => {
-      if (reqDialogOpen) return
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(e.target as Node)
-      ) {
-        setExpanded(false)
-        setValue("")
-      }
-    },
-    [reqDialogOpen],
-  )
-
-  useEffect(() => {
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [handleClickOutside])
 
   function openReqDialog(formData?: ReqDraftFormData) {
     setReqInitialData(formData ? { ...formData } : undefined)
@@ -211,7 +196,8 @@ export function ChatBar() {
       onError: () => {
         addMessage({
           role: "assistant",
-          content: "Sorry, I couldn't parse that into a requisition. Could you try describing the role again?",
+          content:
+            "Sorry, I couldn't parse that into a requisition. Could you try describing the role again?",
         })
       },
     })
@@ -220,7 +206,6 @@ export function ChatBar() {
   function handleSend(content: string) {
     if (chat.isPending || parseReq.isPending || isDraftingEmail) return
 
-    // Active command chip flow (e.g. "/create req" chip is shown)
     if (activeCommand === "Create req") {
       const trimmed = content.trim()
       setValue("")
@@ -267,14 +252,12 @@ export function ChatBar() {
       return
     }
 
-    const createMatch = CREATE_REQ_RE.test(trimmed)
-    if (createMatch) {
+    if (CREATE_REQ_RE.test(trimmed)) {
       setActiveCommand("Create req")
       return
     }
 
     if (EMAIL_INTENT_RE.test(trimmed)) {
-      setValue("")
       void handleEmailIntent(trimmed)
       return
     }
@@ -288,8 +271,7 @@ export function ChatBar() {
   }
 
   function handleNavigate(to: string) {
-    setValue("")
-    setExpanded(false)
+    setOpen(false)
     if (to !== "#") navigate(to)
   }
 
@@ -324,44 +306,52 @@ export function ChatBar() {
         setValue("")
       }
     } else if (e.key === "Escape") {
-      e.preventDefault()
       if (value) {
+        e.preventDefault()
         setValue("")
-      } else if (expanded) {
-        setExpanded(false)
-      } else {
-        inputRef.current?.blur()
       }
     }
   }
 
-  const hasOverlay = showDropdown || expanded || chat.isError
-
   return (
-  <>
-    <div ref={containerRef} className="relative w-80">
-      <ChatInput
-        variant="nav"
-        value={value}
-        onChange={setValue}
-        onSend={handleSend}
-        disabled={chat.isPending || parseReq.isPending || isDraftingEmail}
-        inputRef={inputRef}
-        onKeyDown={handleInputKeyDown}
-        activeCommand={activeCommand}
-        onClearCommand={() => setActiveCommand(null)}
-      />
+    <>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent
+          showCloseButton={false}
+          className={cn(
+            "top-[15%] translate-y-0 overflow-hidden p-0 sm:max-w-2xl",
+            "gap-0 bg-popover border-border"
+          )}
+        >
+          <DialogHeader className="sr-only">
+            <DialogTitle>Command bar</DialogTitle>
+            <DialogDescription>
+              Search candidates, requisitions, and run AI actions.
+            </DialogDescription>
+          </DialogHeader>
 
-      {hasOverlay && (
-        <div className="absolute left-1/2 top-full z-50 mt-2 flex w-[600px] -translate-x-1/2 flex-col">
+          <div className="border-b p-3">
+            <ChatInput
+              variant="bar"
+              value={value}
+              onChange={setValue}
+              onSend={handleSend}
+              disabled={chat.isPending || parseReq.isPending || isDraftingEmail}
+              inputRef={inputRef}
+              onKeyDown={handleInputKeyDown}
+              activeCommand={activeCommand}
+              onClearCommand={() => setActiveCommand(null)}
+            />
+          </div>
+
           {chat.isError && (
-            <p className="px-5 py-2 text-center text-sm text-destructive">
+            <p className="border-b px-5 py-2 text-center text-sm text-destructive">
               Failed to get a response. Try again.
             </p>
           )}
 
           {showDropdown && !expanded && (
-            <div className="max-h-[300px] overflow-y-auto rounded-xl border bg-popover px-4 py-2 shadow-lg">
+            <div className="max-h-[50vh] overflow-y-auto px-3 py-2">
               {dropdownItems.map((item, idx) => {
                 const showHeading =
                   idx === 0 || dropdownItems[idx - 1].type !== item.type
@@ -374,7 +364,7 @@ export function ChatBar() {
                 return (
                   <div key={item.id}>
                     {showHeading && (
-                      <div className="py-1.5 text-xs font-medium text-muted-foreground">
+                      <div className="px-1 py-1.5 text-xs font-medium text-muted-foreground">
                         {GROUP_LABELS[item.type]}
                       </div>
                     )}
@@ -384,7 +374,7 @@ export function ChatBar() {
                         "flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-left text-sm transition-colors",
                         idx === selectedIndex
                           ? "bg-accent text-accent-foreground"
-                          : "hover:bg-accent/50",
+                          : "hover:bg-accent/50"
                       )}
                       onClick={() => handleItemSelect(item)}
                       onMouseEnter={() => setSelectedIndex(idx)}
@@ -395,7 +385,7 @@ export function ChatBar() {
                             "size-4 shrink-0",
                             item.type === "ai"
                               ? "text-berry-400"
-                              : "text-muted-foreground",
+                              : "text-muted-foreground"
                           )}
                         />
                       )}
@@ -432,13 +422,13 @@ export function ChatBar() {
           )}
 
           {expanded && !docked && (
-            <div className="flex max-h-[50vh] flex-col rounded-xl border bg-popover shadow-lg">
-              <div className="flex shrink-0 items-center justify-end gap-1 border-b px-4 py-4">
+            <div className="flex max-h-[60vh] flex-col">
+              <div className="flex shrink-0 items-center justify-end gap-1 border-b px-4 py-2">
                 <Button
                   variant="ghost"
                   size="icon-xs"
                   onClick={() => {
-                    setExpanded(false)
+                    setOpen(false)
                     setDocked(true)
                   }}
                   title="Open as side panel"
@@ -446,7 +436,7 @@ export function ChatBar() {
                   <PanelRightDashed className="size-3.5" />
                 </Button>
               </div>
-              <div className="overflow-y-auto px-6 py-6">
+              <div className="overflow-y-auto px-6 py-4">
                 {messages.length === 0 && !chat.isPending ? (
                   <p className="py-8 text-center text-sm text-muted-foreground">
                     Send a message to start a conversation.
@@ -469,21 +459,19 @@ export function ChatBar() {
               </div>
             </div>
           )}
-        </div>
-      )}
-    </div>
+        </DialogContent>
+      </Dialog>
 
-    <CreateRequisitionDialog
-      open={reqDialogOpen}
-      onOpenChange={setReqDialogOpen}
-      initialData={reqInitialData}
-      autoGenerate
-      onCreated={(id) => {
-        setExpanded(false)
-        navigate(`/requisitions/${id}`)
-      }}
-    />
-
-  </>
+      <CreateRequisitionDialog
+        open={reqDialogOpen}
+        onOpenChange={setReqDialogOpen}
+        initialData={reqInitialData}
+        autoGenerate
+        onCreated={(id) => {
+          setOpen(false)
+          navigate(`/requisitions/${id}`)
+        }}
+      />
+    </>
   )
 }
