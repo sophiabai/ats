@@ -3,6 +3,7 @@ import { useNavigate } from "react-router"
 import { X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { ChatHistoryPopover } from "@/features/chat/components/chat-history-popover"
 import { ChatInput } from "@/features/chat/components/chat-input"
 import { MessageBubble } from "@/features/chat/components/message-bubble"
 import { MessageSkeleton } from "@/features/chat/components/message-skeleton"
@@ -151,14 +152,17 @@ export function DockedChatPanel() {
       <div className="flex h-full w-[380px] shrink-0 flex-col border-l bg-background">
         <div className="flex shrink-0 items-center justify-between px-4 py-3">
           <span className="text-sm font-normal text-foreground">Chat</span>
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            onClick={() => setDocked(false)}
-            title="Close"
-          >
-            <X className="size-3.5" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <ChatHistoryPopover />
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              onClick={() => setDocked(false)}
+              title="Close"
+            >
+              <X className="size-3.5" />
+            </Button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 py-4">
