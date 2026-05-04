@@ -176,8 +176,16 @@
     --primary: var(--color-berry-600);
     --primary-foreground: oklch(1 0 0);
     --ring: var(--color-berry-300);
-    --sidebar-primary: var(--color-berry-500);
     --brand: var(--color-berry-500);
+
+    --sidebar: var(--color-berry-700);
+    --sidebar-foreground: oklch(1 0 0 / 0.85);
+    --sidebar-primary: var(--color-berry-300);
+    --sidebar-primary-foreground: var(--color-berry-900);
+    --sidebar-accent: rgba(255, 255, 255, 0.12);
+    --sidebar-accent-foreground: oklch(1 0 0);
+    --sidebar-border: rgba(255, 255, 255, 0.10);
+    --sidebar-ring: var(--color-berry-200);
 }
 
 .rippling.dark {
@@ -187,9 +195,26 @@
     --primary: var(--color-berry-300);
     --primary-foreground: var(--color-berry-900);
     --ring: var(--color-berry-400);
+    --brand: var(--color-berry-300);
+
+    --sidebar: var(--color-berry-900);
+    --sidebar-foreground: oklch(1 0 0 / 0.85);
     --sidebar-primary: var(--color-berry-400);
     --sidebar-primary-foreground: var(--color-berry-900);
-    --brand: var(--color-berry-300);
+    --sidebar-accent: rgba(255, 255, 255, 0.08);
+    --sidebar-accent-foreground: oklch(1 0 0);
+    --sidebar-border: rgba(255, 255, 255, 0.08);
+    --sidebar-ring: var(--color-berry-300);
+}
+
+.rippling [data-slot="sidebar-menu-button"][data-active="true"],
+.rippling [data-slot="sidebar-menu-sub-button"][data-active="true"],
+.rippling [data-slot="sidebar-menu-button"][data-state="open"],
+.rippling [data-slot="sidebar-menu-button"]:hover,
+.rippling [data-slot="sidebar-menu-sub-button"]:hover,
+.rippling [data-slot="sidebar-menu-button"][data-state="open"]:hover {
+    background-color: var(--sidebar-accent);
+    color: var(--sidebar-accent-foreground);
 }
 
 @keyframes cand-fade-up {

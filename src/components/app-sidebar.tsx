@@ -161,11 +161,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader className="items-start px-5 pt-5 pb-3 group-data-[collapsible=icon]:px-1.5 group-data-[collapsible=icon]:pt-3">
+      <SidebarHeader className="items-start px-5 pt-5 pb-3 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:pt-3">
         <img
           src={logoUrl}
           alt="Logo"
-          className="h-6 w-auto brightness-0 dark:brightness-100 [.rippling_&]:brightness-100 group-data-[collapsible=icon]:h-5"
+          className="h-6 w-auto brightness-0 dark:brightness-100 [.rippling_&]:brightness-100 group-data-[collapsible=icon]:h-4"
         />
       </SidebarHeader>
       <SidebarContent className="pt-2">
