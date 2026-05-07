@@ -41,6 +41,7 @@ const SEGMENT_TITLES: Record<string, string> = {
   interviews: "Interviews",
   assessments: "Assessments",
   emails: "Emails",
+  inbox: "Inbox",
   "headcount-planning": "Headcount planning",
   workflows: "Workflows",
   "job-board": "Internal job board",

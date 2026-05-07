@@ -576,7 +576,7 @@ INSERT INTO applications (candidate_id, req_id, applied_date, source, current_mi
 
 -- Account Executive (5 candidates)
 INSERT INTO applications (candidate_id, req_id, applied_date, source, current_milestone, current_stage_id, status) VALUES
-  ('c0000000-0000-0000-0000-000000000010', 'b0000000-0000-0000-0000-000000000002', '2026-02-05', 'linkedin',     'final_interview', 'e0000000-0000-0000-0002-000000000004', 'active'),
+  ('c0000000-0000-0000-0000-000000000010', 'b0000000-0000-0000-0000-000000000002', '2026-02-05', 'linkedin',     'screen',          'e0000000-0000-0000-0002-000000000003', 'active'),
   ('c0000000-0000-0000-0000-000000000011', 'b0000000-0000-0000-0000-000000000002', '2026-02-08', 'linkedin',     'screen',          'e0000000-0000-0000-0002-000000000003', 'active'),
   ('c0000000-0000-0000-0000-000000000012', 'b0000000-0000-0000-0000-000000000002', '2026-02-10', 'agency',       'offer',           'e0000000-0000-0000-0002-000000000005', 'active'),
   ('c0000000-0000-0000-0000-000000000013', 'b0000000-0000-0000-0000-000000000002', '2026-02-14', 'referral',     'screen',          'e0000000-0000-0000-0002-000000000002', 'active');
@@ -662,6 +662,40 @@ INSERT INTO applications (candidate_id, req_id, applied_date, source, current_mi
   ('c0000000-0000-0000-0000-000000000012', 'b0000000-0000-0000-0000-000000000005', '2026-02-24', 'agency',       'application',     'e0000000-0000-0000-0005-000000000001', 'rejected', 'Sales background doesn''t align with content marketing');
 INSERT INTO applications (candidate_id, req_id, applied_date, source, current_milestone, current_stage_id, status, withdrawn_reason) VALUES
   ('c0000000-0000-0000-0000-000000000014', 'b0000000-0000-0000-0000-000000000005', '2026-02-18', 'linkedin',     'application',     'e0000000-0000-0000-0005-000000000001', 'withdrawn', 'Accepted another offer');
+
+-- ============================================================
+-- Extra application-review candidates (populate the Inbox board)
+-- ============================================================
+
+-- Senior Frontend Engineer (b001) — app-review stage e…01-…001
+INSERT INTO applications (candidate_id, req_id, applied_date, source, current_milestone, current_stage_id, status) VALUES
+  ('c0000000-0000-0000-0000-000000000010', 'b0000000-0000-0000-0000-000000000001', '2026-04-20', 'linkedin',     'application', 'e0000000-0000-0000-0001-000000000001', 'active'),
+  ('c0000000-0000-0000-0000-000000000017', 'b0000000-0000-0000-0000-000000000001', '2026-04-22', 'careers_page', 'application', 'e0000000-0000-0000-0001-000000000001', 'active'),
+  ('c0000000-0000-0000-0000-000000000020', 'b0000000-0000-0000-0000-000000000001', '2026-04-24', 'referral',     'application', 'e0000000-0000-0000-0001-000000000001', 'active');
+
+-- Account Executive (b002) — app-review stage e…02-…001
+INSERT INTO applications (candidate_id, req_id, applied_date, source, current_milestone, current_stage_id, status) VALUES
+  ('c0000000-0000-0000-0000-000000000007', 'b0000000-0000-0000-0000-000000000002', '2026-04-18', 'linkedin',     'application', 'e0000000-0000-0000-0002-000000000001', 'active'),
+  ('c0000000-0000-0000-0000-000000000015', 'b0000000-0000-0000-0000-000000000002', '2026-04-21', 'careers_page', 'application', 'e0000000-0000-0000-0002-000000000001', 'active'),
+  ('c0000000-0000-0000-0000-000000000017', 'b0000000-0000-0000-0000-000000000002', '2026-04-23', 'referral',     'application', 'e0000000-0000-0000-0002-000000000001', 'active');
+
+-- Senior Product Designer (b003) — app-review stage e…03-…001
+INSERT INTO applications (candidate_id, req_id, applied_date, source, current_milestone, current_stage_id, status) VALUES
+  ('c0000000-0000-0000-0000-000000000006', 'b0000000-0000-0000-0000-000000000003', '2026-04-19', 'linkedin',     'application', 'e0000000-0000-0000-0003-000000000001', 'active'),
+  ('c0000000-0000-0000-0000-000000000011', 'b0000000-0000-0000-0000-000000000003', '2026-04-22', 'referral',     'application', 'e0000000-0000-0000-0003-000000000001', 'active'),
+  ('c0000000-0000-0000-0000-000000000021', 'b0000000-0000-0000-0000-000000000003', '2026-04-25', 'linkedin',     'application', 'e0000000-0000-0000-0003-000000000001', 'active');
+
+-- Machine Learning Engineer (b004) — app-review stage e…04-…001
+INSERT INTO applications (candidate_id, req_id, applied_date, source, current_milestone, current_stage_id, status) VALUES
+  ('c0000000-0000-0000-0000-000000000003', 'b0000000-0000-0000-0000-000000000004', '2026-04-17', 'referral',     'application', 'e0000000-0000-0000-0004-000000000001', 'active'),
+  ('c0000000-0000-0000-0000-000000000013', 'b0000000-0000-0000-0000-000000000004', '2026-04-20', 'linkedin',     'application', 'e0000000-0000-0000-0004-000000000001', 'active'),
+  ('c0000000-0000-0000-0000-000000000017', 'b0000000-0000-0000-0000-000000000004', '2026-04-23', 'careers_page', 'application', 'e0000000-0000-0000-0004-000000000001', 'active');
+
+-- Content Marketing Lead (b005) — app-review stage e…05-…001 (Isaac Lee already here)
+INSERT INTO applications (candidate_id, req_id, applied_date, source, current_milestone, current_stage_id, status) VALUES
+  ('c0000000-0000-0000-0000-000000000003', 'b0000000-0000-0000-0000-000000000005', '2026-04-19', 'referral',     'application', 'e0000000-0000-0000-0005-000000000001', 'active'),
+  ('c0000000-0000-0000-0000-000000000006', 'b0000000-0000-0000-0000-000000000005', '2026-04-22', 'linkedin',     'application', 'e0000000-0000-0000-0005-000000000001', 'active'),
+  ('c0000000-0000-0000-0000-000000000015', 'b0000000-0000-0000-0000-000000000005', '2026-04-24', 'careers_page', 'application', 'e0000000-0000-0000-0005-000000000001', 'active');
 
 -- ============================================================
 -- Candidate pools
@@ -987,7 +1021,108 @@ INSERT INTO criteria_evaluations (req_id, candidate_id, criterion, met, reasonin
   ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000025', 'Exceptional writing skills with published technical content portfolio', true, 'Authors Next.js documentation used by 1M+ developers monthly.'),
   ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000025', 'Ability to distill complex technical concepts into clear narratives', true, 'Excels at making framework concepts accessible through migration guides and tutorials.'),
   ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000025', 'Familiarity with SEO, content analytics, and distribution strategies', false, 'Technical documentation focus; no marketing distribution or SEO experience.'),
-  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000025', 'Experience marketing to software developers', true, 'Writes exclusively for a developer audience at Vercel.');
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000025', 'Experience marketing to software developers', true, 'Writes exclusively for a developer audience at Vercel.'),
+
+  -- ── Extra application-review criteria ──
+  -- Senior Frontend Engineer (b001) — c010, c017, c020
+  -- c010: Marcus Johnson → top match (4/5)
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000010', '5+ years of professional frontend development experience', true, 'Previously built internal dashboards at Salesforce using React.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000010', 'Deep expertise in React, TypeScript, and modern CSS', true, 'Built custom CRM dashboards with React and TypeScript at Salesforce.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000010', 'Experience building design systems or component libraries', true, 'Created shared component library for the sales ops internal tools team.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000010', 'Strong understanding of web performance and accessibility', true, 'Led performance audit of Salesforce internal tooling, cutting load times by 30%.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000010', 'Experience mentoring engineers or leading technical initiatives', false, 'Mentored sales reps but not engineers specifically.'),
+  -- c017: Olivia Hart → worth review (3/5)
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000017', '5+ years of professional frontend development experience', false, 'Has 4 years of UX design, not frontend engineering specifically.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000017', 'Deep expertise in React, TypeScript, and modern CSS', false, 'Design-focused; CSS skills present but no React/TypeScript depth.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000017', 'Experience building design systems or component libraries', true, 'Built component specifications and design token systems at Square.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000017', 'Strong understanding of web performance and accessibility', true, 'Strong accessibility focus in UX work at Square.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000017', 'Experience mentoring engineers or leading technical initiatives', true, 'Led cross-functional design sprints involving engineers.'),
+  -- c020: Sophie Chen → top match (4/5)
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000020', '5+ years of professional frontend development experience', true, 'Built marketing landing pages and A/B test frameworks in React at HubSpot.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000020', 'Deep expertise in React, TypeScript, and modern CSS', true, 'Hands-on React and TypeScript for growth engineering at HubSpot.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000020', 'Experience building design systems or component libraries', true, 'Maintained HubSpot''s marketing component library.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000020', 'Strong understanding of web performance and accessibility', true, 'Led Core Web Vitals optimization initiative across HubSpot marketing pages.'),
+  ('b0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000020', 'Experience mentoring engineers or leading technical initiatives', false, 'Individual contributor; no mentoring experience.'),
+
+  -- Account Executive (b002) — c007, c015, c017
+  -- c007: Ava Nguyen → top match (4/5)
+  ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000007', '3+ years of B2B SaaS sales experience selling to technical buyers', true, 'Sold data analytics solutions to engineering leaders at Lyft partner companies.'),
+  ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000007', 'Proven track record of meeting or exceeding quota', true, 'Exceeded pipeline targets by 140% in her analytics consulting role.'),
+  ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000007', 'Experience with consultative selling and complex deal cycles', true, 'Ran consultative workshops with enterprise clients on data strategy.'),
+  ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000007', 'Familiarity with developer tools or infrastructure products', true, 'Works with data tools daily at Lyft; deep understanding of technical buyer needs.'),
+  ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000007', 'Self-starter comfortable in an early-stage environment', false, 'Has worked at established companies.'),
+  -- c015: Priya Sharma → worth review (3/5)
+  ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000015', '3+ years of B2B SaaS sales experience selling to technical buyers', false, 'Product designer; no sales background.'),
+  ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000015', 'Proven track record of meeting or exceeding quota', false, 'No sales quota experience.'),
+  ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000015', 'Experience with consultative selling and complex deal cycles', true, 'Ran design workshops that influenced $2M+ enterprise deals at Figma.'),
+  ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000015', 'Familiarity with developer tools or infrastructure products', true, 'Deep expertise designing for Figma, a developer-adjacent tool.'),
+  ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000015', 'Self-starter comfortable in an early-stage environment', true, 'Joined Figma at an early growth stage.'),
+  -- c017: Olivia Hart → top match (4/5)
+  ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000017', '3+ years of B2B SaaS sales experience selling to technical buyers', true, 'Led client-facing workshops selling design tool subscriptions at Square.'),
+  ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000017', 'Proven track record of meeting or exceeding quota', true, 'Achieved 120% of engagement targets in her design consulting practice.'),
+  ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000017', 'Experience with consultative selling and complex deal cycles', true, 'Ran multi-stakeholder design reviews for enterprise accounts.'),
+  ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000017', 'Familiarity with developer tools or infrastructure products', true, 'Uses developer-adjacent design tools daily.'),
+  ('b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000017', 'Self-starter comfortable in an early-stage environment', false, 'Has only worked at established companies.'),
+
+  -- Senior Product Designer (b003) — c006, c011, c021
+  -- c006: Tyler Washington → top match (4/5)
+  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000006', '5+ years of product design experience with end-to-end portfolio', true, 'Built end-to-end data visualization dashboards with strong UX at Snowflake.'),
+  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000006', 'Deep proficiency in Figma including prototyping and components', true, 'Created Figma prototypes for the Snowflake query builder redesign.'),
+  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000006', 'Experience designing for developer tools or B2B SaaS platforms', true, 'Designed developer-facing interfaces for Snowflake and Kafka tooling.'),
+  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000006', 'Strong systems thinking for design system work', true, 'Built systematic component patterns for data pipeline visualization.'),
+  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000006', 'Experience with user research methods and data-informed design', false, 'Uses analytics but hasn''t conducted formal user research studies.'),
+  -- c011: Rachel Foster → top match (4/5)
+  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000011', '5+ years of product design experience with end-to-end portfolio', true, 'Designed customer-facing sales portal with complete UX flow at Zendesk.'),
+  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000011', 'Deep proficiency in Figma including prototyping and components', true, 'Built interactive Figma prototypes for Zendesk''s deal management tool.'),
+  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000011', 'Experience designing for developer tools or B2B SaaS platforms', true, 'Designed B2B SaaS interfaces at Zendesk used by support teams.'),
+  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000011', 'Strong systems thinking for design system work', false, 'Used design systems but didn''t build or maintain one.'),
+  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000011', 'Experience with user research methods and data-informed design', true, 'Conducts customer discovery calls and analyzes buyer personas.'),
+  -- c021: Ethan Brooks → worth review (3/5)
+  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000021', '5+ years of product design experience with end-to-end portfolio', false, 'Content marketing background; no design portfolio.'),
+  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000021', 'Deep proficiency in Figma including prototyping and components', false, 'Limited Figma experience for content graphics only.'),
+  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000021', 'Experience designing for developer tools or B2B SaaS platforms', true, 'Created visual content for Contentful, a developer-focused CMS.'),
+  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000021', 'Strong systems thinking for design system work', true, 'Built systematic content templates and visual guidelines.'),
+  ('b0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000021', 'Experience with user research methods and data-informed design', true, 'Runs content A/B tests and user surveys for content strategy.'),
+
+  -- Machine Learning Engineer (b004) — c003, c013, c017
+  -- c003: Liam O''Brien → top match (4/5)
+  ('b0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000003', '3+ years of ML engineering or applied ML research experience', true, 'Built ML-powered search and recommendation features at Airbnb.'),
+  ('b0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000003', 'Hands-on experience with LLMs including fine-tuning or inference optimization', true, 'Fine-tuned GPT models for Airbnb''s smart search suggestions.'),
+  ('b0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000003', 'Proficiency in Python, PyTorch, and distributed training frameworks', true, 'Strong Python skills from ML feature work; uses PyTorch for model prototyping.'),
+  ('b0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000003', 'Experience building production ML systems with monitoring', true, 'Deployed ML models to production with monitoring dashboards at Airbnb.'),
+  ('b0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000003', 'Strong fundamentals in statistics and optimization', false, 'HCI research includes some statistical methods, but not optimization depth.'),
+  -- c013: Jessica Park → top match (4/5)
+  ('b0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000013', '3+ years of ML engineering or applied ML research experience', true, 'Built ML-driven lead scoring models at Gong using conversation data.'),
+  ('b0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000013', 'Hands-on experience with LLMs including fine-tuning or inference optimization', true, 'Fine-tuned LLMs for sales call summarization and sentiment analysis at Gong.'),
+  ('b0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000013', 'Proficiency in Python, PyTorch, and distributed training frameworks', true, 'Proficient in Python and PyTorch for model development at Gong.'),
+  ('b0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000013', 'Experience building production ML systems with monitoring', true, 'Deployed NLP models serving 1000+ enterprise customers with monitoring.'),
+  ('b0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000013', 'Strong fundamentals in statistics and optimization', false, 'Applied statistics knowledge; lacks formal optimization background.'),
+  -- c017: Olivia Hart → top match (4/5)
+  ('b0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000017', '3+ years of ML engineering or applied ML research experience', true, 'Applied ML in user research — built predictive models for usability outcomes.'),
+  ('b0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000017', 'Hands-on experience with LLMs including fine-tuning or inference optimization', true, 'Used LLMs to auto-generate research summaries and tag usability issues.'),
+  ('b0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000017', 'Proficiency in Python, PyTorch, and distributed training frameworks', true, 'Built Python-based ML pipelines for UX analytics at Square.'),
+  ('b0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000017', 'Experience building production ML systems with monitoring', false, 'Research prototypes only; no production ML deployment.'),
+  ('b0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000017', 'Strong fundamentals in statistics and optimization', true, 'User research background includes statistical analysis of usability data.'),
+
+  -- Content Marketing Lead (b005) — c003, c006, c015
+  -- c003: Liam O''Brien → top match (4/5)
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000003', '4+ years of content marketing experience in developer tools or B2B SaaS', true, 'Wrote technical blog posts about frontend architecture at Airbnb engineering blog.'),
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000003', 'Exceptional writing skills with published technical content portfolio', true, 'Published articles on design systems and React patterns on Medium and dev.to.'),
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000003', 'Ability to distill complex technical concepts into clear narratives', true, 'Known for clear technical writing; regularly speaks at meetups.'),
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000003', 'Familiarity with SEO, content analytics, and distribution strategies', true, 'Optimized Airbnb blog posts for SEO; grew organic traffic to engineering blog.'),
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000003', 'Experience marketing to software developers', false, 'Writes for developers but from an engineering, not marketing, perspective.'),
+  -- c006: Tyler Washington → top match (4/5)
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000006', '4+ years of content marketing experience in developer tools or B2B SaaS', true, 'Created developer documentation and tutorials for Snowflake data tools.'),
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000006', 'Exceptional writing skills with published technical content portfolio', true, 'Published deep-dive technical guides on data engineering best practices.'),
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000006', 'Ability to distill complex technical concepts into clear narratives', true, 'Known for making complex data pipeline concepts accessible.'),
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000006', 'Familiarity with SEO, content analytics, and distribution strategies', false, 'Technical documentation focus; no SEO or distribution experience.'),
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000006', 'Experience marketing to software developers', true, 'Writes exclusively for a developer and data engineer audience.'),
+  -- c015: Priya Sharma → worth review (3/5)
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000015', '4+ years of content marketing experience in developer tools or B2B SaaS', false, 'Product designer; not a content marketer.'),
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000015', 'Exceptional writing skills with published technical content portfolio', true, 'Published case studies and design articles on Medium and Figma blog.'),
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000015', 'Ability to distill complex technical concepts into clear narratives', true, 'Excels at presenting design rationale to engineering audiences.'),
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000015', 'Familiarity with SEO, content analytics, and distribution strategies', false, 'No SEO or content distribution experience.'),
+  ('b0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000015', 'Experience marketing to software developers', true, 'Designed and documented developer-facing tools at Figma.');
 
 -- ============================================================
 -- Candidate activities (demo timeline for Jane Warren)
@@ -1014,3 +1149,28 @@ CROSS JOIN (VALUES
 ) AS v(activity_type, action, detail, metadata, created_at)
 WHERE a.candidate_id = 'c0000000-0000-0000-0000-000000000026'
   AND a.req_id = 'b0000000-0000-0000-0000-000000000001';
+
+-- ============================================================
+-- Application interviews (scheduled state for demo)
+-- ============================================================
+
+-- Marcus Johnson – Hiring manager screen scheduled
+INSERT INTO application_interviews (
+  application_id, stage_id, source_req_interview_id,
+  title, interview_type, duration_minutes, interviewer_name,
+  scheduled_at, status, order_position
+)
+SELECT
+  a.id,
+  'e0000000-0000-0000-0002-000000000003',
+  'f0000000-0000-0002-0000-000000000002',
+  'Hiring manager screen',
+  'standard',
+  45,
+  'Diana Kim',
+  '2026-05-12 17:00:00+00',
+  'scheduled',
+  0
+FROM applications a
+WHERE a.candidate_id = 'c0000000-0000-0000-0000-000000000010'
+  AND a.req_id = 'b0000000-0000-0000-0000-000000000002';
