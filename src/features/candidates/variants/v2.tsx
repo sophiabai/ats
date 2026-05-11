@@ -15,7 +15,6 @@ import {
   Ellipsis,
   FileText,
   Forward,
-  GraduationCap,
   Link2,
   Linkedin,
   Mail,
@@ -29,6 +28,7 @@ import {
   Search,
   Send,
   SendHorizontal,
+  Sparkles,
   Trash2,
   UserCheck,
   Workflow,
@@ -64,6 +64,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CURRENT_USER } from "@/lib/constants";
 import { cn, formatReqTitle } from "@/lib/utils";
 import {
   useCandidateDetail,
@@ -71,6 +72,8 @@ import {
   type ApplicationDetail,
   type ReqStageWithInterviews,
 } from "@/features/candidates/api/use-candidate-detail";
+import { AllFeedbackTab } from "@/features/candidates/components/all-feedback-tab";
+import { ApplicationOverview } from "@/features/candidates/components/application-overview";
 import {
   getStageStatus,
   InterviewTimeline,
@@ -78,6 +81,10 @@ import {
   MILESTONE_ORDER,
   StageIcon,
 } from "@/features/candidates/components/application-tab-content";
+import {
+  EducationSection,
+  ExperienceSection,
+} from "@/features/candidates/components/candidate-sections";
 import { CandidateFormDialog } from "@/features/candidates/components/candidate-form-dialog";
 import {
   EmailComposer,
@@ -94,10 +101,17 @@ import { SendSplitButton } from "@/features/candidates/components/send-button";
 import { useCandidateActivities } from "@/features/candidates/api/use-candidate-activities";
 import { useCreateActivity, type CreateActivityInput } from "@/features/candidates/api/use-create-activity";
 import { useDeleteCandidate } from "@/features/candidates/api/use-candidate-mutations";
+import { useMoveApplicationForward } from "@/features/candidates/api/use-application-mutations";
+import {
+  RATING_LABELS,
+  type InterviewFeedback,
+  type Rating,
+} from "@/features/candidates/components/interview-feedback-dialog";
+import { ReassignStageDialog } from "@/features/candidates/components/reassign-stage-dialog";
 import { useSetPageTitle } from "@/stores/page-title-store";
 import type { Milestone } from "@/types/database";
 
-type RaSentEvent = {
+export type RaSentEvent = {
   id: string;
   kind?: "request_availability" | "email";
   candidateName: string;
@@ -109,6 +123,128 @@ type RaSentEvent = {
   templateKey?: EmailTemplateKey;
   emailContext?: EmailContext;
 };
+
+export function CandidateHeader({
+  candidate,
+  onEmail,
+  onEdit,
+  onDownload,
+  onDelete,
+}: {
+  candidate: CandidateDetail;
+  onEmail?: () => void;
+  onEdit?: () => void;
+  onDownload?: () => void;
+  onDelete?: () => void;
+}) {
+  const latestActivity = ACTIVITY_SEEDS[0];
+  const linkedinUrl =
+    `https://www.linkedin.com/in/${candidate.first_name}-${candidate.last_name}`.toLowerCase();
+
+  return (
+    <div className="flex items-start gap-3">
+      <div className="min-w-0 flex-1">
+        <h1 className="text-2xl font-semibold">
+          {candidate.first_name} {candidate.last_name}
+        </h1>
+        {candidate.current_company && (
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            {candidate.current_title
+              ? `${candidate.current_title} at ${candidate.current_company}`
+              : candidate.current_company}
+          </p>
+        )}
+        {latestActivity && (
+          <p
+            className={
+              candidate.current_company
+                ? "mt-1 text-sm text-muted-foreground"
+                : "mt-1.5 text-sm text-muted-foreground"
+            }
+          >
+            {latestActivity.action} · {latestActivity.time}
+          </p>
+        )}
+        <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
+          <div className="flex items-center gap-1.5">
+            <Mail className="size-3.5 shrink-0" />
+            <span className="truncate">{candidate.email}</span>
+          </div>
+          {candidate.phone && (
+            <div className="flex items-center gap-1.5">
+              <Phone className="size-3.5 shrink-0" />
+              {candidate.phone}
+            </div>
+          )}
+          {candidate.location && (
+            <div className="flex items-center gap-1.5">
+              <MapPin className="size-3.5 shrink-0" />
+              {candidate.location}
+            </div>
+          )}
+          <a
+            href={linkedinUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 hover:text-foreground"
+          >
+            <Linkedin className="size-3.5 shrink-0" />
+            LinkedIn
+          </a>
+        </div>
+      </div>
+      {(onEmail || onEdit || onDownload || onDelete) && (
+        <div className="flex shrink-0 items-center gap-1">
+          {onEmail && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8"
+              aria-label="Email candidate"
+              onClick={onEmail}
+            >
+              <Mail className="size-4" />
+            </Button>
+          )}
+          {(onEdit || onDownload || onDelete) && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-8"
+                  aria-label="More actions"
+                >
+                  <Ellipsis className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {onEdit && (
+                  <DropdownMenuItem onSelect={onEdit}>
+                    <Pencil />
+                    Edit candidate
+                  </DropdownMenuItem>
+                )}
+                {onDownload && (
+                  <DropdownMenuItem onSelect={onDownload}>
+                    <Download />
+                    Download PDF
+                  </DropdownMenuItem>
+                )}
+                {onDelete && (
+                  <DropdownMenuItem variant="destructive" onSelect={onDelete}>
+                    <Trash2 />
+                    Delete candidate
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function ProfileSkeleton() {
   return (
@@ -225,101 +361,13 @@ export function CandidateDetailV2() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start gap-3">
-        <div className="min-w-0 flex-1">
-          <h1 className="text-2xl font-semibold ">
-            {candidate.first_name} {candidate.last_name}
-          </h1>
-          {candidate.current_company && (
-            <p className="mt-1.5 text-sm text-muted-foreground">
-              {candidate.current_title
-                ? `${candidate.current_title} at ${candidate.current_company}`
-                : candidate.current_company}
-            </p>
-          )}
-          {ACTIVITY_SEEDS[0] && (
-            <p
-              className={
-                candidate.current_company
-                  ? "mt-1 text-sm text-muted-foreground"
-                  : "mt-1.5 text-sm text-muted-foreground"
-              }
-            >
-              {ACTIVITY_SEEDS[0].action} · {ACTIVITY_SEEDS[0].time}
-            </p>
-          )}
-          <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1.5">
-              <Mail className="size-3.5 shrink-0" />
-              <span className="truncate">{candidate.email}</span>
-            </div>
-            {candidate.phone && (
-              <div className="flex items-center gap-1.5">
-                <Phone className="size-3.5 shrink-0" />
-                {candidate.phone}
-              </div>
-            )}
-            {candidate.location && (
-              <div className="flex items-center gap-1.5">
-                <MapPin className="size-3.5 shrink-0" />
-                {candidate.location}
-              </div>
-            )}
-            <a
-              href={`https://www.linkedin.com/in/${candidate.first_name}-${candidate.last_name}`.toLowerCase()}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 hover:text-foreground"
-            >
-              <Linkedin className="size-3.5 shrink-0" />
-              LinkedIn
-            </a>
-          </div>
-        </div>
-        <div className="flex shrink-0 items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-8"
-            aria-label="Email candidate"
-            onClick={() => setEmailDialogOpen(true)}
-          >
-            <Mail className="size-4" />
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-8"
-                aria-label="More actions"
-              >
-                <Ellipsis className="size-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={() => setEditDialogOpen(true)}>
-                <Pencil />
-                Edit candidate
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={() => toast.success("PDF downloaded")}
-              >
-                <Download />
-                Download PDF
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                variant="destructive"
-                onSelect={handleDeleteCandidate}
-              >
-                <Trash2 />
-                Delete candidate
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
-
+      <CandidateHeader
+        candidate={candidate}
+        onEmail={() => setEmailDialogOpen(true)}
+        onEdit={() => setEditDialogOpen(true)}
+        onDownload={() => toast.success("PDF downloaded")}
+        onDelete={handleDeleteCandidate}
+      />
 
       <Tabs value={tabsValue} onValueChange={setActiveTab}>
         <TabsList>
@@ -372,8 +420,8 @@ export function CandidateDetailV2() {
         onOpenChange={setEmailDialogOpen}
         candidateName={candidateFullName}
         candidateEmail={candidate.email}
-        companyName="Your company"
-        senderName="You"
+        companyName={CURRENT_USER.company}
+        senderName={CURRENT_USER.name}
         jobTitle={apps[0]?.requisitions?.title ?? ""}
         onSent={(payload) => {
           const evt: RaSentEvent = {
@@ -401,123 +449,56 @@ export function CandidateDetailV2() {
   );
 }
 
-const MONTH_NAMES = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-];
+export function ProfileTabContent({
+  candidate,
+  singleColumn = false,
+}: {
+  candidate: CandidateDetail;
+  singleColumn?: boolean;
+}) {
+  const hasSkills = candidate.skills && candidate.skills.length > 0;
 
-function formatMonth(dateStr: string) {
-  const [year, month] = dateStr.split("-");
-  return `${MONTH_NAMES[parseInt(month, 10) - 1]} ${year}`;
-}
+  const skillsSection = hasSkills && (
+    <section>
+      <h3 className="mb-4 font-semibold">Skills</h3>
+      <div className="flex flex-wrap gap-1.5">
+        {candidate.skills!.map((skill) => (
+          <Badge key={skill} variant="secondary" className="text-xs">
+            {skill}
+          </Badge>
+        ))}
+      </div>
+    </section>
+  );
 
-function durationLabel(start: string, end: string | null) {
-  const s = new Date(start + "-01");
-  const e = end ? new Date(end + "-01") : new Date();
-  let months = (e.getFullYear() - s.getFullYear()) * 12 + (e.getMonth() - s.getMonth());
-  if (months < 1) months = 1;
-  const yrs = Math.floor(months / 12);
-  const mos = months % 12;
-  if (yrs > 0 && mos > 0) return `${yrs} yr${yrs > 1 ? "s" : ""} ${mos} mo${mos > 1 ? "s" : ""}`;
-  if (yrs > 0) return `${yrs} yr${yrs > 1 ? "s" : ""}`;
-  return `${mos} mo${mos > 1 ? "s" : ""}`;
-}
+  const notesSection = candidate.notes && (
+    <section>
+      <h3 className="mb-4 font-semibold">Notes</h3>
+      <p className="text-sm text-muted-foreground">{candidate.notes}</p>
+    </section>
+  );
 
-function ProfileTabContent({ candidate }: { candidate: CandidateDetail }) {
-  const workHistory = candidate.work_history ?? [];
-  const education = candidate.education ?? [];
+  if (singleColumn) {
+    return (
+      <div className="space-y-8">
+        <ExperienceSection candidate={candidate} />
+        <EducationSection candidate={candidate} />
+        {skillsSection}
+        {notesSection}
+      </div>
+    );
+  }
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_280px]">
       <div className="space-y-8">
-        {workHistory.length > 0 && (
-          <section>
-            <h3 className="font-semibold">Experience</h3>
-            <p className="mt-1 mb-4 text-sm text-muted-foreground">
-              Total years of experience:{" "}
-              <span className="font-semibold text-foreground">10.5 years</span>
-            </p>
-            <div className="space-y-7">
-              {workHistory.map((w, i) => (
-                <div key={i} className="flex gap-3">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-500/10">
-                    <Briefcase className="size-5 text-blue-600 dark:text-blue-400" strokeWidth={1.2} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="font-medium leading-snug">{w.title}</div>
-                    <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-sm text-muted-foreground">
-                      <span>{w.company}</span>
-                      {w.location && (
-                        <>
-                          <span className="text-border">·</span>
-                          <span>{w.location}</span>
-                        </>
-                      )}
-                    </div>
-                    <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-sm text-muted-foreground">
-                      <span>
-                        {formatMonth(w.start_date)} – {w.end_date ? formatMonth(w.end_date) : "Present"}
-                      </span>
-                      <span className="text-border">·</span>
-                      <span>{durationLabel(w.start_date, w.end_date)}</span>
-                    </div>
-                    {w.description && (
-                      <p className="mt-2 text-sm leading-relaxed text-foreground/80">
-                        {w.description}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {education.length > 0 && (
-          <section>
-            <h3 className="mb-4 font-semibold">Education</h3>
-            <div className="space-y-4">
-              {education.map((ed, i) => (
-                <div key={i} className="flex gap-3">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10">
-                    <GraduationCap className="size-5 text-emerald-600 dark:text-emerald-400" strokeWidth={1.2} />
-                  </div>
-                  <div>
-                    <div className="font-medium leading-snug">
-                      {ed.degree}{ed.field ? ` in ${ed.field}` : ""}
-                    </div>
-                    <div className="mt-0.5 text-sm text-muted-foreground">
-                      {ed.school}
-                      {ed.end_year ? ` · ${ed.end_year}` : ""}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
+        <ExperienceSection candidate={candidate} />
+        <EducationSection candidate={candidate} />
       </div>
 
       <aside className="space-y-6 lg:border-l lg:pl-6">
-        {candidate.skills && candidate.skills.length > 0 && (
-          <section>
-            <h3 className="mb-4 font-semibold">Skills</h3>
-            <div className="flex flex-wrap gap-1.5">
-              {candidate.skills.map((skill) => (
-                <Badge key={skill} variant="secondary" className="text-xs">
-                  {skill}
-                </Badge>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {candidate.notes && (
-          <section>
-            <h3 className="mb-4 font-semibold">Notes</h3>
-            <p className="text-sm text-muted-foreground">{candidate.notes}</p>
-          </section>
-        )}
+        {skillsSection}
+        {notesSection}
       </aside>
     </div>
   );
@@ -544,11 +525,22 @@ function parseScheduleDate(input: string): Date {
 }
 
 function ApplicationDetailPanel({ app, candidateName, onAvailabilitySent, schedulingStatus, onScheduled }: { app: ApplicationDetail; candidateName: string; onAvailabilitySent: () => void; schedulingStatus: SchedulingStatus; onScheduled?: () => void }) {
-  const [subTab, setSubTab] = useState("interviews");
+  const [subTab, setSubTab] = useState(
+    app.current_milestone === "application" ? "home" : "interviews",
+  );
   const [scheduleOpen, setScheduleOpen] = useState(false);
+  const createActivity = useCreateActivity();
   const [requestAvailOpen, setRequestAvailOpen] = useState(false);
   const [selfScheduleOpen, setSelfScheduleOpen] = useState(false);
-  const [scheduledByTitle, setScheduledByTitle] = useState<Record<string, Date>>({});
+  const [scheduledByTitle, setScheduledByTitle] = useState<Record<string, Date>>(() => {
+    const initial: Record<string, Date> = {};
+    for (const ai of app.application_interviews ?? []) {
+      if (ai.scheduled_at) {
+        initial[ai.title] = new Date(ai.scheduled_at);
+      }
+    }
+    return initial;
+  });
   const allStages = app.requisitions?.req_stages ?? [];
   const reqTitle = formatReqTitle(app.requisitions.req_number, app.requisitions.title);
 
@@ -585,10 +577,15 @@ function ApplicationDetailPanel({ app, candidateName, onAvailabilitySent, schedu
             <TabsTrigger value="home">Application</TabsTrigger>
             <TabsTrigger value="interviews">Interview stages</TabsTrigger>
             <TabsTrigger value="feedback">All feedback</TabsTrigger>
+            <TabsTrigger value="notes">Notes & comments</TabsTrigger>
           </TabsList>
         </div>
 
         <Card className={cn("flex min-h-0 flex-1 flex-col overflow-hidden", subTab === "home" && "rounded-tl-none")}>
+          <TabsContent value="home" className="mt-0 flex-1 overflow-y-auto p-6">
+            <ApplicationOverview app={app} />
+          </TabsContent>
+
           <TabsContent value="interviews" className="mt-0 flex-1 overflow-y-auto p-4">
             <div className="space-y-4">
               {MILESTONE_ORDER.map((ms, msIdx) => (
@@ -606,23 +603,25 @@ function ApplicationDetailPanel({ app, candidateName, onAvailabilitySent, schedu
                   onSelfSchedule={() => setSelfScheduleOpen(true)}
                   schedulingStatus={schedulingStatus}
                   scheduledByTitle={scheduledByTitle}
+                  candidateName={candidateName}
+                  onCreateActivity={(input) => createActivity.mutate(input)}
                 />
               ))}
             </div>
           </TabsContent>
 
-          {["home", "feedback"].map((tab) => (
-            <TabsContent key={tab} value={tab} className="mt-0 flex flex-1 items-center justify-center">
-              <p className="text-sm text-muted-foreground">Coming soon</p>
-            </TabsContent>
-          ))}
+          <TabsContent value="notes" className="mt-0 flex-1 overflow-y-auto p-4">
+            <div className="mx-auto flex max-w-2xl flex-col gap-4">
+              <NotesCard />
+              <CommentsCard />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="feedback" className="mt-0 flex flex-1 overflow-hidden p-4">
+            <AllFeedbackTab />
+          </TabsContent>
         </Card>
       </Tabs>
-
-      <aside className="flex w-64 shrink-0 flex-col gap-4 overflow-y-auto px-4 pt-[48px] pb-4">
-        <NotesCard />
-        <CommentsCard />
-      </aside>
 
       <ScheduleInterviewDialog
         open={scheduleOpen}
@@ -679,6 +678,8 @@ function PipelineMilestone({
   onSelfSchedule,
   schedulingStatus: schStatus,
   scheduledByTitle,
+  candidateName,
+  onCreateActivity,
 }: {
   milestone: Milestone;
   index: number;
@@ -692,8 +693,120 @@ function PipelineMilestone({
   onSelfSchedule: () => void;
   schedulingStatus: SchedulingStatus;
   scheduledByTitle?: Record<string, Date>;
+  candidateName?: string;
+  onCreateActivity?: (input: CreateActivityInput) => void;
 }) {
   const [availExpanded, setAvailExpanded] = useState(false);
+  const [reassignOpen, setReassignOpen] = useState(false);
+  const [autoMoveMessage, setAutoMoveMessage] = useState<string | null>(null);
+  const [feedbacksByInterview, setFeedbacksByInterview] = useState<
+    Record<string, Record<string, InterviewFeedback>>
+  >({});
+  const moveForward = useMoveApplicationForward();
+
+  const orderedStages = useMemo(() => {
+    return [...allStages].sort((a, b) => {
+      const ai = MILESTONE_ORDER.indexOf(a.milestone);
+      const bi = MILESTONE_ORDER.indexOf(b.milestone);
+      if (ai !== bi) return ai - bi;
+      return a.sort_order - b.sort_order;
+    });
+  }, [allStages]);
+
+  const nextStage = useMemo(() => {
+    const currentIdx = orderedStages.findIndex(
+      (s) => s.id === app.current_stage_id,
+    );
+    return orderedStages[currentIdx + 1] ?? null;
+  }, [orderedStages, app.current_stage_id]);
+
+  const handleMoveForward = () => {
+    if (!nextStage) return;
+    moveForward.mutate({
+      applicationId: app.id,
+      candidateId: app.candidate_id,
+      nextStageId: nextStage.id,
+      nextMilestone: nextStage.milestone,
+    });
+  };
+
+  const handleReassign = (stageId: string, nextMilestone: Milestone) => {
+    moveForward.mutate(
+      {
+        applicationId: app.id,
+        candidateId: app.candidate_id,
+        nextStageId: stageId,
+        nextMilestone,
+      },
+      { onSuccess: () => setReassignOpen(false) },
+    );
+  };
+
+  const handleFeedbackChange = (
+    interviewTitle: string,
+    interviewerName: string,
+    feedback: InterviewFeedback,
+  ) => {
+    const next = {
+      ...feedbacksByInterview,
+      [interviewTitle]: {
+        ...(feedbacksByInterview[interviewTitle] ?? {}),
+        [interviewerName]: feedback,
+      },
+    };
+    setFeedbacksByInterview(next);
+
+    onCreateActivity?.({
+      candidateId: app.candidate_id,
+      applicationId: app.id,
+      activityType: "interviews_and_feedbacks",
+      action: "Feedback submitted",
+      detail: `${interviewerName} submitted feedback for ${interviewTitle}: ${feedback.overallRating ? RATING_LABELS[feedback.overallRating as Rating] : "No rating"}`,
+    });
+
+    const currentStage = allStages.find((s) => s.id === app.current_stage_id);
+    if (!currentStage) return;
+
+    const allInterviewers: { title: string; name: string }[] = [];
+    for (const iv of currentStage.req_interviews) {
+      for (const n of (iv.interviewer_name ?? "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)) {
+        allInterviewers.push({ title: iv.title, name: n });
+      }
+    }
+
+    const allHaveFeedback = allInterviewers.every(
+      ({ title, name }) => next[title]?.[name]?.overallRating,
+    );
+    if (!allHaveFeedback) return;
+
+    const allPositive = allInterviewers.every(({ title, name }) => {
+      const r = next[title]?.[name]?.overallRating;
+      return r === "yes" || r === "strong_yes";
+    });
+
+    if (allPositive && nextStage) {
+      setAutoMoveMessage(
+        `All interviewers said yes, moved to ${nextStage.name}`,
+      );
+      onCreateActivity?.({
+        candidateId: app.candidate_id,
+        applicationId: app.id,
+        activityType: "application_moved",
+        action: `Moved to ${nextStage.name}`,
+        detail: `Auto-advanced from ${currentStage.name} — all interviewers recommended`,
+      });
+      moveForward.mutate({
+        applicationId: app.id,
+        candidateId: app.candidate_id,
+        nextStageId: nextStage.id,
+        nextMilestone: nextStage.milestone,
+      });
+    }
+  };
+
   return (
     <div className="space-y-1">
       <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground/70">
@@ -710,6 +823,9 @@ function PipelineMilestone({
             );
             const isCurrent = status === "current";
             const isExpanded = stage.id === selectedStageId || isCurrent;
+            const allScheduled =
+              stage.req_interviews.length > 0 &&
+              stage.req_interviews.every((iv) => scheduledByTitle?.[iv.title]);
             return (
               <div
                 key={stage.id}
@@ -744,7 +860,7 @@ function PipelineMilestone({
                       <span className="ml-1.5">(current stage)</span>
                     )}
                   </span>
-                  {isCurrent && (
+                  {isCurrent && !allScheduled && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                         <Button size="sm">Schedule</Button>
@@ -882,10 +998,13 @@ function PipelineMilestone({
                           <InterviewTimeline
                             interviews={stage.req_interviews}
                             scheduledByTitle={scheduledByTitle}
+                            candidateName={candidateName}
+                            feedbacks={feedbacksByInterview}
+                            onFeedbackChange={handleFeedbackChange}
                           />
                         </div>
                       )}
-                      {status !== "completed" && (
+                      {status === "current" && (
                         <div className="flex items-center gap-2 border-t border-border/60 py-2">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -896,7 +1015,14 @@ function PipelineMilestone({
                             <DropdownMenuContent align="start">
                               <DropdownMenuItem>Add note</DropdownMenuItem>
                               <DropdownMenuItem>Add feedback</DropdownMenuItem>
-                              <DropdownMenuItem>Reassign stage</DropdownMenuItem>
+                              <DropdownMenuItem
+                                onSelect={(e) => {
+                                  e.preventDefault();
+                                  setReassignOpen(true);
+                                }}
+                              >
+                                Reassign stage
+                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                           <div className="flex-1" />
@@ -904,9 +1030,14 @@ function PipelineMilestone({
                             <X className="size-3.5" />
                             Reject
                           </Button>
-                          <Button variant="success" size="sm">
+                          <Button
+                            variant="success"
+                            size="sm"
+                            onClick={handleMoveForward}
+                            disabled={moveForward.isPending}
+                          >
+                            <Check className="size-3.5" />
                             Move forward
-                            <ArrowRight className="size-3.5" />
                           </Button>
                         </div>
                       )}
@@ -922,6 +1053,24 @@ function PipelineMilestone({
             <span>{MILESTONE_LABELS[milestone]}</span>
           </div>
         )}
+
+      {autoMoveMessage && (
+        <div className="animate-in fade-in slide-in-from-top-1 flex items-center gap-2 rounded-md bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 duration-300 dark:text-emerald-400">
+          <Sparkles className="size-3.5 shrink-0" />
+          <span>{autoMoveMessage}</span>
+        </div>
+      )}
+
+      <ReassignStageDialog
+        open={reassignOpen}
+        onOpenChange={setReassignOpen}
+        candidateName={candidateName ?? "this candidate"}
+        allStages={allStages}
+        currentStageId={app.current_stage_id}
+        defaultStageId={nextStage?.id ?? app.current_stage_id}
+        onConfirm={handleReassign}
+        isSaving={moveForward.isPending}
+      />
     </div>
   );
 }
@@ -1047,7 +1196,7 @@ function formatStatusLabel(status: string, date: string) {
     : `${STATUS_LABEL[status] ?? status} on: ${formatted}`;
 }
 
-function JobApplicationsTabContent({
+export function JobApplicationsTabContent({
   apps,
   preselectedAppId,
   candidateName,
@@ -1328,7 +1477,7 @@ const ACTIVITY_TYPE_ICON: Record<string, React.ComponentType<{ className?: strin
   pipeline_plan_updated: Workflow,
 };
 
-function ActivitiesTabContent({ apps, raSentEvents, candidateId, onCreateActivity }: { apps: ApplicationDetail[]; raSentEvents: RaSentEvent[]; candidateId: string; onCreateActivity: (input: CreateActivityInput) => void }) {
+export function ActivitiesTabContent({ apps, raSentEvents, candidateId, onCreateActivity }: { apps: ApplicationDetail[]; raSentEvents: RaSentEvent[]; candidateId: string; onCreateActivity: (input: CreateActivityInput) => void }) {
   const { data: dbActivities } = useCandidateActivities(candidateId);
 
   const reqOptions = useMemo(() => {

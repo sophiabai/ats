@@ -1,194 +1,69 @@
-"use client"
-
-import * as React from "react"
+import * as React from "react";
 import {
   BarChart3,
-  Bell,
   Bot,
-  Briefcase,
   ClipboardList,
   FileText,
-  Folder,
   Inbox,
   Search,
   Send,
   SquareKanban,
-  TrendingUp,
   UserSearch,
-  Users,
   Vote,
   Workflow,
-} from "lucide-react"
-import logoUrl from "@/assets/Logo.svg"
-import { NavAllApps } from "@/components/nav-all-apps"
-import { NavMain, type NavMainItem } from "@/components/nav-main"
-import { NavProjects } from "@/components/nav-projects"
-import { NavUser } from "@/components/nav-user"
-import { useChatBarStore } from "@/stores/chat-bar-store"
-import { useStarredRequisitionsStore } from "@/stores/starred-requisitions-store"
-import { useCandidatePools } from "@/features/candidates/api/use-candidate-pools"
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarRail,
-} from "@/components/ui/sidebar"
-import { formatReqTitle } from "@/lib/utils"
+} from "lucide-react";
 
-const user = {
-  name: "Sophia Bai",
-  email: "sophia@example.com",
-  avatar: "/avatars/sophia.jpg",
-}
+import { NavMain, type NavMainItem } from "@/components/nav-main";
+import { NavProjects, type NavProjectsItem } from "@/components/nav-projects";
+import { SiteSidebar } from "@/components/site-sidebar";
+import type { Sidebar } from "@/components/ui/sidebar";
+import { useCandidatesNavItem } from "@/features/candidates/nav";
+import { headcountNavItem } from "@/features/headcount-planning/nav";
+import { useRequisitionsNavItem } from "@/features/requisitions/nav";
+import { useChatBarStore } from "@/stores/chat-bar-store";
 
-const data = {
-  quickAccess: [
-    {
-      title: "Inbox",
-      url: "/inbox",
-      icon: Inbox,
-    },
+const recruitingOverflow: NavProjectsItem[] = [
+  { name: "Workflows", url: "/workflows", icon: Workflow },
+  { name: "My referral", url: "#", icon: UserSearch },
+  { name: "Internal job board", url: "/job-board", icon: SquareKanban },
+  { name: "Templates and defaults", url: "#", icon: FileText },
+  { name: "Candidate surveys", url: "#", icon: Vote },
+];
+
+export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
+  const setOpen = useChatBarStore((s) => s.setOpen);
+  const setDocked = useChatBarStore((s) => s.setDocked);
+
+  const requisitionsNavItem = useRequisitionsNavItem();
+  const candidatesNavItem = useCandidatesNavItem();
+
+  const quickAccess: NavMainItem[] = [
+    { title: "Inbox", url: "/inbox", icon: Inbox },
     {
       title: "Search",
       url: "#",
       icon: Search,
+      onClick: () => {
+        setDocked(false);
+        setOpen(true);
+      },
     },
-    {
-      title: "Outreach",
-      url: "#",
-      icon: Send,
-    },
-    {
-      title: "My Interviews",
-      url: "#",
-      icon: ClipboardList,
-    },
-  ],
-  recruitingOverflow: [
-    {
-      name: "Workflows",
-      url: "/workflows",
-      icon: Workflow,
-    },
-    {
-      name: "My Referral",
-      url: "#",
-      icon: UserSearch,
-    },
-    {
-      name: "Internal Job Board",
-      url: "/job-board",
-      icon: SquareKanban,
-    },
-    {
-      name: "Template and Defaults",
-      url: "#",
-      icon: FileText,
-    },
-    {
-      name: "Candidate Surveys",
-      url: "#",
-      icon: Vote,
-    },
-  ],
-}
+    { title: "Outreach", url: "#", icon: Send },
+    { title: "My interviews", url: "#", icon: ClipboardList },
+  ];
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { setOpen, setDocked } = useChatBarStore()
-  const starred = useStarredRequisitionsStore((s) => s.starred)
-  const { data: pools } = useCandidatePools()
-
-  const quickAccess: NavMainItem[] = data.quickAccess.map((item) =>
-    item.title === "Search" ? { ...item, onClick: () => { setDocked(false); setOpen(true) } } : item
-  )
-
-  const poolSubItems = [
-    { title: "All candidates", url: "/candidates" },
-    ...(pools ?? []).map((p) => ({
-      title: p.name,
-      url: `/candidates/pools/${p.id}`,
-      icon: Folder,
-    })),
-  ]
-
-  const recruiting = [
-    {
-      name: "Job Requisitions",
-      url: "/requisitions",
-      icon: Briefcase,
-      ...(starred.length > 0 && {
-        items: [
-          { title: "All requisitions", url: "/requisitions" },
-          ...starred.map((r) => ({ title: formatReqTitle(r.req_number, r.title), url: `/requisitions/${r.id}` })),
-        ],
-      }),
-    },
-    {
-      name: "Candidates",
-      url: "#",
-      icon: Users,
-      items: poolSubItems,
-    },
-    {
-      name: "Headcount Planning",
-      url: "/headcount-planning",
-      icon: TrendingUp,
-      items: [
-        { title: "My team", url: "/headcount-planning/my-team" },
-        { title: "Roster", url: "/headcount-planning/roster" },
-        { title: "Plan", url: "/headcount-planning/plan" },
-        { title: "Budget", url: "/headcount-planning/budget" },
-        { title: "Scenarios", url: "/headcount-planning/scenarios" },
-        { title: "Approvals", url: "/headcount-planning/approvals" },
-        { title: "Settings", url: "/headcount-planning/settings" },
-      ],
-    },
-    {
-      name: "Agents",
-      url: "/agents",
-      icon: Bot,
-    },
-    {
-      name: "Analytics",
-      url: "#",
-      icon: BarChart3,
-    },
-  ]
+  const recruiting: NavProjectsItem[] = [
+    requisitionsNavItem,
+    candidatesNavItem,
+    headcountNavItem,
+    { name: "Agents", url: "/agents", icon: Bot },
+    { name: "Analytics", url: "#", icon: BarChart3 },
+  ];
 
   return (
-    <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader className="items-start px-5 pt-5 pb-3 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:pt-3">
-        <img
-          src={logoUrl}
-          alt="Logo"
-          className="h-6 w-auto brightness-0 dark:brightness-100 [.rippling_&]:brightness-100 group-data-[collapsible=icon]:h-4"
-        />
-      </SidebarHeader>
-      <SidebarContent className="pt-2">
-        <NavAllApps />
-        <NavMain label="Quick Access" items={quickAccess} />
-        <NavProjects
-          label="Recruiting"
-          items={recruiting}
-          overflow={data.recruitingOverflow}
-        />
-      </SidebarContent>
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Notifications">
-              <Bell />
-              <span>Notifications</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-        <NavUser user={user} />
-      </SidebarFooter>
-      <SidebarRail />
-    </Sidebar>
-  )
+    <SiteSidebar {...props}>
+      <NavMain items={quickAccess} />
+      <NavProjects items={recruiting} overflow={recruitingOverflow} />
+    </SiteSidebar>
+  );
 }

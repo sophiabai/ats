@@ -301,7 +301,7 @@ export function Component() {
           description: req.description ?? "",
           assessment_criteria: req.assessment_criteria ?? [],
           linked_pool_ids: pools?.map((p) => p.id) ?? [],
-        } satisfies FormState}
+        } satisfies Partial<FormState>}
       />
     </div>
   );

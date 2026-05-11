@@ -1,5 +1,3 @@
-"use client"
-
 import { Link, useLocation } from "react-router"
 import { ChevronRight, MoreHorizontal, type LucideIcon } from "lucide-react"
 
@@ -25,7 +23,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 
-interface NavItem {
+export interface NavProjectsItem {
   name: string
   url: string
   icon: LucideIcon
@@ -41,9 +39,8 @@ export function NavProjects({
   items,
   overflow,
 }: {
-  label?: string
-  items: NavItem[]
-  overflow?: NavItem[]
+  items: NavProjectsItem[]
+  overflow?: NavProjectsItem[]
 }) {
   const { isMobile } = useSidebar()
   const { pathname } = useLocation()

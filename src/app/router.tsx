@@ -1,178 +1,63 @@
 import { createBrowserRouter, type RouteObject } from "react-router";
+
 import { RootLayout } from "@/app/layout";
+import { AppSidebar } from "@/components/app-sidebar";
+import { OrgChartSidebar } from "@/components/org-chart-sidebar";
+
+import { agentsRoutes } from "@/features/agents/routes";
+import { applicationsRoutes } from "@/features/applications/routes";
+import { assessmentRoutes } from "@/features/assessment/routes";
+import { candidatesRoutes } from "@/features/candidates/routes";
+import { docsRoutes } from "@/features/docs/routes";
+import { emailsRoutes } from "@/features/emails/routes";
+import { headcountPlanningRoutes } from "@/features/headcount-planning/routes";
+import { inboxRoutes } from "@/features/inbox/routes";
+import { interviewsRoutes } from "@/features/interviews/routes";
+import {
+  jobBoardRoutes,
+  publicJobBoardRoutes,
+} from "@/features/job-board/routes";
+import { orgChartRoutes } from "@/features/org-chart/routes";
+import { protoHubRoutes } from "@/features/proto-hub/routes";
+import { requisitionsRoutes } from "@/features/requisitions/routes";
+import { schedulingRoutes } from "@/features/scheduling/routes";
+import { workflowsRoutes } from "@/features/workflows/routes";
+
+// Routes that render inside the recruiting app shell.
+const recruitingRoutes: RouteObject[] = [
+  ...inboxRoutes,
+  ...requisitionsRoutes,
+  ...candidatesRoutes,
+  ...applicationsRoutes,
+  ...interviewsRoutes,
+  ...assessmentRoutes,
+  ...emailsRoutes,
+  ...headcountPlanningRoutes,
+  ...agentsRoutes,
+  ...workflowsRoutes,
+  ...jobBoardRoutes,
+];
+
+// Routes outside any app shell (public pages, prototypes).
+const publicRoutes: RouteObject[] = [
+  ...docsRoutes,
+  ...protoHubRoutes,
+  ...schedulingRoutes,
+  ...publicJobBoardRoutes,
+];
 
 const routes: RouteObject[] = [
-  {
-    path: "pipeline-automation",
-    HydrateFallback: () => null,
-    lazy: () =>
-      import("@/features/docs/pipeline-automation-page"),
-  },
-  {
-    path: "proto-hub",
-    HydrateFallback: () => null,
-    lazy: () => import("@/features/proto-hub/proto-hub-page"),
-  },
-  {
-    path: "candidate-email",
-    HydrateFallback: () => null,
-    lazy: () =>
-      import("@/features/scheduling/candidate-availability-page"),
-  },
-  {
-    path: "candidate-email/:slug",
-    HydrateFallback: () => null,
-    lazy: () =>
-      import("@/features/scheduling/candidate-availability-page"),
-  },
-  {
-    path: "candidate-availability-acme-ai",
-    HydrateFallback: () => null,
-    lazy: () =>
-      import("@/features/scheduling/candidate-availability-acme-ai-page"),
-  },
-  {
-    path: "candidate-schedule-acme-ai",
-    HydrateFallback: () => null,
-    lazy: () =>
-      import("@/features/scheduling/candidate-schedule-acme-ai-page"),
-  },
-  {
-    path: "careers",
-    HydrateFallback: () => null,
-    lazy: () =>
-      import("@/features/job-board/public-job-board-page"),
-  },
-  {
-    path: "careers/:postId",
-    HydrateFallback: () => null,
-    lazy: () =>
-      import("@/features/job-board/public-job-post-detail-page"),
-  },
+  ...publicRoutes,
   {
     path: "/",
-    element: <RootLayout />,
+    element: <RootLayout sidebar={<AppSidebar />} />,
     HydrateFallback: () => null,
-    children: [
-      {
-        index: true,
-        lazy: () => import("@/features/home/home-page"),
-      },
-      {
-        path: "requisitions",
-        lazy: () => import("@/features/requisitions/requisitions-page"),
-      },
-      {
-        path: "requisitions/:reqId",
-        lazy: () => import("@/features/requisitions/requisition-detail-page"),
-      },
-      {
-        path: "candidates",
-        lazy: () => import("@/features/candidates/candidates-page"),
-      },
-      {
-        path: "candidates/pools/:poolId",
-        lazy: () => import("@/features/candidates/candidate-pool-page"),
-      },
-      {
-        path: "candidates/:candidateId",
-        lazy: () => import("@/features/candidates/candidate-detail-page"),
-      },
-      {
-        path: "applications",
-        lazy: () => import("@/features/applications/applications-page"),
-      },
-      {
-        path: "interviews",
-        lazy: () => import("@/features/interviews/interviews-page"),
-      },
-      {
-        path: "assessments",
-        lazy: () => import("@/features/assessment/assessments-page"),
-      },
-      {
-        path: "emails",
-        lazy: () => import("@/features/emails/emails-page"),
-      },
-      {
-        path: "headcount-planning",
-        lazy: () =>
-          import(
-            "@/features/headcount-planning/headcount-planning-page"
-          ),
-      },
-      {
-        path: "headcount-planning/my-team",
-        lazy: () =>
-          import("@/features/headcount-planning/my-team-page"),
-      },
-      {
-        path: "headcount-planning/roster",
-        lazy: () =>
-          import("@/features/headcount-planning/roster-page"),
-      },
-      {
-        path: "headcount-planning/plan",
-        lazy: () =>
-          import("@/features/headcount-planning/plan-page"),
-      },
-      {
-        path: "headcount-planning/past-plans",
-        lazy: () =>
-          import("@/features/headcount-planning/past-plans-page"),
-      },
-      {
-        path: "headcount-planning/budget",
-        lazy: () =>
-          import("@/features/headcount-planning/budget-page"),
-      },
-      {
-        path: "headcount-planning/scenarios",
-        lazy: () =>
-          import("@/features/headcount-planning/scenarios-page"),
-      },
-      {
-        path: "headcount-planning/approvals",
-        lazy: () =>
-          import(
-            "@/features/headcount-planning/approval-requests-page"
-          ),
-      },
-      {
-        path: "headcount-planning/settings",
-        lazy: () =>
-          import("@/features/headcount-planning/settings-page"),
-      },
-      {
-        path: "inbox",
-        lazy: () => import("@/features/inbox/inbox-page"),
-      },
-      {
-        path: "agents",
-        lazy: () => import("@/features/agents/agents-page"),
-      },
-      {
-        path: "workflows",
-        lazy: () => import("@/features/workflows/workflows-page"),
-      },
-      {
-        path: "workflows/review",
-        lazy: () => import("@/features/workflows/sop-review-page"),
-      },
-      {
-        path: "workflows/builder",
-        lazy: () => import("@/features/workflows/workflow-builder-page"),
-      },
-      {
-        path: "job-board",
-        lazy: () => import("@/features/job-board/job-board-page"),
-      },
-      {
-        path: "job-board/:postId",
-        lazy: () =>
-          import("@/features/job-board/job-post-detail-page"),
-      },
-    ],
+    children: recruitingRoutes,
+  },
+  {
+    element: <RootLayout sidebar={<OrgChartSidebar />} />,
+    HydrateFallback: () => null,
+    children: orgChartRoutes,
   },
 ];
 

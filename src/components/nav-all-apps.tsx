@@ -11,6 +11,7 @@ import {
   Heart,
   LayoutGrid,
   Monitor,
+  Network,
   RefreshCw,
   ScanFace,
   Settings,
@@ -46,9 +47,18 @@ interface AppCategory {
   icon: LucideIcon
   items: AppItem[]
   separatorAfter?: boolean
+  /** When set, clicking the category navigates here directly instead of showing sub-items. */
+  url?: string
 }
 
 const CATEGORIES: AppCategory[] = [
+  {
+    id: "org-chart",
+    label: "Org chart",
+    icon: Network,
+    items: [],
+    url: "/org-chart",
+  },
   {
     id: "hr",
     label: "HR",
@@ -130,7 +140,7 @@ export function NavAllApps() {
   const active = CATEGORIES.find((c) => c.id === activeId) ?? CATEGORIES[0]
 
   return (
-    <SidebarGroup>
+    <SidebarGroup className="pb-0">
       <SidebarMenu>
         <SidebarMenuItem>
           <Popover open={open} onOpenChange={setOpen}>
@@ -150,25 +160,41 @@ export function NavAllApps() {
                 {CATEGORIES.map((category) => {
                   const isActive = category.id === activeId
                   const Icon = category.icon
+                  const buttonClass = cn(
+                    "flex w-full items-center justify-between gap-2 rounded-md px-2 py-2 text-sm transition-colors",
+                    isActive
+                      ? "bg-accent text-accent-foreground"
+                      : "text-foreground/80 hover:bg-accent/60 hover:text-foreground",
+                  )
                   return (
                     <div key={category.id}>
-                      <button
-                        type="button"
-                        onMouseEnter={() => setActiveId(category.id)}
-                        onFocus={() => setActiveId(category.id)}
-                        className={cn(
-                          "flex w-full items-center justify-between gap-2 rounded-md px-2 py-2 text-sm transition-colors",
-                          isActive
-                            ? "bg-accent text-accent-foreground"
-                            : "text-foreground/80 hover:bg-accent/60 hover:text-foreground",
-                        )}
-                      >
-                        <span className="flex items-center gap-2">
-                          <Icon className="size-4 text-muted-foreground" />
-                          {category.label}
-                        </span>
-                        <ChevronRight className="size-3.5 text-muted-foreground" />
-                      </button>
+                      {category.url ? (
+                        <Link
+                          to={category.url}
+                          onMouseEnter={() => setActiveId(category.id)}
+                          onFocus={() => setActiveId(category.id)}
+                          onClick={() => setOpen(false)}
+                          className={buttonClass}
+                        >
+                          <span className="flex items-center gap-2">
+                            <Icon className="size-4 text-muted-foreground" />
+                            {category.label}
+                          </span>
+                        </Link>
+                      ) : (
+                        <button
+                          type="button"
+                          onMouseEnter={() => setActiveId(category.id)}
+                          onFocus={() => setActiveId(category.id)}
+                          className={buttonClass}
+                        >
+                          <span className="flex items-center gap-2">
+                            <Icon className="size-4 text-muted-foreground" />
+                            {category.label}
+                          </span>
+                          <ChevronRight className="size-3.5 text-muted-foreground" />
+                        </button>
+                      )}
                       {category.separatorAfter && (
                         <div className="my-1.5 h-px bg-border" aria-hidden />
                       )}
@@ -181,27 +207,33 @@ export function NavAllApps() {
                 <div className="px-2 pt-1.5 pb-1 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
                   {active.label}
                 </div>
-                <div className="flex flex-col">
-                  {active.items.map((item, idx) => {
-                    const ItemIcon = item.icon
-                    return (
-                      <Link
-                        key={item.label}
-                        to={item.url}
-                        onClick={() => setOpen(false)}
-                        className={cn(
-                          "flex items-center gap-2 rounded-md px-2 py-2 text-sm transition-colors",
-                          idx === 0
-                            ? "bg-accent text-accent-foreground"
-                            : "text-foreground/80 hover:bg-accent/60 hover:text-foreground",
-                        )}
-                      >
-                        <ItemIcon className="size-4 text-muted-foreground" />
-                        {item.label}
-                      </Link>
-                    )
-                  })}
-                </div>
+                {active.items.length > 0 ? (
+                  <div className="flex flex-col">
+                    {active.items.map((item, idx) => {
+                      const ItemIcon = item.icon
+                      return (
+                        <Link
+                          key={item.label}
+                          to={item.url}
+                          onClick={() => setOpen(false)}
+                          className={cn(
+                            "flex items-center gap-2 rounded-md px-2 py-2 text-sm transition-colors",
+                            idx === 0
+                              ? "bg-accent text-accent-foreground"
+                              : "text-foreground/80 hover:bg-accent/60 hover:text-foreground",
+                          )}
+                        >
+                          <ItemIcon className="size-4 text-muted-foreground" />
+                          {item.label}
+                        </Link>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <p className="px-2 py-2 text-sm text-muted-foreground">
+                    Open {active.label.toLowerCase()} to get started.
+                  </p>
+                )}
               </div>
             </PopoverContent>
           </Popover>

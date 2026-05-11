@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { marked } from "marked";
 import {
   Briefcase,
+  CalendarClock,
   FileText,
   ListChecks,
   Loader2,
@@ -15,6 +16,10 @@ import {
   Users,
 } from "lucide-react";
 import { StepNav } from "@/components/custom/step-nav";
+import {
+  InterviewPlanCardList,
+  type InterviewPlanSession,
+} from "@/features/candidates/components/scheduling/interview-plan-card";
 import { API_ENDPOINTS, DEFAULT_MODEL } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import {
@@ -64,7 +69,32 @@ const STEPS = [
   { label: "Job description", subtitle: "Write or generate with AI", icon: FileText },
   { label: "Assessment criteria", subtitle: "Evaluation criteria", icon: ListChecks },
   { label: "Candidate pools", subtitle: "Link sourcing pools", icon: Users },
+  { label: "Interview plan", subtitle: "Default loop sessions", icon: CalendarClock },
 ] as const;
+
+const DEFAULT_INTERVIEW_PLAN: InterviewPlanSession[] = [
+  {
+    title: "Phone screen",
+    startHour: 9,
+    durationMinutes: 30,
+    room: "SF-15-Bruce(6) [Zoom]",
+    participants: [],
+  },
+  {
+    title: "Hiring manager",
+    startHour: 9,
+    durationMinutes: 45,
+    room: "SF-15-Bruce(6) [Zoom]",
+    participants: [],
+  },
+  {
+    title: "Technical",
+    startHour: 9,
+    durationMinutes: 60,
+    room: "SF-15-Bruce(6) [Zoom]",
+    participants: [],
+  },
+];
 
 export interface FormState {
   title: string;
@@ -80,6 +110,7 @@ export interface FormState {
   description: string;
   assessment_criteria: string[];
   linked_pool_ids: string[];
+  interview_plan: InterviewPlanSession[];
 }
 
 const INITIAL_FORM: FormState = {
@@ -96,6 +127,7 @@ const INITIAL_FORM: FormState = {
   description: "",
   assessment_criteria: [],
   linked_pool_ids: [],
+  interview_plan: [],
 };
 
 async function aiGenerateViaApi(prompt: string): Promise<string> {
@@ -318,6 +350,9 @@ Return ONLY a valid JSON array of strings, no other text. Example: ["Technical d
               )}
               {step === 4 && (
                 <Step4 form={form} updateField={updateField} />
+              )}
+              {step === 5 && (
+                <Step5 form={form} updateField={updateField} />
               )}
             </div>
 
@@ -724,6 +759,86 @@ function Step4({
           </label>
         ))}
       </div>
+    </div>
+  );
+}
+
+function Step5({
+  form,
+  updateField,
+}: {
+  form: FormState;
+  updateField: <K extends keyof FormState>(field: K, value: FormState[K]) => void;
+}) {
+  const plan = form.interview_plan ?? [];
+
+  React.useEffect(() => {
+    if (plan.length === 0) {
+      updateField("interview_plan", DEFAULT_INTERVIEW_PLAN.map((s) => ({ ...s })));
+    }
+  }, [plan.length]);
+
+  function updateSession(index: number, patch: Partial<InterviewPlanSession>) {
+    updateField(
+      "interview_plan",
+      plan.map((s, i) => (i === index ? { ...s, ...patch } : s)),
+    );
+  }
+
+  function reorderSessions(fromIdx: number, toIdx: number) {
+    if (
+      fromIdx === toIdx ||
+      fromIdx < 0 ||
+      toIdx < 0 ||
+      fromIdx >= plan.length ||
+      toIdx >= plan.length
+    ) {
+      return;
+    }
+    const next = plan.slice();
+    const [moved] = next.splice(fromIdx, 1);
+    next.splice(toIdx, 0, moved);
+    updateField("interview_plan", next);
+  }
+
+  function addSession() {
+    updateField("interview_plan", [
+      ...plan,
+      {
+        title: "New session",
+        startHour: 9,
+        durationMinutes: 45,
+        room: "SF-15-Bruce(6) [Zoom]",
+        participants: [],
+      },
+    ]);
+  }
+
+  return (
+    <div className="grid gap-4">
+      <p className="text-sm text-muted-foreground">
+        Define the default interview loop for this role. These sessions will be
+        used as the starting template when scheduling candidates.
+      </p>
+
+      <InterviewPlanCardList
+        interviews={plan}
+        dateShort=""
+        onUpdateInterview={updateSession}
+        onReorderInterviews={reorderSessions}
+        hideDateTime
+      />
+
+      <Button
+        type="button"
+        variant="link"
+        size="sm"
+        className="h-auto w-fit gap-1.5 px-0"
+        onClick={addSession}
+      >
+        <Plus className="size-3.5" />
+        Add session
+      </Button>
     </div>
   );
 }

@@ -12,10 +12,12 @@ export const API_ENDPOINTS = {
 
 export const DEFAULT_MODEL = "gpt-4o" as const;
 
-// Demo-app identity for the currently signed-in recruiter.
+// Demo-app identity for the currently signed-in user.
 export const CURRENT_USER = {
   name: "Anne Montgomery",
-  company: "ACME AI",
+  email: "anne@acme.com",
+  company: "ACME",
+  avatar: "/avatars/sophia.jpg",
 } as const;
 
 export const MILESTONES = [

@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react"
-import { Link } from "react-router"
+import { Link, useLocation } from "react-router"
 
 import {
   SidebarGroup,
@@ -19,37 +19,46 @@ export interface NavMainItem {
 export function NavMain({
   items,
 }: {
-  label?: string
   items: NavMainItem[]
 }) {
+  const { pathname } = useLocation()
+
+  function matchesPath(url: string) {
+    if (!url || url === "#") return false
+    return pathname === url || pathname.startsWith(url + "/")
+  }
+
   return (
     <SidebarGroup>
       <SidebarMenu>
-        {items.map((item) => (
-          <SidebarMenuItem key={item.title}>
-            {item.onClick ? (
-              <SidebarMenuButton
-                isActive={item.isActive}
-                tooltip={item.title}
-                onClick={item.onClick}
-              >
-                {item.icon && <item.icon />}
-                <span>{item.title}</span>
-              </SidebarMenuButton>
-            ) : (
-              <SidebarMenuButton
-                asChild
-                isActive={item.isActive}
-                tooltip={item.title}
-              >
-                <Link to={item.url}>
+        {items.map((item) => {
+          const active = item.isActive ?? matchesPath(item.url)
+          return (
+            <SidebarMenuItem key={item.title}>
+              {item.onClick ? (
+                <SidebarMenuButton
+                  isActive={active}
+                  tooltip={item.title}
+                  onClick={item.onClick}
+                >
                   {item.icon && <item.icon />}
                   <span>{item.title}</span>
-                </Link>
-              </SidebarMenuButton>
-            )}
-          </SidebarMenuItem>
-        ))}
+                </SidebarMenuButton>
+              ) : (
+                <SidebarMenuButton
+                  asChild
+                  isActive={active}
+                  tooltip={item.title}
+                >
+                  <Link to={item.url}>
+                    {item.icon && <item.icon />}
+                    <span>{item.title}</span>
+                  </Link>
+                </SidebarMenuButton>
+              )}
+            </SidebarMenuItem>
+          )
+        })}
       </SidebarMenu>
     </SidebarGroup>
   )

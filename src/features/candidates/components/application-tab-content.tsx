@@ -10,6 +10,7 @@ import {
   Pencil,
   XCircle,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -25,6 +26,12 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import {
+  InterviewFeedbackDialog,
+  RATING_LABELS,
+  type InterviewFeedback,
+  type Rating,
+} from "@/features/candidates/components/interview-feedback-dialog";
 import { useCriteriaEvaluations } from "@/features/requisitions/api/use-criteria-evaluations";
 import type { ApplicationDetail } from "@/features/candidates/api/use-candidate-detail";
 import type { Milestone, ReqInterview } from "@/types/database";
@@ -79,8 +86,8 @@ export function StageIcon({ status }: { status: StageStatus }) {
     );
   if (status === "current")
     return (
-      <div className="flex size-5 items-center justify-center rounded-full border border-muted-foreground/30 text-muted-foreground">
-        <MoreHorizontal className="size-3" />
+      <div className="flex size-5 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600">
+        <MoreHorizontal className="size-3" strokeWidth={3} />
       </div>
     );
   return (
@@ -93,9 +100,19 @@ export function StageIcon({ status }: { status: StageStatus }) {
 export function InterviewTimeline({
   interviews,
   scheduledByTitle,
+  candidateName,
+  feedbacks,
+  onFeedbackChange,
 }: {
   interviews: ReqInterview[];
   scheduledByTitle?: Record<string, Date>;
+  candidateName?: string;
+  feedbacks?: Record<string, Record<string, InterviewFeedback>>;
+  onFeedbackChange?: (
+    interviewTitle: string,
+    interviewerName: string,
+    feedback: InterviewFeedback,
+  ) => void;
 }) {
   return (
     <div className="pt-3">
@@ -105,6 +122,13 @@ export function InterviewTimeline({
           interview={iv}
           isLast={idx === interviews.length - 1}
           scheduledAt={scheduledByTitle?.[iv.title]}
+          candidateName={candidateName}
+          feedbacks={feedbacks?.[iv.title]}
+          onFeedbackChange={
+            onFeedbackChange
+              ? (name, fb) => onFeedbackChange(iv.title, name, fb)
+              : undefined
+          }
         />
       ))}
     </div>
@@ -132,22 +156,97 @@ function feedbackFormLabel(title: string) {
   return title.split(" (")[0];
 }
 
+const POSITIVE_RATINGS: ReadonlySet<Rating> = new Set(["yes", "strong_yes"]);
+
+function FeedbackRatingBadge({ rating }: { rating: Rating }) {
+  const isPositive = POSITIVE_RATINGS.has(rating);
+  return (
+    <Badge
+      className={cn(
+        "gap-0.5 border-0 px-1.5 py-0 text-[10px] font-medium",
+        isPositive
+          ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+          : "bg-red-500/15 text-red-700 dark:text-red-400",
+      )}
+    >
+      {isPositive ? (
+        <Check className="size-3" strokeWidth={3} />
+      ) : (
+        <XCircle className="size-3" />
+      )}
+      {RATING_LABELS[rating]}
+    </Badge>
+  );
+}
+
+function InterviewerLine({
+  name,
+  onOpenFeedback,
+  feedback,
+}: {
+  name: string;
+  onOpenFeedback?: () => void;
+  feedback?: InterviewFeedback;
+}) {
+  const hasFeedback = Boolean(feedback);
+  const rating = feedback?.overallRating;
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className="text-sm leading-5 text-muted-foreground">{name}</span>
+      {rating && <FeedbackRatingBadge rating={rating} />}
+      {onOpenFeedback && (
+        hasFeedback ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-6 text-muted-foreground"
+            onClick={onOpenFeedback}
+          >
+            <Pencil className="size-3" />
+          </Button>
+        ) : (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 px-2 text-xs text-muted-foreground"
+            onClick={onOpenFeedback}
+          >
+            <Pencil className="size-3" />
+            Add feedback
+          </Button>
+        )
+      )}
+    </div>
+  );
+}
+
 function InterviewRow({
   interview,
   isLast,
   scheduledAt,
+  candidateName,
+  feedbacks,
+  onFeedbackChange,
 }: {
   interview: ReqInterview;
   isLast: boolean;
   scheduledAt?: Date;
+  candidateName?: string;
+  feedbacks?: Record<string, InterviewFeedback>;
+  onFeedbackChange?: (interviewerName: string, feedback: InterviewFeedback) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [feedbackInterviewer, setFeedbackInterviewer] = useState<string | null>(
+    null,
+  );
   const interviewers = (interview.interviewer_name ?? "")
     .split(",")
     .map((n) => n.trim())
     .filter(Boolean);
   const isTechnical = TECHNICAL_INTERVIEW_TYPES.has(interview.interview_type);
   const notes = interview.instructions || DEFAULT_INTERVIEWER_NOTES;
+  const openFeedback = (name: string) => () => setFeedbackInterviewer(name);
 
   return (
     <div className="flex gap-2">
@@ -180,12 +279,12 @@ function InterviewRow({
         {!expanded &&
           (interviewers.length > 0 ? (
             interviewers.map((name) => (
-              <p
+              <InterviewerLine
                 key={name}
-                className="text-sm leading-5 text-muted-foreground"
-              >
-                {name}
-              </p>
+                name={name}
+                onOpenFeedback={openFeedback(name)}
+                feedback={feedbacks?.[name]}
+              />
             ))
           ) : (
             <p className="text-sm leading-5 text-muted-foreground">
@@ -215,12 +314,12 @@ function InterviewRow({
                 </div>
                 {interviewers.length > 0 ? (
                   interviewers.map((name) => (
-                    <p
+                    <InterviewerLine
                       key={name}
-                      className="text-sm leading-5 text-muted-foreground"
-                    >
-                      {name}
-                    </p>
+                      name={name}
+                      onOpenFeedback={openFeedback(name)}
+                      feedback={feedbacks?.[name]}
+                    />
                   ))
                 ) : (
                   <p className="text-sm leading-5 text-muted-foreground">
@@ -315,6 +414,22 @@ function InterviewRow({
           </div>
         </div>
       </div>
+      <InterviewFeedbackDialog
+        open={feedbackInterviewer !== null}
+        onOpenChange={(open) => {
+          if (!open) setFeedbackInterviewer(null);
+        }}
+        candidateName={candidateName ?? "Candidate"}
+        interviewerName={feedbackInterviewer ?? ""}
+        interviewTitle={interview.title}
+        initialValue={
+          feedbackInterviewer ? feedbacks?.[feedbackInterviewer] : undefined
+        }
+        onSave={(value) => {
+          if (!feedbackInterviewer) return;
+          onFeedbackChange?.(feedbackInterviewer, value);
+        }}
+      />
     </div>
   );
 }

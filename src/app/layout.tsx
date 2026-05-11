@@ -1,9 +1,18 @@
+import type { ReactNode } from "react";
 import { Sparkles } from "lucide-react";
-import { Link, Outlet, useLocation } from "react-router";
-import { AppSidebar } from "@/components/app-sidebar";
+import { Link, Outlet, useLocation, useMatches } from "react-router";
+import type { RouteHandle, RouteCrumb } from "@/app/route-meta";
 import { CommandBar } from "@/components/command-bar";
+import {
+  HeaderActionsProvider,
+  useHeaderActionsRefCallback,
+} from "@/components/header-actions-portal";
 import { VariantDropdown } from "@/components/custom/variant-dropdown";
+import { DockedCandidatePanel } from "@/components/docked-candidate-panel";
 import { DockedChatPanel } from "@/components/docked-chat-panel";
+import { EmployeeProfilePanel } from "@/features/org-chart/components/employee-profile-panel";
+import { useInboxDetailStore } from "@/stores/inbox-detail-store";
+import { useOrgChartDetailStore } from "@/stores/org-chart-detail-store";
 import { Button } from "@/components/ui/button";
 import { useChatBarStore } from "@/stores/chat-bar-store";
 import { useThemeUrlSync } from "@/hooks/use-theme-url-sync";
@@ -24,107 +33,57 @@ import {
 import { Toaster } from "@/components/ui/sonner";
 import { usePageTitleStore } from "@/stores/page-title-store";
 
+// State shape passed via `<Link state={...}>` to override the static
+// route-handle crumbs with navigation-context crumbs (e.g. arriving at a
+// candidate detail page from "Requisition X" vs. from the candidates list).
 export interface BreadcrumbState {
-  breadcrumb?: Array<{ title: string; href: string }>;
+  breadcrumb?: RouteCrumb[];
   pageTitle?: string;
 }
 
-interface Crumb {
-  title: string;
-  href: string;
-}
-
-const SEGMENT_TITLES: Record<string, string> = {
-  requisitions: "Requisitions",
-  candidates: "Candidates",
-  applications: "Applications",
-  interviews: "Interviews",
-  assessments: "Assessments",
-  emails: "Emails",
-  inbox: "Inbox",
-  "headcount-planning": "Headcount planning",
-  workflows: "Workflows",
-  "job-board": "Internal job board",
-  "my-team": "My team",
-  roster: "Roster",
-  plan: "Plan",
-  "past-plans": "Past plans",
-  budget: "Budget",
-  scenarios: "Scenarios",
-  approvals: "Approvals",
-  settings: "Settings",
-};
-
-const ROUTE_OVERRIDES: Record<string, { crumbs: Crumb[]; page: string }> = {
-  "headcount-planning/past-plans": {
-    crumbs: [
-      { title: "Headcount planning", href: "/headcount-planning" },
-      { title: "Plan", href: "/headcount-planning/plan" },
-    ],
-    page: "Past plans",
-  },
-  "workflows/review": {
-    crumbs: [{ title: "Workflows", href: "/workflows" }],
-    page: "Create SOP",
-  },
-  "workflows/builder": {
-    crumbs: [{ title: "Workflows", href: "/workflows" }],
-    page: "Workflow builder",
-  },
-};
-
-function useBreadcrumbs(): { crumbs: Crumb[]; page: string } {
-  const { pathname, state } = useLocation() as {
-    pathname: string;
-    state: BreadcrumbState | null;
-  };
+function useBreadcrumbs(): { crumbs: RouteCrumb[]; page: string } {
+  const { state } = useLocation() as { state: BreadcrumbState | null };
+  const matches = useMatches();
   const dynamicTitle = usePageTitleStore((s) => s.pageTitle);
-  const segments = pathname.split("/").filter(Boolean);
 
-  if (segments.length === 0) {
-    return { crumbs: [], page: "Home" };
-  }
+  // The leaf route owns its breadcrumb metadata via the route's `handle`.
+  const leaf = matches[matches.length - 1];
+  const handle = (leaf?.handle ?? {}) as RouteHandle;
 
+  // Per-navigation override always wins (e.g. arriving at a detail page via
+  // a contextual link that wants its own crumb chain).
   if (state?.breadcrumb && state.breadcrumb.length > 0) {
     return {
       crumbs: state.breadcrumb,
-      page: state.pageTitle ?? dynamicTitle ?? "Details",
+      page: state.pageTitle ?? dynamicTitle ?? handle.title ?? "Details",
     };
   }
 
-  const routeKey = segments.join("/");
-  if (ROUTE_OVERRIDES[routeKey]) {
-    return ROUTE_OVERRIDES[routeKey];
-  }
-
-  const crumbs: Crumb[] = [];
-  for (let i = 0; i < segments.length - 1; i++) {
-    const title = SEGMENT_TITLES[segments[i]];
-    if (title) {
-      crumbs.push({ title, href: "/" + segments.slice(0, i + 1).join("/") });
-    }
-  }
-
-  const lastSegment = segments[segments.length - 1];
-  const page =
-    SEGMENT_TITLES[lastSegment] ?? state?.pageTitle ?? dynamicTitle ?? "Details";
-
-  return { crumbs, page };
+  return {
+    crumbs: handle.parents ?? [],
+    page: handle.title ?? state?.pageTitle ?? dynamicTitle ?? "Details",
+  };
 }
 
-export function RootLayout() {
+// `sidebar` is required: each app's route subtree wraps `RootLayout` with its
+// own sidebar so the layout never has to know which app it's rendering.
+export function RootLayout({ sidebar }: { sidebar: ReactNode }) {
   const { crumbs, page } = useBreadcrumbs();
   const docked = useChatBarStore((s) => s.docked);
   const toggleDocked = useChatBarStore((s) => s.toggleDocked);
+  const candidatePanelOpen = useInboxDetailStore((s) => !!s.candidateId);
+  const employeePanelOpen = useOrgChartDetailStore((s) => !!s.employeeId);
+  const [headerActionsEl, setHeaderActionsEl] = useHeaderActionsRefCallback();
 
   useThemeUrlSync();
 
   return (
+    <HeaderActionsProvider value={headerActionsEl}>
     <div className="flex h-svh flex-col">
       <SidebarProvider className="min-h-0 flex-1 overflow-hidden">
-        <AppSidebar />
+        {sidebar}
         <SidebarInset className="relative min-w-0 min-h-0 overflow-hidden bg-white dark:bg-stone-950">
-          <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-in-out-quart group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+          <header className="flex h-16 shrink-0 items-center gap-2 pr-12 transition-[width,height] ease-in-out-quart group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
             <div className="flex items-center gap-2 px-4">
               <SidebarTrigger className="-ml-1" />
               <Separator
@@ -152,12 +111,15 @@ export function RootLayout() {
                 </BreadcrumbList>
               </Breadcrumb>
             </div>
-            <div className="ml-auto flex items-center gap-2 pr-4 pl-2">
-              <VariantDropdown />
-              <Separator
-                orientation="vertical"
-                className="data-[orientation=vertical]:h-4"
-              />
+            <div className="w-4 shrink-0" />
+            <div
+              ref={setHeaderActionsEl}
+              className="ml-auto flex items-center gap-2"
+            />
+            <div className="flex items-center gap-2 pl-2">
+              <div className="-translate-y-[1px]">
+                <VariantDropdown />
+              </div>
               <Button
                 variant="ghost"
                 size="icon-sm"
@@ -169,14 +131,17 @@ export function RootLayout() {
               </Button>
             </div>
           </header>
-          <div className="flex w-full flex-1 flex-col gap-6 overflow-y-auto px-17 pt-6">
+          <div className="flex w-full flex-1 flex-col gap-6 overflow-y-auto px-12 pt-6">
             <Outlet />
           </div>
         </SidebarInset>
+        {candidatePanelOpen && <DockedCandidatePanel />}
+        {employeePanelOpen && <EmployeeProfilePanel />}
         {docked && <DockedChatPanel />}
       </SidebarProvider>
       <CommandBar />
       <Toaster position="bottom-center" />
     </div>
+    </HeaderActionsProvider>
   );
 }

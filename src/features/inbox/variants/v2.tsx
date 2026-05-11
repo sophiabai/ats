@@ -1,21 +1,32 @@
 import { Link } from "react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Bot,
   Calendar,
+  Check,
   CheckCircle2,
   ChevronDown,
   FileText,
+  ListFilter,
   Mail,
   MessageSquare,
   Search,
   Send,
   Undo2,
   User,
+  X,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { cn, formatReqTitle } from "@/lib/utils";
 import {
   Card,
@@ -29,9 +40,22 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Toggle } from "@/components/ui/toggle";
 import { supabase } from "@/lib/supabase";
+import { useInboxDetailStore } from "@/stores/inbox-detail-store";
 import { MILESTONE_ORDER } from "@/features/candidates/components/application-tab-content";
 import type {
   Application,
@@ -513,36 +537,40 @@ const AGENT_ACTIVITIES: Activity[] = [
   },
 ];
 
-function ApplicationCard({ app }: { app: ApplicationRow }) {
+function ApplicationCard({
+  app,
+  selected,
+  onSelect,
+}: {
+  app: ApplicationRow;
+  selected: boolean;
+  onSelect: () => void;
+}) {
   const c = app.candidates;
   const status = deriveStatus(app);
   const message = status === "new-message" ? getMessagePreview(app) : null;
 
   return (
-    <Link
-      to={`/candidates/${c.id}?app=${app.id}`}
-      target="_blank"
-      className="flex flex-col gap-2 rounded-lg bg-card p-3 shadow-sm transition-shadow hover:shadow-md"
-    >
-      <div className="flex items-center gap-2">
-        <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-medium text-muted-foreground">
-          {getInitials(c)}
-        </span>
-        <span className="truncate text-sm font-medium">
-          {c.first_name} {c.last_name}
-        </span>
-      </div>
-      {status && (
-        <Badge
-          variant="secondary"
-          className={cn(
-            "w-fit px-1.5 py-0 text-[11px]",
-            STATUS_CONFIG[status].className,
-          )}
-        >
-          {STATUS_CONFIG[status].label}
-        </Badge>
+    <button
+      type="button"
+      onClick={onSelect}
+      className={cn(
+        "flex flex-col gap-2 rounded-lg bg-card p-3 text-left shadow-sm transition-shadow hover:shadow-md",
+        selected && "shadow-md ring-1 ring-berry-600",
       )}
+    >
+      <div className="min-w-0">
+        <div className="truncate text-sm font-medium">
+          {c.first_name} {c.last_name}
+        </div>
+        {(c.current_title || c.current_company) && (
+          <div className="truncate text-xs text-muted-foreground">
+            {c.current_title && c.current_company
+              ? `${c.current_title} at ${c.current_company}`
+              : c.current_title || c.current_company}
+          </div>
+        )}
+      </div>
       {message && (
         <div className="flex flex-col gap-0.5">
           <span className="truncate text-xs font-medium">
@@ -553,16 +581,37 @@ function ApplicationCard({ app }: { app: ApplicationRow }) {
           </p>
         </div>
       )}
-      <div className="flex items-center justify-end">
+      <div className="flex items-center justify-between">
+        {status ? (
+          <Badge
+            variant="secondary"
+            className={cn(
+              "px-1.5 py-0 text-[11px]",
+              STATUS_CONFIG[status].className,
+            )}
+          >
+            {STATUS_CONFIG[status].label}
+          </Badge>
+        ) : (
+          <span />
+        )}
         <span className="text-[11px] text-muted-foreground">
           {formatApplied(app.applied_date)}
         </span>
       </div>
-    </Link>
+    </button>
   );
 }
 
-function ReqGroupSection({ group }: { group: ReqGroup }) {
+function ReqGroupSection({
+  group,
+  selectedAppId,
+  onSelectApp,
+}: {
+  group: ReqGroup;
+  selectedAppId: string | null;
+  onSelectApp: (candidateId: string, appId: string, initialTab?: string) => void;
+}) {
   const reqTitle = formatReqTitle(group.reqNumber, group.reqTitle);
 
   return (
@@ -577,24 +626,24 @@ function ReqGroupSection({ group }: { group: ReqGroup }) {
         >
           {reqTitle}
         </Link>
-        <span className="text-xs text-muted-foreground">
+        <span className="text-sm font-medium text-muted-foreground">
           ({group.total} {group.total === 1 ? "candidate" : "candidates"})
         </span>
       </CollapsibleTrigger>
       <CollapsibleContent className="mt-2">
-        <div className="flex gap-2 overflow-x-auto">
+        <div className="-mr-17 flex gap-2 overflow-x-auto pr-17">
           {group.columns.map((col) => (
             <div
               key={col.def.key}
-              className="flex w-[260px] shrink-0 flex-col gap-2 rounded-xl bg-muted p-2"
+              className="flex w-[220px] shrink-0 flex-col gap-2 rounded-xl bg-muted p-2"
             >
               <div className="flex items-center gap-1.5 px-3 py-1.5">
-                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <span className="text-xs font-medium text-muted-foreground">
                   {col.def.name}
                 </span>
                 <Badge
                   variant="secondary"
-                  className="px-1.5 py-0 text-[11px]"
+                  className="bg-white px-1.5 py-0 text-[11px] dark:bg-stone-900"
                 >
                   {col.applications.length}
                 </Badge>
@@ -605,9 +654,22 @@ function ReqGroupSection({ group }: { group: ReqGroup }) {
                     —
                   </div>
                 ) : (
-                  col.applications.map((app) => (
-                    <ApplicationCard key={app.id} app={app} />
-                  ))
+                  col.applications.map((app) => {
+                    const initialTab =
+                      deriveStatus(app) === "new-message"
+                        ? "messages"
+                        : undefined;
+                    return (
+                      <ApplicationCard
+                        key={app.id}
+                        app={app}
+                        selected={app.id === selectedAppId}
+                        onSelect={() =>
+                          onSelectApp(app.candidates.id, app.id, initialTab)
+                        }
+                      />
+                    );
+                  })
                 )}
               </div>
             </div>
@@ -628,7 +690,7 @@ function ReqGroupSkeleton() {
             {Array.from({ length: 5 }).map((_, ci) => (
               <div
                 key={ci}
-                className="flex w-[260px] shrink-0 flex-col gap-2 rounded-xl bg-muted p-2"
+                className="flex w-[220px] shrink-0 flex-col gap-2 rounded-xl bg-muted p-2"
               >
                 <Skeleton className="mx-3 my-1.5 h-3 w-20" />
                 <Skeleton className="h-16 w-full" />
@@ -641,9 +703,185 @@ function ReqGroupSkeleton() {
   );
 }
 
+function SearchableFilter({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: string[];
+  value: string | null;
+  onChange: (v: string | null) => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className={cn(
+            "h-7 gap-1.5 text-xs",
+            value && "bg-muted",
+          )}
+        >
+          <ListFilter className="size-3" />
+          {value ?? label}
+          {value && (
+            <span
+              role="button"
+              className="ml-0.5 rounded-sm hover:bg-muted-foreground/20"
+              onClick={(e) => {
+                e.stopPropagation();
+                onChange(null);
+              }}
+            >
+              <X className="size-3" />
+            </span>
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-52 p-0" align="start">
+        <Command>
+          <CommandInput placeholder={`Search ${label.toLowerCase()}...`} />
+          <CommandList>
+            <CommandEmpty>No results</CommandEmpty>
+            <CommandGroup>
+              {options.map((opt) => (
+                <CommandItem
+                  key={opt}
+                  value={opt}
+                  onSelect={() => {
+                    onChange(value === opt ? null : opt);
+                    setOpen(false);
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      "size-3.5",
+                      value === opt ? "opacity-100" : "opacity-0",
+                    )}
+                  />
+                  {opt}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+const TIME_OPTIONS = [
+  { value: "1h", label: "Last hour" },
+  { value: "24h", label: "Last 24 hours" },
+  { value: "7d", label: "Last 7 days" },
+  { value: "30d", label: "Last 30 days" },
+  { value: "all", label: "All time" },
+];
+
+function AgentActivityFilters({
+  activities,
+  filters,
+  onFiltersChange,
+}: {
+  activities: Activity[];
+  filters: {
+    candidate: string | null;
+    activityType: string | null;
+    jobReq: string | null;
+    time: string | null;
+  };
+  onFiltersChange: (f: typeof filters) => void;
+}) {
+  const candidates = useMemo(
+    () => [...new Set(activities.map((a) => a.candidateName).filter(Boolean) as string[])].sort(),
+    [activities],
+  );
+  const activityTypes = useMemo(
+    () => [...new Set(activities.map((a) => a.agent))].sort(),
+    [activities],
+  );
+  const jobReqs = useMemo(
+    () => [...new Set(activities.map((a) => a.role).filter(Boolean) as string[])].sort(),
+    [activities],
+  );
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <SearchableFilter
+        label="Candidate"
+        options={candidates}
+        value={filters.candidate}
+        onChange={(v) => onFiltersChange({ ...filters, candidate: v })}
+      />
+      <SearchableFilter
+        label="Activity type"
+        options={activityTypes}
+        value={filters.activityType}
+        onChange={(v) => onFiltersChange({ ...filters, activityType: v })}
+      />
+      <SearchableFilter
+        label="Job req"
+        options={jobReqs}
+        value={filters.jobReq}
+        onChange={(v) => onFiltersChange({ ...filters, jobReq: v })}
+      />
+      <Select
+        value={filters.time ?? "all"}
+        onValueChange={(v) =>
+          onFiltersChange({ ...filters, time: v === "all" ? null : v })
+        }
+      >
+        <SelectTrigger className="h-7 w-auto gap-1.5 text-xs">
+          <Calendar className="size-3" />
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {TIME_OPTIONS.map((opt) => (
+            <SelectItem key={opt.value} value={opt.value}>
+              {opt.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
+function filterActivities(
+  activities: Activity[],
+  filters: {
+    candidate: string | null;
+    activityType: string | null;
+    jobReq: string | null;
+    time: string | null;
+  },
+) {
+  return activities.filter((a) => {
+    if (filters.candidate && a.candidateName !== filters.candidate) return false;
+    if (filters.activityType && a.agent !== filters.activityType) return false;
+    if (filters.jobReq && a.role !== filters.jobReq) return false;
+    return true;
+  });
+}
+
 export function InboxV2() {
   const [view, setView] = useState<InboxView>("candidate");
+  const [activityFilters, setActivityFilters] = useState({
+    candidate: null as string | null,
+    activityType: null as string | null,
+    jobReq: null as string | null,
+    time: null as string | null,
+  });
+  const { appId: selectedAppId, toggle: toggleDetail, close: closeDetail } =
+    useInboxDetailStore();
   const { data: applications, isLoading } = useStageBoard();
+
+  useEffect(() => () => closeDetail(), [closeDetail]);
 
   const columnOrder = useMemo(
     () => buildColumnOrder(applications ?? []),
@@ -657,12 +895,7 @@ export function InboxV2() {
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Inbox</h1>
-          <p className="text-sm text-muted-foreground">
-            What needs your attention today.
-          </p>
-        </div>
+        <h1 className="text-2xl font-semibold tracking-tight">Inbox</h1>
         <div className="flex items-center rounded-lg border bg-card p-0.5">
           <Toggle
             pressed={view === "candidate"}
@@ -695,7 +928,12 @@ export function InboxV2() {
             </div>
           ) : (
             reqGroups.map((group) => (
-              <ReqGroupSection key={group.reqId} group={group} />
+              <ReqGroupSection
+                key={group.reqId}
+                group={group}
+                selectedAppId={selectedAppId}
+                onSelectApp={toggleDetail}
+              />
             ))
           )}
         </div>
@@ -704,75 +942,96 @@ export function InboxV2() {
       {view === "agent" && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Bot className="size-4 text-muted-foreground" />
-              Agent activity
-            </CardTitle>
-            <CardDescription>
-              Recent actions taken by your agents
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Bot className="size-4 text-muted-foreground" />
+                  Agent activity
+                </CardTitle>
+                <CardDescription>
+                  Recent actions taken by your agents
+                </CardDescription>
+              </div>
+            </div>
+            <AgentActivityFilters
+              activities={AGENT_ACTIVITIES}
+              filters={activityFilters}
+              onFiltersChange={setActivityFilters}
+            />
           </CardHeader>
           <CardContent>
-            <div className="space-y-0">
-              {AGENT_ACTIVITIES.map((activity, i) => (
-                <div
-                  key={activity.id}
-                  className={cn("group/activity flex gap-3 py-3")}
-                >
-                  <div className="relative flex flex-col items-center">
-                    <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted">
-                      <activity.icon className="size-3.5 text-muted-foreground" />
-                    </div>
-                    {i < AGENT_ACTIVITIES.length - 1 && (
-                      <div className="mt-1 w-px flex-1 bg-border" />
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1 pb-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-sm font-medium">
-                        {activity.agent}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        {activity.undoable && (
-                          <Button
-                            variant="ghost"
-                            size="xs"
-                            className="gap-1 text-muted-foreground opacity-0 transition-opacity group-hover/activity:opacity-100"
-                          >
-                            <Undo2 className="size-3" />
-                            Undo
-                          </Button>
+            {(() => {
+              const filtered = filterActivities(AGENT_ACTIVITIES, activityFilters);
+              if (filtered.length === 0) {
+                return (
+                  <p className="py-8 text-center text-sm text-muted-foreground">
+                    No activities match the current filters.
+                  </p>
+                );
+              }
+              return (
+                <div className="space-y-0">
+                  {filtered.map((activity, i) => (
+                    <div
+                      key={activity.id}
+                      className={cn("group/activity flex gap-3 py-3")}
+                    >
+                      <div className="relative flex flex-col items-center">
+                        <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted">
+                          <activity.icon className="size-3.5 text-muted-foreground" />
+                        </div>
+                        {i < filtered.length - 1 && (
+                          <div className="mt-1 w-px flex-1 bg-border" />
                         )}
-                        {activity.candidateId && (
-                          <Button
-                            asChild
-                            variant="ghost"
-                            size="xs"
-                            className="gap-1 text-muted-foreground opacity-0 transition-opacity group-hover/activity:opacity-100"
-                          >
-                            <Link
-                              to={`/candidates/${activity.candidateId}?tab=activities`}
-                              target="_blank"
-                            >
-                              View details
-                            </Link>
-                          </Button>
-                        )}
-                        <span className="shrink-0 text-[11px] text-muted-foreground">
-                          {activity.time}
-                        </span>
+                      </div>
+                      <div className="min-w-0 flex-1 pb-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-medium">
+                            {activity.agent}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            {activity.undoable && (
+                              <Button
+                                variant="ghost"
+                                size="xs"
+                                className="gap-1 text-muted-foreground opacity-0 transition-opacity group-hover/activity:opacity-100"
+                              >
+                                <Undo2 className="size-3" />
+                                Undo
+                              </Button>
+                            )}
+                            {activity.candidateId && (
+                              <Button
+                                asChild
+                                variant="ghost"
+                                size="xs"
+                                className="gap-1 text-muted-foreground opacity-0 transition-opacity group-hover/activity:opacity-100"
+                              >
+                                <Link
+                                  to={`/candidates/${activity.candidateId}?tab=activities`}
+                                  target="_blank"
+                                >
+                                  View details
+                                </Link>
+                              </Button>
+                            )}
+                            <span className="shrink-0 text-[11px] text-muted-foreground">
+                              {activity.time}
+                            </span>
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {activity.action}
+                        </p>
+                        <p className="text-xs text-muted-foreground/70">
+                          {activity.detail}
+                        </p>
                       </div>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      {activity.action}
-                    </p>
-                    <p className="text-xs text-muted-foreground/70">
-                      {activity.detail}
-                    </p>
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              );
+            })()}
           </CardContent>
         </Card>
       )}

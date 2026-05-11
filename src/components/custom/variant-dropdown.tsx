@@ -27,7 +27,7 @@ export function VariantDropdown() {
         <Button
           variant="ghost"
           size="xs"
-          className="font-normal text-muted-foreground/60 hover:text-muted-foreground"
+          className="font-normal text-muted-foreground/35 hover:text-muted-foreground/60"
         >
           {current?.label ?? "Layout"}
           <ChevronDown className="opacity-60" />
