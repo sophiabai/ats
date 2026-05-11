@@ -12,7 +12,6 @@ import {
   RotateCw,
   Search,
   Sparkles,
-  Video,
   Volume2,
   X,
 } from "lucide-react";

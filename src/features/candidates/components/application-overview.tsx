@@ -292,7 +292,7 @@ function VideoQuestionnaireSection() {
           className="w-full"
         />
         <div className="flex gap-2 overflow-x-auto pb-1">
-          {VIDEO_QUESTIONS.map((q, i) => (
+          {VIDEO_QUESTIONS.map((_q, i) => (
             <button
               key={i}
               type="button"

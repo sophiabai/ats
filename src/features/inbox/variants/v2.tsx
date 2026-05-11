@@ -423,12 +423,6 @@ function buildReqGroups(
   return result;
 }
 
-function getInitials(candidate: Candidate) {
-  const first = candidate.first_name?.[0] ?? "";
-  const last = candidate.last_name?.[0] ?? "";
-  return `${first}${last}`.toUpperCase() || "?";
-}
-
 function formatApplied(date: string | null) {
   if (!date) return "";
   const now = new Date();
