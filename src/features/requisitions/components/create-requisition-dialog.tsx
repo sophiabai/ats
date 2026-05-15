@@ -111,6 +111,7 @@ export interface FormState {
   assessment_criteria: string[];
   linked_pool_ids: string[];
   interview_plan: InterviewPlanSession[];
+  intake_id: string | null;
 }
 
 const INITIAL_FORM: FormState = {
@@ -128,6 +129,7 @@ const INITIAL_FORM: FormState = {
   assessment_criteria: [],
   linked_pool_ids: [],
   interview_plan: [],
+  intake_id: null,
 };
 
 async function aiGenerateViaApi(prompt: string): Promise<string> {
@@ -288,6 +290,7 @@ Return ONLY a valid JSON array of strings, no other text. Example: ["Technical d
       sourcer_name: form.include_sourcer ? form.sourcer_name : "",
       description: form.description,
       assessment_criteria: form.assessment_criteria.filter(Boolean),
+      intake_id: form.intake_id,
     });
     if (form.linked_pool_ids.length > 0) {
       await linkPoolsMutation.mutateAsync({

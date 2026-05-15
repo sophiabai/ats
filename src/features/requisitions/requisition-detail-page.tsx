@@ -12,6 +12,9 @@ import {
   Star,
   MoreHorizontal,
   Pencil,
+  Columns3,
+  List,
+  Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -25,6 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { StatusBadge } from "@/features/requisitions/components/status-badge";
 import { CandidateList } from "@/features/requisitions/components/candidate-list";
+import { CandidateKanban } from "@/features/requisitions/components/candidate-kanban";
 import { ReqPoolCandidates } from "@/features/requisitions/components/req-pool-candidates";
 import { useReqCandidatePools } from "@/features/requisitions/api/use-req-candidate-pools";
 import { useCriteriaEvaluations } from "@/features/requisitions/api/use-criteria-evaluations";
@@ -32,6 +36,7 @@ import {
   CreateRequisitionDialog,
   type FormState,
 } from "@/features/requisitions/components/create-requisition-dialog";
+import { CandidateFormDialog } from "@/features/candidates/components/candidate-form-dialog";
 import {
   useRequisitionDetail,
   groupApplicationsByMilestone,
@@ -101,8 +106,10 @@ export function Component() {
   const { data: evaluations } = useCriteriaEvaluations(reqId);
   const poolCandidateCount = pools?.reduce((sum, p) => sum + p.candidates.length, 0) ?? 0;
   const [view] = useState<View>("table");
+  const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
   const [editOpen, setEditOpen] = useState(false);
   const [linkPoolsOpen, setLinkPoolsOpen] = useState(false);
+  const [addCandidateOpen, setAddCandidateOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("pools");
   const { isStarred, toggle: toggleStar } = useStarredRequisitionsStore();
 
@@ -208,6 +215,61 @@ export function Component() {
         )}
       </div>
 
+      <div className="flex items-center justify-between gap-2">
+        <div className="inline-flex items-center rounded-md border bg-muted p-0.5">
+          <button
+            type="button"
+            onClick={() => setViewMode("kanban")}
+            className={cn(
+              "inline-flex items-center justify-center rounded-sm px-2.5 py-1.5 transition-colors",
+              viewMode === "kanban"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+            aria-pressed={viewMode === "kanban"}
+            aria-label="Kanban view"
+          >
+            <Columns3 className="size-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("table")}
+            className={cn(
+              "inline-flex items-center justify-center rounded-sm px-2.5 py-1.5 transition-colors",
+              viewMode === "table"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+            aria-pressed={viewMode === "table"}
+            aria-label="Table view"
+          >
+            <List className="size-4" />
+          </button>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setLinkPoolsOpen(true)}
+          >
+            Link pools
+          </Button>
+          <Button size="sm" onClick={() => setAddCandidateOpen(true)}>
+            <Plus className="mr-1.5 size-4" />
+            Add candidate
+          </Button>
+        </div>
+      </div>
+
+      {viewMode === "kanban" ? (
+        <CandidateKanban
+          applications={req.applications ?? []}
+          pools={pools}
+          reqId={req.id}
+          reqTitle={formatReqTitle(req.req_number, req.title)}
+          evaluations={evaluations}
+        />
+      ) : (
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <div className="flex items-center gap-2">
           <TabsList>
@@ -283,6 +345,7 @@ export function Component() {
           )}
         </TabsContent>
       </Tabs>
+      )}
 
       <CreateRequisitionDialog
         open={editOpen}
@@ -302,6 +365,11 @@ export function Component() {
           assessment_criteria: req.assessment_criteria ?? [],
           linked_pool_ids: pools?.map((p) => p.id) ?? [],
         } satisfies Partial<FormState>}
+      />
+
+      <CandidateFormDialog
+        open={addCandidateOpen}
+        onOpenChange={setAddCandidateOpen}
       />
     </div>
   );

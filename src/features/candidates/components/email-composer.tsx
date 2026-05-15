@@ -27,6 +27,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { GmailStyleEmailComposer } from "./gmail-style-email-composer";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -544,55 +545,73 @@ export function EmailComposer({
     editor.querySelectorAll("p:empty, div:empty").forEach((n) => n.remove());
   }, [renderKey]);
 
+  const templateHeader = (
+    <div className="flex items-center px-1 py-0.5">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            className="flex items-center gap-1 text-sm text-foreground outline-none"
+          >
+            Template: {isCustom ? "Custom draft" : TEMPLATES[templateKey].label}
+            <ChevronDown className="size-3.5" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-64">
+          {(Object.keys(TEMPLATES) as EmailTemplateKey[]).map((k) => (
+            <DropdownMenuItem
+              key={k}
+              onSelect={() => handleTemplateChange(k)}
+            >
+              {TEMPLATES[k].label}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+
+  const toRow = (
+    <div className="flex items-center gap-2 px-4 py-2.5">
+      <div className="flex flex-1 flex-wrap items-center gap-2">
+        <span className={CHIP_CLASSES}>
+          {recipientName} ({recipientEmail})
+          <X className="size-3 cursor-pointer" />
+        </span>
+      </div>
+      <button
+        type="button"
+        className="shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-primary"
+      >
+        CC/BCC
+      </button>
+    </div>
+  );
+
   return (
-    <div
+    <GmailStyleEmailComposer
       className={cn(
-        "flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border bg-card",
+        "flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl shadow-none",
         className,
       )}
+      showWindowControls={false}
+      showSubject={false}
+      showSend={false}
+      showSendOptions={false}
+      showDecorationToolbar={false}
+      showDiscard={false}
+      showCcBcc={false}
+      headerAccessory={templateHeader}
+      toArea={toRow}
+      footerSlot={
+        <FormatToolbar
+          onExec={exec}
+          onInsertVariable={insertVariable}
+          leading={footerLeading}
+          trailing={footerTrailing}
+        />
+      }
     >
-      {/* Template bar */}
-      <div className="flex items-center border-b px-4 py-2.5">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              className="flex items-center gap-1 text-sm text-foreground outline-none"
-            >
-              Template: {isCustom ? "Custom draft" : TEMPLATES[templateKey].label}
-              <ChevronDown className="size-3.5" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-64">
-            {(Object.keys(TEMPLATES) as EmailTemplateKey[]).map((k) => (
-              <DropdownMenuItem
-                key={k}
-                onSelect={() => handleTemplateChange(k)}
-              >
-                {TEMPLATES[k].label}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-      {/* To field */}
-      <div className="flex items-center gap-2 border-b px-4 py-2.5">
-        <div className="flex flex-1 flex-wrap items-center gap-2">
-          <span className={CHIP_CLASSES}>
-            {recipientName} ({recipientEmail})
-            <X className="size-3 cursor-pointer" />
-          </span>
-        </div>
-        <button
-          type="button"
-          className="shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-primary"
-        >
-          CC/BCC
-        </button>
-      </div>
-
-      {/* Editable body */}
       <div
         ref={editorRef}
         key={renderKey}
@@ -603,19 +622,11 @@ export function EmailComposer({
         onMouseUp={saveSelection}
         onBlur={saveSelection}
         className={cn(
-          "email-composer-body flex-1 overflow-y-auto px-4 py-3 text-base leading-relaxed text-black",
+          "email-composer-body min-h-[200px] flex-1 overflow-y-auto px-4 py-3 text-base leading-relaxed text-black",
           "focus:outline-none",
         )}
         dangerouslySetInnerHTML={{ __html: initialHtml }}
       />
-
-      {/* Format toolbar */}
-      <FormatToolbar
-        onExec={exec}
-        onInsertVariable={insertVariable}
-        leading={footerLeading}
-        trailing={footerTrailing}
-      />
-    </div>
+    </GmailStyleEmailComposer>
   );
 }

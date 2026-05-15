@@ -1,4 +1,5 @@
-import { ChevronsRight, Mail } from "lucide-react";
+import { X } from "lucide-react";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,15 +32,16 @@ export function EmployeeProfilePanel() {
   const deptColor = DEPARTMENT_COLORS[employee.department] ?? "#64748b";
 
   return (
-    <aside className="flex h-full w-[420px] shrink-0 flex-col border-l bg-background">
+    <aside className="z-10 flex h-full w-[420px] shrink-0 flex-col border-l bg-white shadow-md dark:bg-stone-950">
       <div className="flex items-center justify-end gap-1 px-5 pt-3">
         <Button
           variant="ghost"
           size="icon-sm"
           onClick={close}
+          title="Close"
           aria-label="Close profile"
         >
-          <ChevronsRight className="size-4" />
+          <X className="size-4" />
         </Button>
       </div>
 
@@ -86,18 +88,6 @@ export function EmployeeProfilePanel() {
               </div>
             </div>
           </div>
-
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full"
-            onClick={() =>
-              window.open(`mailto:${profile.workEmail}`, "_blank", "noopener")
-            }
-          >
-            <Mail className="size-3.5" />
-            Email {employee.name.split(" ")[0]}
-          </Button>
 
           <section>
             <h3 className="mb-3 text-sm font-semibold">Role information</h3>

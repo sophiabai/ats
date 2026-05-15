@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { Sparkles } from "lucide-react";
 import { Link, Outlet, useLocation, useMatches } from "react-router";
 import type { RouteHandle, RouteCrumb } from "@/app/route-meta";
@@ -14,6 +14,7 @@ import { EmployeeProfilePanel } from "@/features/org-chart/components/employee-p
 import { useInboxDetailStore } from "@/stores/inbox-detail-store";
 import { useOrgChartDetailStore } from "@/stores/org-chart-detail-store";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { useChatBarStore } from "@/stores/chat-bar-store";
 import { useThemeUrlSync } from "@/hooks/use-theme-url-sync";
 import {
@@ -29,6 +30,7 @@ import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { usePageTitleStore } from "@/stores/page-title-store";
@@ -65,6 +67,29 @@ function useBreadcrumbs(): { crumbs: RouteCrumb[]; page: string } {
   };
 }
 
+// Auto-collapses the side nav whenever a detail drawer opens (candidate or
+// employee profile). Lives inside SidebarProvider so useSidebar() is available.
+//
+// We track the prior drawer-open state in a ref so we only collapse on the
+// "closed → open" transition. Without this guard, the user couldn't manually
+// re-expand the sidebar while a drawer was open: shadcn's `setOpen` identity
+// changes on every open-state change, which would re-fire this effect and
+// slam the sidebar back closed.
+function AutoCollapseOnDrawer() {
+  const { setOpen } = useSidebar();
+  const candidatePanelOpen = useInboxDetailStore((s) => !!s.candidateId);
+  const employeePanelOpen = useOrgChartDetailStore((s) => !!s.employeeId);
+  const prevOpenRef = useRef(false);
+
+  useEffect(() => {
+    const isOpen = candidatePanelOpen || employeePanelOpen;
+    if (isOpen && !prevOpenRef.current) setOpen(false);
+    prevOpenRef.current = isOpen;
+  }, [candidatePanelOpen, employeePanelOpen, setOpen]);
+
+  return null;
+}
+
 // `sidebar` is required: each app's route subtree wraps `RootLayout` with its
 // own sidebar so the layout never has to know which app it's rendering.
 export function RootLayout({ sidebar }: { sidebar: ReactNode }) {
@@ -74,6 +99,9 @@ export function RootLayout({ sidebar }: { sidebar: ReactNode }) {
   const candidatePanelOpen = useInboxDetailStore((s) => !!s.candidateId);
   const employeePanelOpen = useOrgChartDetailStore((s) => !!s.employeeId);
   const [headerActionsEl, setHeaderActionsEl] = useHeaderActionsRefCallback();
+  const { pathname } = useLocation();
+  // Org chart wants a tinted header so it blends with its muted page bg.
+  const isMutedHeader = pathname.startsWith("/org-chart");
 
   useThemeUrlSync();
 
@@ -81,9 +109,15 @@ export function RootLayout({ sidebar }: { sidebar: ReactNode }) {
     <HeaderActionsProvider value={headerActionsEl}>
     <div className="flex h-svh flex-col">
       <SidebarProvider className="min-h-0 flex-1 overflow-hidden">
+        <AutoCollapseOnDrawer />
         {sidebar}
         <SidebarInset className="relative min-w-0 min-h-0 overflow-hidden bg-white dark:bg-stone-950">
-          <header className="flex h-16 shrink-0 items-center gap-2 pr-12 transition-[width,height] ease-in-out-quart group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+          <header
+            className={cn(
+              "flex h-16 shrink-0 items-center gap-2 pr-12 transition-[width,height] ease-in-out-quart group-has-data-[collapsible=icon]/sidebar-wrapper:h-12",
+              isMutedHeader && "bg-muted/40 dark:bg-stone-900/40"
+            )}
+          >
             <div className="flex items-center gap-2 px-4">
               <SidebarTrigger className="-ml-1" />
               <Separator

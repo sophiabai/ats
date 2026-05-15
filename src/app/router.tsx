@@ -12,6 +12,7 @@ import { docsRoutes } from "@/features/docs/routes";
 import { emailsRoutes } from "@/features/emails/routes";
 import { headcountPlanningRoutes } from "@/features/headcount-planning/routes";
 import { inboxRoutes } from "@/features/inbox/routes";
+import { intakesRoutes } from "@/features/intakes/routes";
 import { interviewsRoutes } from "@/features/interviews/routes";
 import {
   jobBoardRoutes,
@@ -27,6 +28,7 @@ import { workflowsRoutes } from "@/features/workflows/routes";
 const recruitingRoutes: RouteObject[] = [
   ...inboxRoutes,
   ...requisitionsRoutes,
+  ...intakesRoutes,
   ...candidatesRoutes,
   ...applicationsRoutes,
   ...interviewsRoutes,

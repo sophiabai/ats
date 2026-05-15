@@ -82,7 +82,18 @@ export function Component() {
   const viewerKey = `${view}|${trimmed}|${activeFilterCount}|${JSON.stringify(filters)}`
 
   return (
-    <div className="-mx-17 -mt-6 flex h-full flex-col">
+    <div
+      className="-mx-17 -mt-6 flex h-full flex-col bg-muted/40 dark:bg-stone-900/40"
+      style={
+        view === "hr"
+          ? {
+              backgroundImage:
+                "radial-gradient(circle, color-mix(in oklab, var(--foreground) 12%, transparent) 1px, transparent 1px)",
+              backgroundSize: "16px 16px",
+            }
+          : undefined
+      }
+    >
       <HeaderActions>
         <Select
           value={view}
@@ -92,7 +103,7 @@ export function Component() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="hr">HR view</SelectItem>
+            <SelectItem value="hr">Admin view</SelectItem>
             <SelectItem value="employee">Employee view</SelectItem>
           </SelectContent>
         </Select>

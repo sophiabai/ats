@@ -156,11 +156,11 @@ export function DockedChatPanel() {
             <ChatHistoryPopover />
             <Button
               variant="ghost"
-              size="icon-xs"
+              size="icon-sm"
               onClick={() => setDocked(false)}
               title="Close"
             >
-              <X className="size-3.5" />
+              <X className="size-4" />
             </Button>
           </div>
         </div>

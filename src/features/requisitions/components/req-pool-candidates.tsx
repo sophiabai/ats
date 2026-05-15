@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router";
 import { formatDistanceToNow } from "date-fns";
-import { Folder, FolderOpen, Plus, Unlink, Users, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Folder, FolderOpen, Unlink, Users, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -250,11 +250,6 @@ export function ReqPoolCandidates({
   const [deletingCandidate, setDeletingCandidate] = useState<Candidate | null>(null);
   const evaluatingRef = useRef(new Set<string>());
 
-  function openAdd() {
-    setEditingCandidate(null);
-    setFormDialogOpen(true);
-  }
-
   function openEdit(c: Candidate) {
     setEditingCandidate(c);
     setFormDialogOpen(true);
@@ -321,35 +316,9 @@ export function ReqPoolCandidates({
           <p className="text-sm">
             Link candidate pools to source candidates for this requisition.
           </p>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setDialogOpen(true)}
-            >
-              Link pools
-            </Button>
-            <Button size="sm" onClick={openAdd}>
-              <Plus className="mr-1.5 size-4" />
-              Add candidate
-            </Button>
-          </div>
         </div>
       ) : (
         <>
-          <div className="flex justify-end gap-2 pb-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setDialogOpen(true)}
-            >
-              Link pools
-            </Button>
-            <Button size="sm" onClick={openAdd}>
-              <Plus className="mr-1.5 size-4" />
-              Add candidate
-            </Button>
-          </div>
           {pools.map((pool) => (
             <PoolSection
               key={pool.id}

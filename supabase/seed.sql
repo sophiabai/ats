@@ -1174,3 +1174,20 @@ SELECT
 FROM applications a
 WHERE a.candidate_id = 'c0000000-0000-0000-0000-000000000010'
   AND a.req_id = 'b0000000-0000-0000-0000-000000000002';
+
+-- ============================================================
+-- Intakes (role docs that can be reused across requisitions)
+-- ============================================================
+INSERT INTO intakes (id, title, content, created_at, updated_at) VALUES
+  (
+    'd0000000-0000-0000-0000-000000000001',
+    'Product Designer',
+    E'<h2>Role overview</h2>\n<p>We''re hiring a <strong>Product Designer</strong> to own the end-to-end design of a core surface in our product. You''ll partner closely with a PM and an EM, drive design from research through ship, and raise the bar on craft across the team.</p>\n<p><strong>Team:</strong> Growth &middot; <strong>Reports to:</strong> Head of Design &middot; <strong>Level:</strong> IC4–IC5 &middot; <strong>Location:</strong> SF or remote (US)</p>\n\n<h2>Why this role exists</h2>\n<p>Our growth surface drives a meaningful share of activation, but the experience has grown faster than its design system. We need a senior designer who can hold the whole journey in their head, simplify it, and ship.</p>\n\n<h2>What you''ll do</h2>\n<ul>\n<li>Lead design for the growth funnel — onboarding, activation, and the first 7 days</li>\n<li>Run lightweight research: usability tests, in-app prompts, and qual interviews</li>\n<li>Define and evolve patterns in our design system in partnership with the systems team</li>\n<li>Prototype to communicate — static mocks are the floor, not the ceiling</li>\n<li>Collaborate daily with PM and engineering from kickoff through QA</li>\n</ul>\n\n<h2>What we''re looking for</h2>\n<h3>Must-haves</h3>\n<ul>\n<li>5+ years designing consumer or prosumer software, ideally at a product-led company</li>\n<li>A portfolio showing shipped work with measurable outcomes, not just artifacts</li>\n<li>Strong interaction craft: hierarchy, motion, copy, edge cases</li>\n<li>Comfort with ambiguity — you can scope a vague problem into shippable bets</li>\n</ul>\n<h3>Nice-to-haves</h3>\n<ul>\n<li>Experience designing for growth, onboarding, or experimentation surfaces</li>\n<li>Fluency in Figma variables, auto-layout, and component APIs</li>\n<li>Background in front-end engineering or prototyping in code</li>\n</ul>\n\n<h2>Success in 90 days</h2>\n<ol>\n<li>Mapped the current onboarding flow and shipped one high-confidence simplification</li>\n<li>Established a recurring design review cadence with PM and engineering</li>\n<li>Contributed at least two reusable patterns back to the design system</li>\n</ol>\n\n<h2>Compensation &amp; logistics</h2>\n<ul>\n<li><strong>Salary band:</strong> $180k–$220k base + equity</li>\n<li><strong>Employment type:</strong> Full-time</li>\n<li><strong>Interview loop:</strong> Recruiter screen → hiring manager → portfolio review → design exercise → cross-functional panel</li>\n</ul>\n\n<blockquote>Strong preference for candidates who can show their thinking, not just their pixels. We''ll dig into trade-offs and what got cut.</blockquote>',
+    '2026-05-10 09:00:00+00',
+    '2026-05-12 14:00:00+00'
+  );
+
+-- Link the Senior Product Designer req to the intake above.
+UPDATE requisitions
+SET intake_id = 'd0000000-0000-0000-0000-000000000001'
+WHERE id = 'b0000000-0000-0000-0000-000000000003';

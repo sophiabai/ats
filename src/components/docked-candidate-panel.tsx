@@ -1,14 +1,22 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
-import { ChevronsRight, Maximize2 } from "lucide-react";
+import { Check, Download, Ellipsis, Mail, Maximize2, Pencil, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   useCandidateDetail,
 } from "@/features/candidates/api/use-candidate-detail";
+import { useMoveApplicationForward } from "@/features/candidates/api/use-application-mutations";
 import { useCreateActivity } from "@/features/candidates/api/use-create-activity";
+import { MILESTONE_ORDER } from "@/features/candidates/components/application-tab-content";
 import { EmailDialog } from "@/features/candidates/components/email-dialog";
 import {
   ActivitiesTabContent,
@@ -76,6 +84,7 @@ export function DockedCandidatePanel() {
   const { width, onMouseDown } = useResizable(DEFAULT_WIDTH);
   const { data: candidate, isLoading } = useCandidateDetail(candidateId!);
   const createActivity = useCreateActivity();
+  const moveForward = useMoveApplicationForward();
 
   const [activeTab, setActiveTab] = useState(initialTab ?? "applications");
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
@@ -117,9 +126,36 @@ export function DockedCandidatePanel() {
     }
   }, [candidateFullName, candidate?.id]);
 
+  const apps = candidate?.applications ?? [];
+  const selectedApp = apps.find((a) => a.id === appId) ?? apps[0] ?? null;
+  const nextStage = useMemo(() => {
+    if (!selectedApp) return null;
+    const allStages = selectedApp.requisitions?.req_stages ?? [];
+    const ordered = [...allStages].sort((a, b) => {
+      const ai = MILESTONE_ORDER.indexOf(a.milestone);
+      const bi = MILESTONE_ORDER.indexOf(b.milestone);
+      if (ai !== bi) return ai - bi;
+      return a.sort_order - b.sort_order;
+    });
+    const currentIdx = ordered.findIndex(
+      (s) => s.id === selectedApp.current_stage_id,
+    );
+    return ordered[currentIdx + 1] ?? null;
+  }, [selectedApp]);
+
+  const handleMoveForward = () => {
+    if (!selectedApp || !nextStage) return;
+    moveForward.mutate({
+      applicationId: selectedApp.id,
+      candidateId: selectedApp.candidate_id,
+      nextStageId: nextStage.id,
+      nextMilestone: nextStage.milestone,
+    });
+  };
+
   if (isLoading) {
     return (
-      <div className="relative flex h-full shrink-0 flex-col border-l bg-white dark:bg-stone-950" style={{ width }}>
+      <div className="relative z-10 flex h-full shrink-0 flex-col border-l bg-white shadow-md dark:bg-stone-950" style={{ width }}>
         <ResizeHandle onMouseDown={onMouseDown} />
         <DrawerChrome onClose={close} candidateId={null} />
         <div className="space-y-4 p-6">
@@ -133,28 +169,27 @@ export function DockedCandidatePanel() {
 
   if (!candidate) {
     return (
-      <div className="relative flex h-full shrink-0 flex-col items-center justify-center border-l bg-white dark:bg-stone-950 text-sm text-muted-foreground" style={{ width }}>
+      <div className="relative z-10 flex h-full shrink-0 flex-col items-center justify-center border-l bg-white shadow-md dark:bg-stone-950 text-sm text-muted-foreground" style={{ width }}>
         Candidate not found
       </div>
     );
   }
 
-  const apps = candidate.applications ?? [];
-
   return (
-    <aside className="relative flex h-full shrink-0 flex-col border-l bg-white dark:bg-stone-950" style={{ width }}>
+    <aside className="relative z-10 flex h-full shrink-0 flex-col border-l bg-white shadow-md dark:bg-stone-950" style={{ width }}>
       <ResizeHandle onMouseDown={onMouseDown} />
-      <DrawerChrome onClose={close} candidateId={candidate.id} />
+      <DrawerChrome
+        onClose={close}
+        candidateId={candidate.id}
+        onEmail={() => setEmailDialogOpen(true)}
+        onEdit={() => toast.info("Edit candidate coming soon")}
+        onDownload={() => toast.success("PDF downloaded")}
+        onDelete={() => toast.info("Delete candidate coming soon")}
+      />
 
       <div className="flex-1 overflow-y-auto px-12 py-10">
         <div className="pb-6">
-          <CandidateHeader
-            candidate={candidate}
-            onEmail={() => setEmailDialogOpen(true)}
-            onEdit={() => toast.info("Edit candidate coming soon")}
-            onDownload={() => toast.success("PDF downloaded")}
-            onDelete={() => toast.info("Delete candidate coming soon")}
-          />
+          <CandidateHeader candidate={candidate} />
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -204,6 +239,37 @@ export function DockedCandidatePanel() {
         </Tabs>
       </div>
 
+      {selectedApp && (
+        <div className="flex items-center gap-2 border-t px-6 py-3">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm">
+                More actions
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem>Add note</DropdownMenuItem>
+              <DropdownMenuItem>Add feedback</DropdownMenuItem>
+              <DropdownMenuItem>Reassign stage</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <div className="flex-1" />
+          <Button variant="outline" size="sm">
+            <X className="size-3.5" />
+            Reject
+          </Button>
+          <Button
+            variant="success"
+            size="sm"
+            onClick={handleMoveForward}
+            disabled={moveForward.isPending || !nextStage}
+          >
+            <Check className="size-3.5" />
+            Move forward
+          </Button>
+        </div>
+      )}
+
       <EmailDialog
         open={emailDialogOpen}
         onOpenChange={setEmailDialogOpen}
@@ -235,32 +301,75 @@ export function DockedCandidatePanel() {
 function DrawerChrome({
   onClose,
   candidateId,
+  onEmail,
+  onEdit,
+  onDownload,
+  onDelete,
 }: {
   onClose: () => void;
   candidateId: string | null;
+  onEmail?: () => void;
+  onEdit?: () => void;
+  onDownload?: () => void;
+  onDelete?: () => void;
 }) {
   return (
     <div className="flex items-center justify-end gap-0.5 px-3 pt-3">
+      {candidateId && (
+        <>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon-sm" aria-label="More actions">
+                <Ellipsis className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {onEdit && (
+                <DropdownMenuItem onSelect={onEdit}>
+                  <Pencil />
+                  Edit candidate
+                </DropdownMenuItem>
+              )}
+              {onDownload && (
+                <DropdownMenuItem onSelect={onDownload}>
+                  <Download />
+                  Download PDF
+                </DropdownMenuItem>
+              )}
+              {onDelete && (
+                <DropdownMenuItem variant="destructive" onSelect={onDelete}>
+                  <Trash2 />
+                  Delete candidate
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          {onEmail && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Email candidate"
+              onClick={onEmail}
+            >
+              <Mail className="size-4" />
+            </Button>
+          )}
+          <Button asChild variant="ghost" size="icon-sm" aria-label="Open full profile">
+            <Link to={`/candidates/${candidateId}`} target="_blank">
+              <Maximize2 className="size-4" />
+            </Link>
+          </Button>
+        </>
+      )}
       <Button
         variant="ghost"
         size="icon-sm"
         onClick={onClose}
+        title="Close"
         aria-label="Close"
       >
-        <ChevronsRight className="size-4" />
+        <X className="size-4" />
       </Button>
-      {candidateId && (
-        <Button
-          asChild
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Open full profile"
-        >
-          <Link to={`/candidates/${candidateId}`} target="_blank">
-            <Maximize2 className="size-3.5" />
-          </Link>
-        </Button>
-      )}
     </div>
   );
 }

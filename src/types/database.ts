@@ -144,6 +144,15 @@ export interface Requisition {
   coordinator_name: string | null;
   sourcer_name: string | null;
   assessment_criteria: string[] | null;
+  intake_id: string | null;
+}
+
+export interface Intake {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  title: string;
+  content: string;
 }
 
 export interface ReqStage {

@@ -43,11 +43,26 @@ const sections: Section[] = [
       },
     ],
   },
+  {
+    title: "Others",
+    protos: [
+      {
+        title: "Docs",
+        description: "Send and configure document packets",
+        href: "/docs",
+      },
+      {
+        title: "Email composer",
+        description: "Gmail-style compose window with recruiting templates",
+        href: "/proto-hub/email-composer",
+      },
+    ],
+  },
 ]
 
 export function Component() {
   return (
-    <div className="flex min-h-svh items-center justify-center bg-muted/40 p-6">
+    <div className="flex min-h-svh items-center justify-center bg-white p-6">
       <div className="w-full max-w-2xl space-y-8">
         <div className="space-y-1 text-center">
           <h1 className="text-2xl font-semibold tracking-tight">Proto hub</h1>

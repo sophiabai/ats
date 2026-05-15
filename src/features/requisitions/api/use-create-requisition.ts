@@ -12,6 +12,7 @@ interface CreateRequisitionInput {
   sourcer_name: string;
   description: string;
   assessment_criteria: string[];
+  intake_id?: string | null;
 }
 
 export function useCreateRequisition() {
@@ -35,6 +36,7 @@ export function useCreateRequisition() {
             input.assessment_criteria.length > 0
               ? input.assessment_criteria
               : null,
+          intake_id: input.intake_id ?? null,
           status: "draft",
         })
         .select()
@@ -43,8 +45,14 @@ export function useCreateRequisition() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["requisitions"] });
+      if (variables.intake_id) {
+        queryClient.invalidateQueries({
+          queryKey: ["intake", variables.intake_id],
+        });
+        queryClient.invalidateQueries({ queryKey: ["intakes"] });
+      }
     },
   });
 }
