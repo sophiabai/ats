@@ -16,7 +16,6 @@ import {
   Share2,
   Sparkles,
   TriangleAlert,
-  X,
 } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
