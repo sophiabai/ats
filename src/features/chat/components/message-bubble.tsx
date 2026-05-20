@@ -3,6 +3,7 @@ import type { ChatMessage, ReqDraftFormData } from "@/types";
 import { ReqDraftCard } from "@/features/chat/components/req-draft-card";
 import { ScheduleCard } from "@/features/chat/components/schedule-card";
 import { EmailDraftCard } from "@/features/chat/components/email-draft-card";
+import { ToolCallCard } from "@/features/scheduling-agent/components/tool-call-card";
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -33,22 +34,27 @@ export function MessageBubble({ message, onOpenReqDraft }: MessageBubbleProps) {
   const schedule = message.metadata?.type === "schedule" ? message.metadata : null;
   const emailDraft =
     message.metadata?.type === "email_draft" ? message.metadata : null;
+  const toolCallLog =
+    message.metadata?.type === "tool_call_log" ? message.metadata : null;
 
   return (
     <div>
-      <div className="prose prose-sm max-w-none text-foreground prose-p:leading-relaxed prose-pre:rounded-lg prose-pre:bg-muted">
-        <Markdown
-          components={{
-            code: ({ children }) => (
-              <span className="inline-flex items-center rounded-md bg-foreground/10 px-1.5 py-0.5 text-xs font-medium not-prose">
-                {children}
-              </span>
-            ),
-          }}
-        >
-          {message.content}
-        </Markdown>
-      </div>
+      {message.content && (
+        <div className="prose prose-sm max-w-none text-foreground prose-p:leading-relaxed prose-pre:rounded-lg prose-pre:bg-muted">
+          <Markdown
+            components={{
+              code: ({ children }) => (
+                <span className="inline-flex items-center rounded-md bg-foreground/10 px-1.5 py-0.5 text-xs font-medium not-prose">
+                  {children}
+                </span>
+              ),
+            }}
+          >
+            {message.content}
+          </Markdown>
+        </div>
+      )}
+      {toolCallLog && <ToolCallCard entries={toolCallLog.entries} />}
       {reqDraft && onOpenReqDraft && (
         <ReqDraftCard
           formData={reqDraft.formData}

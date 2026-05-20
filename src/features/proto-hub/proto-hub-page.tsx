@@ -24,7 +24,27 @@ const sections: Section[] = [
     ],
   },
   {
-    title: "Scheduling",
+    title: "Agentic ATS",
+    protos: [
+      {
+        title: "Candidate's email inbox",
+        description: "Agent-driven candidate availability flow",
+        href: "/candidate-email",
+      },
+      {
+        title: "Recruiter's Slack",
+        description: "Anne Montgomery's view of the agent's DMs",
+        href: "/slack-recruiter",
+      },
+      {
+        title: "Interviewer's Slack",
+        description: "Interviewer's view of the agent's conflict DMs",
+        href: "/slack-interviewer",
+      },
+    ],
+  },
+  {
+    title: "Manual scheduling",
     protos: [
       {
         title: "1. RA",
@@ -65,6 +85,11 @@ const sections: Section[] = [
         title: "Candidate profile",
         description: "Profile card for a candidate",
         href: "/proto-hub/candidate-profile",
+      },
+      {
+        title: "Slack mock",
+        description: "Agent's Slack DMs with interviewers and the recruiter",
+        href: "/slack",
       },
     ],
   },

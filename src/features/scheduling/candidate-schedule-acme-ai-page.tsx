@@ -1,12 +1,18 @@
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { CandidateSummaryPanel } from "./components/candidate-summary-panel"
 import { OptionalNoteStep } from "./components/optional-note-step"
 import { MobileNoteStep } from "./components/mobile-note-step"
 import { useMediaQuery } from "@/hooks/use-media-query"
+import { useAgentRequestSync } from "@/features/scheduling-agent"
 
-const CANDIDATE = "Andy"
+const DEFAULT_CANDIDATE = "Andy"
 const COMPANY = "ACME"
+
+function firstName(fullName: string | undefined): string {
+  if (!fullName) return DEFAULT_CANDIDATE
+  return fullName.trim().split(/\s+/)[0] || DEFAULT_CANDIDATE
+}
 
 const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
@@ -295,7 +301,7 @@ function ConfirmationContent({ s, stacked, onReschedule }: { s: ScheduleState; s
 // ---------------------------------------------------------------------------
 // Desktop layout
 // ---------------------------------------------------------------------------
-function DesktopLayout({ s }: { s: ScheduleState }) {
+function DesktopLayout({ s, candidateName }: { s: ScheduleState; candidateName: string }) {
   return (
     <div
       className="customer-brand relative flex min-h-svh flex-col overflow-hidden bg-muted"
@@ -305,7 +311,7 @@ function DesktopLayout({ s }: { s: ScheduleState }) {
       <div className="cand-fade-up relative z-10 flex flex-1 items-start justify-center px-8 pb-[200px] pt-14">
         <div className="flex overflow-hidden rounded-3xl bg-white/85">
           <CandidateSummaryPanel
-            candidateName={CANDIDATE}
+            candidateName={candidateName}
             companyName={COMPANY}
             greeting={`Schedule your interview with ${COMPANY}`}
           />
@@ -404,7 +410,7 @@ function DesktopLayout({ s }: { s: ScheduleState }) {
 // Mobile layout (3 steps + confirmation)
 // Step 1: Calendar  •  Step 2: Time slots  •  Step 3: Note  •  Step 4: Confirmation
 // ---------------------------------------------------------------------------
-function MobileLayout({ s }: { s: ScheduleState }) {
+function MobileLayout({ s, candidateName }: { s: ScheduleState; candidateName: string }) {
   const [mobileStep, setMobileStep] = useState(1)
 
   useEffect(() => {
@@ -454,7 +460,7 @@ function MobileLayout({ s }: { s: ScheduleState }) {
                 <img src="/customer-logo.svg" alt={COMPANY} className="h-14 w-auto" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Hi {CANDIDATE},</p>
+                <p className="text-sm text-muted-foreground">Hi {candidateName},</p>
                 <p className="text-lg font-medium text-foreground">Schedule your interview with {COMPANY}</p>
               </div>
             </div>
@@ -548,8 +554,23 @@ function MobileLayout({ s }: { s: ScheduleState }) {
 export function Component() {
   const s = useScheduleState()
   const isMobile = useMediaQuery("(max-width: 639px)")
+  const { request, submitPickedSlot } = useAgentRequestSync()
+  const syncedRef = useRef(false)
+  const candidateName = firstName(request?.candidate_name)
 
-  return isMobile ? <MobileLayout s={s} /> : <DesktopLayout s={s} />
+  useEffect(() => {
+    if (s.step === 3 && request && !syncedRef.current && s.confirmationDetails) {
+      syncedRef.current = true
+      const slot = s.confirmationDetails
+        .map((d) => `${d.label}: ${d.ranges.join(", ")}`)
+        .join(" | ")
+      submitPickedSlot(slot, s.note || undefined)
+    }
+  }, [s.step, s.confirmationDetails, s.note, request, submitPickedSlot])
+
+  return isMobile
+    ? <MobileLayout s={s} candidateName={candidateName} />
+    : <DesktopLayout s={s} candidateName={candidateName} />
 }
 
 // ---------------------------------------------------------------------------

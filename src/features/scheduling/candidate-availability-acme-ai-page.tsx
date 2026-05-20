@@ -7,14 +7,20 @@ import { CandidateSummaryPanel } from "./components/candidate-summary-panel"
 import { OptionalNoteStep } from "./components/optional-note-step"
 import { MobileNoteStep } from "./components/mobile-note-step"
 import { useMediaQuery } from "@/hooks/use-media-query"
+import { useAgentRequestSync } from "@/features/scheduling-agent"
 
 // ---------------------------------------------------------------------------
 // Candidate availability picker page.
 // Uses the "customer-brand" theme for primary color (#587dff).
 // ---------------------------------------------------------------------------
 
-const CANDIDATE = "Andy"
+const DEFAULT_CANDIDATE = "Andy"
 const COMPANY = "ACME"
+
+function firstName(fullName: string | undefined): string {
+  if (!fullName) return DEFAULT_CANDIDATE
+  return fullName.trim().split(/\s+/)[0] || DEFAULT_CANDIDATE
+}
 const DURATION_SLOTS = 14 // 3h30m = 14 quarter-hour slots
 const SLOT_HEIGHT = 48
 const HOURS = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
@@ -891,7 +897,7 @@ function ConfirmationContent({ s, stacked, onUpdateAvailability }: { s: AvailSta
 // ---------------------------------------------------------------------------
 // Desktop layout
 // ---------------------------------------------------------------------------
-function DesktopLayout({ s }: { s: AvailState }) {
+function DesktopLayout({ s, candidateName }: { s: AvailState; candidateName: string }) {
   return (
     <div
       className="customer-brand relative flex min-h-svh flex-col overflow-hidden bg-muted"
@@ -906,7 +912,7 @@ function DesktopLayout({ s }: { s: AvailState }) {
       <div className="cand-fade-up relative z-10 flex flex-1 items-start justify-center px-8 pb-[200px] pt-14">
         <div className="flex w-[884px] overflow-hidden rounded-3xl bg-white/85">
           <CandidateSummaryPanel
-            candidateName={CANDIDATE}
+            candidateName={candidateName}
             companyName={COMPANY}
             greeting={`Share your availability to meet with ${COMPANY}`}
           />
@@ -974,7 +980,7 @@ function InfoPills() {
 // ---------------------------------------------------------------------------
 // Mobile layout — 3 steps: calendar → note → confirmation
 // ---------------------------------------------------------------------------
-function MobileLayout({ s }: { s: AvailState }) {
+function MobileLayout({ s, candidateName }: { s: AvailState; candidateName: string }) {
   const [mobileStep, setMobileStep] = useState(1)
 
   useEffect(() => {
@@ -1013,7 +1019,7 @@ function MobileLayout({ s }: { s: AvailState }) {
                 <img src="/customer-logo.svg" alt={COMPANY} className="h-14 w-auto" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Hi {CANDIDATE},</p>
+                <p className="text-sm text-muted-foreground">Hi {candidateName},</p>
                 <p className="text-lg font-medium text-foreground">
                   Select dates to meet with {COMPANY}
                 </p>
@@ -1076,10 +1082,42 @@ function MobileLayout({ s }: { s: AvailState }) {
 // ---------------------------------------------------------------------------
 // Main component — layout switcher
 // ---------------------------------------------------------------------------
+function formatSelectionForAgent(slot: Slot): string {
+  const [y, m, d] = slot.day.split("-").map(Number)
+  const date = new Date(y, m - 1, d)
+  const dayStr = date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })
+  const startTime = formatTimeForAgent(slot.startHour)
+  const endTime = formatTimeForAgent(slot.startHour + slot.slots * 0.25)
+  return `${dayStr} ${startTime} – ${endTime}`
+}
+
+function formatTimeForAgent(h: number): string {
+  const hours = Math.floor(h)
+  const minutes = Math.round((h - hours) * 60)
+  const ampm = hours >= 12 ? "pm" : "am"
+  const hh = hours % 12 || 12
+  const mm = minutes === 0 ? "" : `:${String(minutes).padStart(2, "0")}`
+  return `${hh}${mm}${ampm}`
+}
+
 export function Component() {
   const s = useAvailabilityState()
   const isMobile = useMediaQuery("(max-width: 639px)")
-  return isMobile ? <MobileLayout s={s} /> : <DesktopLayout s={s} />
+  const { request, submitAvailability } = useAgentRequestSync()
+  const syncedRef = useRef(false)
+  const candidateName = firstName(request?.candidate_name)
+
+  useEffect(() => {
+    if (s.step === 3 && request && !syncedRef.current) {
+      syncedRef.current = true
+      const slots = s.selections.map(formatSelectionForAgent)
+      submitAvailability(slots, s.note || undefined)
+    }
+  }, [s.step, s.selections, s.note, request, submitAvailability])
+
+  return isMobile
+    ? <MobileLayout s={s} candidateName={candidateName} />
+    : <DesktopLayout s={s} candidateName={candidateName} />
 }
 
 // ---------------------------------------------------------------------------

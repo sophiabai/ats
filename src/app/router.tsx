@@ -22,6 +22,7 @@ import { orgChartRoutes } from "@/features/org-chart/routes";
 import { protoHubRoutes } from "@/features/proto-hub/routes";
 import { requisitionsRoutes } from "@/features/requisitions/routes";
 import { schedulingRoutes } from "@/features/scheduling/routes";
+import { slackMockRoutes } from "@/features/slack-mock/routes";
 import { workflowsRoutes } from "@/features/workflows/routes";
 
 // Routes that render inside the recruiting app shell.
@@ -45,6 +46,7 @@ const publicRoutes: RouteObject[] = [
   ...docsRoutes,
   ...protoHubRoutes,
   ...schedulingRoutes,
+  ...slackMockRoutes,
   ...publicJobBoardRoutes,
 ];
 

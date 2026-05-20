@@ -1,11 +1,18 @@
 import { useState, useMemo } from "react"
+import { useSchedulingStateStore } from "@/features/scheduling-agent"
 
 // ---------------------------------------------------------------------------
-// Fully self-contained fake Gmail UI → candidate availability flow.
-// No imports from the rest of the codebase — only React + Tailwind.
+// Fake Gmail UI → candidate availability flow.
+// Merges agent-sent emails (from scheduling-state-store) with hardcoded ones.
 // ---------------------------------------------------------------------------
 
 const CANDIDATE = "Andy"
+
+type AgentInterviewDetail = {
+  title: string
+  duration_min: number
+  interviewer_name: string | null
+}
 
 type Email = {
   id: string
@@ -20,6 +27,41 @@ type Email = {
   unread: boolean
   starred: boolean
   availabilityUrl: string | null
+  body?: string
+  requestId?: string
+  isAgent?: boolean
+  template?: "self_schedule" | "availability_request"
+  candidateName?: string
+  candidateRole?: string
+  interviewDetails?: AgentInterviewDetail[]
+}
+
+function firstName(fullName?: string): string {
+  if (!fullName) return "there"
+  return fullName.split(/\s+/)[0] ?? fullName
+}
+
+function totalDuration(interviews: AgentInterviewDetail[]): string {
+  const total = interviews.reduce((acc, i) => acc + i.duration_min, 0)
+  if (total < 60) return `${total} minutes`
+  const hours = Math.floor(total / 60)
+  const mins = total - hours * 60
+  if (mins === 0) return `${hours} hour${hours === 1 ? "" : "s"}`
+  return `${hours} hour${hours === 1 ? "" : "s"} ${mins} minutes`
+}
+
+function formatRelativeTime(timestamp: number): string {
+  const now = Date.now()
+  const diff = now - timestamp
+  const min = Math.floor(diff / 60_000)
+  const hr = Math.floor(diff / 3_600_000)
+  const day = Math.floor(diff / 86_400_000)
+  if (min < 1) return "Just now"
+  if (min < 60) return `${min}m`
+  if (hr < 24) return `${hr}h`
+  if (day < 7) return `${day}d`
+  const d = new Date(timestamp)
+  return `${d.toLocaleString("en-US", { month: "short" })} ${d.getDate()}`
 }
 
 const emails: Email[] = [
@@ -133,11 +175,48 @@ export function Component() {
     return parts.length > 2 ? parts.slice(2).join("/") : null
   }, [])
 
-  const [openEmail, setOpenEmail] = useState<string | null>(
-    slugFromUrl ? (emails.find((e) => e.slug === slugFromUrl)?.id ?? null) : null
+  const agentRequests = useSchedulingStateStore((s) => s.requests)
+
+  const agentEmails: Email[] = useMemo(
+    () =>
+      [...agentRequests]
+        .sort((a, b) => b.sent_at - a.sent_at)
+        .map((req) => ({
+          id: `agent-${req.id}`,
+          slug: `agent-${req.id}`,
+          from: "Anne Montgomery",
+          senderEmail: "anne@acme.ai",
+          senderInitial: "A",
+          senderColor: "#7c3aed",
+          subject: req.email_subject,
+          preview: req.email_body.replace(/\s+/g, " ").slice(0, 120),
+          time: formatRelativeTime(req.sent_at),
+          unread: !req.candidate_reply,
+          starred: false,
+          availabilityUrl:
+            req.template === "self_schedule"
+              ? `/candidate-schedule-acme-ai?request=${req.id}`
+              : `/candidate-availability-acme-ai?request=${req.id}`,
+          body: req.email_body,
+          requestId: req.id,
+          isAgent: true,
+          template: req.template,
+          candidateName: req.candidate_name,
+          candidateRole: req.candidate_role,
+          interviewDetails: req.interview_details,
+        })),
+    [agentRequests],
   )
 
-  const activeEmail = emails.find((e) => e.id === openEmail)
+  const allEmails = useMemo(() => [...agentEmails, ...emails], [agentEmails])
+
+  const [openEmail, setOpenEmail] = useState<string | null>(
+    slugFromUrl
+      ? (allEmails.find((e) => e.slug === slugFromUrl)?.id ?? null)
+      : null,
+  )
+
+  const activeEmail = allEmails.find((e) => e.id === openEmail)
 
   return (
     <div className="flex h-svh flex-col bg-[#f6f8fc] text-sm" style={{ fontFamily: "'Google Sans', Roboto, Arial, sans-serif" }}>
@@ -195,9 +274,9 @@ export function Component() {
             />
           ) : (
             <InboxList
-              emails={emails}
+              emails={allEmails}
               onOpen={(id) => {
-                const email = emails.find((e) => e.id === id)
+                const email = allEmails.find((e) => e.id === id)
                 setOpenEmail(id)
                 if (email?.slug) {
                   window.history.pushState(null, "", `/candidate-email/${email.slug}`)
@@ -374,6 +453,71 @@ function EmailDetail({
               href={email.availabilityUrl!}
               target="_blank"
               rel="noopener noreferrer"
+              className="text-[#1a73e8] hover:underline"
+            >
+              Schedule your interview here &gt;&gt;
+            </a>
+          </p>
+          <p className="text-gray-500">
+            If none of the available times work for you, reply to this email and we'll find an alternative.
+          </p>
+          <p>
+            Best,
+            <br />
+            Anne
+          </p>
+        </div>
+      ) : email.isAgent && email.template === "availability_request" ? (
+        <div className="space-y-4 text-sm leading-relaxed text-gray-800">
+          <p>Hi {firstName(email.candidateName)}</p>
+          <p>
+            We're excited to move forward with your candidacy for the{" "}
+            <strong>{email.candidateRole ?? "role"}</strong> role at{" "}
+            <strong>ACME AI</strong>! Please use the link below to share your availability for an interview.
+          </p>
+          <p>Looking forward to speaking with you!</p>
+          <p>
+            <a
+              href={email.availabilityUrl!}
+              className="text-[#1a73e8] hover:underline"
+            >
+              Enter your availability here &gt;&gt;
+            </a>
+          </p>
+          <p>
+            Best,
+            <br />
+            Anne
+          </p>
+        </div>
+      ) : email.isAgent && email.template === "self_schedule" ? (
+        <div className="space-y-4 text-sm leading-relaxed text-gray-800">
+          <p>Hi {firstName(email.candidateName)},</p>
+          <p>
+            Great news! We've found times that work for your interview for the{" "}
+            <strong>{email.candidateRole ?? "role"}</strong> role at{" "}
+            <strong>ACME AI</strong>.
+          </p>
+          {email.interviewDetails && email.interviewDetails.length > 0 && (
+            <>
+              <p>
+                Please click the link below to pick a time slot that works best for you. The interview will be{" "}
+                <strong>{totalDuration(email.interviewDetails)}</strong> and will include the following session
+                {email.interviewDetails.length === 1 ? "" : "s"}:
+              </p>
+              <ul className="ml-6 list-disc space-y-1 text-gray-700">
+                {email.interviewDetails.map((iv, i) => (
+                  <li key={i}>
+                    {iv.title} ({iv.duration_min} min)
+                    {iv.interviewer_name ? ` — ${iv.interviewer_name}` : ""}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+          <p>
+            <a
+              href={email.availabilityUrl!}
               className="text-[#1a73e8] hover:underline"
             >
               Schedule your interview here &gt;&gt;

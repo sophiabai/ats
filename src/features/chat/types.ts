@@ -39,9 +39,28 @@ export interface EmailDraftMetadata {
   bodyHtml: string;
 }
 
+export interface ToolCallLogEntry {
+  id: string;
+  name: string;
+  arguments: Record<string, unknown>;
+  status: "pending" | "success" | "error";
+  result?: unknown;
+  error?: string;
+  summary?: string;
+}
+
+export interface ToolCallLogMetadata {
+  type: "tool_call_log";
+  entries: ToolCallLogEntry[];
+}
+
 export interface ChatMessage {
   role: MessageRole;
   content: string;
   command?: string;
-  metadata?: ReqDraftMetadata | ScheduleMetadata | EmailDraftMetadata;
+  metadata?:
+    | ReqDraftMetadata
+    | ScheduleMetadata
+    | EmailDraftMetadata
+    | ToolCallLogMetadata;
 }

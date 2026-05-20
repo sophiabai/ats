@@ -97,6 +97,7 @@ import { EmailDialog } from "@/features/candidates/components/email-dialog";
 import { CandidateSelfScheduleDialog } from "@/features/candidates/components/candidate-self-schedule-dialog";
 import { RequestAvailabilityDialog } from "@/features/candidates/components/request-availability-dialog";
 import { ScheduleInterviewDialog } from "@/features/candidates/components/schedule-interview-dialog";
+import { useScheduleWithAI } from "@/features/scheduling-agent";
 import { SendSplitButton } from "@/features/candidates/components/send-button";
 import { useCandidateActivities } from "@/features/candidates/api/use-candidate-activities";
 import { useCreateActivity, type CreateActivityInput } from "@/features/candidates/api/use-create-activity";
@@ -703,6 +704,7 @@ function PipelineMilestone({
     Record<string, Record<string, InterviewFeedback>>
   >({});
   const moveForward = useMoveApplicationForward();
+  const scheduleWithAI = useScheduleWithAI();
 
   const orderedStages = useMemo(() => {
     return [...allStages].sort((a, b) => {
@@ -866,6 +868,17 @@ function PipelineMilestone({
                         <Button size="sm">Schedule</Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onSelect={() =>
+                            scheduleWithAI.launch(
+                              `Schedule ${candidateName ?? "the candidate"} for the ${stage.name}.`,
+                            )
+                          }
+                          disabled={scheduleWithAI.isPending}
+                        >
+                          <Sparkles className="size-3.5" />
+                          Schedule with AI
+                        </DropdownMenuItem>
                         <DropdownMenuItem onSelect={onSchedule}>Schedule</DropdownMenuItem>
                         <DropdownMenuItem onSelect={onRequestAvailability}>Request availability</DropdownMenuItem>
                         <DropdownMenuItem onSelect={onSelfSchedule}>Candidate self-schedule</DropdownMenuItem>

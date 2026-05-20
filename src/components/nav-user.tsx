@@ -6,8 +6,14 @@ import {
   Monitor,
   Moon,
   Palette,
+  RotateCcw,
   Sun,
 } from "lucide-react"
+import { toast } from "sonner"
+import { useSchedulingStateStore } from "@/features/scheduling-agent/stores/scheduling-state-store"
+import { useSchedulingRulesStore } from "@/features/scheduling-agent/stores/scheduling-rules-store"
+import { useChatStore } from "@/features/chat/stores/chat-store"
+import { useAgentThreadStore } from "@/features/scheduling-agent/stores/agent-thread-store"
 
 import {
   Avatar,
@@ -138,6 +144,18 @@ export function NavUser({
             >
               <FlaskConical />
               Proto hub
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                useSchedulingStateStore.getState().resetAll();
+                useSchedulingRulesStore.getState().resetRules();
+                useChatStore.getState().clearMessages();
+                useAgentThreadStore.getState().resetThread();
+                toast.success("Demo data reset — agent activity cleared.");
+              }}
+            >
+              <RotateCcw />
+              Reset demo data
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>

@@ -2,52 +2,32 @@ import { useEffect, useRef } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { useChatStore } from "@/features/chat/stores/chat-store";
-import { useChat } from "@/features/chat/api/use-chat";
 import { MessageBubble } from "@/features/chat/components/message-bubble";
 import { MessageSkeleton } from "@/features/chat/components/message-skeleton";
 import { ChatInput } from "@/features/chat/components/chat-input";
-import {
-  EMAIL_INTENT_RE,
-  useEmailIntent,
-} from "@/features/chat/hooks/use-email-intent";
+import { useSchedulingAgent } from "@/features/scheduling-agent";
 
 export function ChatPanel() {
   const { messages, addMessage, clearMessages } = useChatStore();
-  const chat = useChat();
-  const { handleEmailIntent, isPending: isDraftingEmail } = useEmailIntent();
+  const agent = useSchedulingAgent();
   const bottomRef = useRef<HTMLDivElement>(null);
-
-  const isPending = chat.isPending || isDraftingEmail;
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isPending]);
+  }, [messages, agent.isPending]);
 
   function handleSend(content: string) {
-    if (isPending) return;
+    if (agent.isPending) return;
     const trimmed = content.trim();
     if (!trimmed) return;
-
-    const userMessage = { role: "user" as const, content: trimmed };
-    addMessage(userMessage);
-
-    if (EMAIL_INTENT_RE.test(trimmed)) {
-      void handleEmailIntent(trimmed);
-      return;
-    }
-
-    const updatedMessages = [...messages, userMessage];
-    chat.mutate(updatedMessages, {
-      onSuccess: (data) => {
-        addMessage({ role: "assistant", content: data.content });
-      },
-    });
+    addMessage({ role: "user", content: trimmed });
+    void agent.run(trimmed);
   }
 
   return (
     <div className="flex h-[calc(100vh-12rem)] flex-col rounded-xl border bg-card">
       <div className="flex items-center justify-between border-b px-4 py-3">
-        <h2 className="text-sm font-semibold">Chat with GPT</h2>
+        <h2 className="text-sm font-semibold">Recruiting coordination agent</h2>
         {messages.length > 0 && (
           <Button
             variant="ghost"
@@ -61,7 +41,7 @@ export function ChatPanel() {
       </div>
 
       <ScrollArea className="flex-1 px-4 py-4">
-        {messages.length === 0 && !isPending && (
+        {messages.length === 0 && !agent.isPending && (
           <div className="flex h-full items-center justify-center py-20">
             <p className="text-sm text-muted-foreground">
               Send a message to start a conversation.
@@ -73,19 +53,19 @@ export function ChatPanel() {
           {messages.map((msg, idx) => (
             <MessageBubble key={idx} message={msg} />
           ))}
-          {isPending && <MessageSkeleton />}
+          {agent.isPending && <MessageSkeleton />}
           <div ref={bottomRef} />
         </div>
       </ScrollArea>
 
-      {chat.isError && (
+      {agent.isError && (
         <div className="border-t bg-destructive/10 px-4 py-2 text-center text-sm text-destructive">
           Failed to get a response. Please try again.
         </div>
       )}
 
       <div className="border-t p-4">
-        <ChatInput onSend={handleSend} disabled={isPending} />
+        <ChatInput onSend={handleSend} disabled={agent.isPending} />
       </div>
     </div>
   );
