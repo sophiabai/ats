@@ -56,6 +56,16 @@ const sections: Section[] = [
         description: "Gmail-style compose window with recruiting templates",
         href: "/proto-hub/email-composer",
       },
+      {
+        title: "Job board integration",
+        description: "Publish, promote, and distribute job posts across channels",
+        href: "/proto-hub/job-board-integration",
+      },
+      {
+        title: "Candidate profile",
+        description: "Profile card for a candidate",
+        href: "/proto-hub/candidate-profile",
+      },
     ],
   },
 ]

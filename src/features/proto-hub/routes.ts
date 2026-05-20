@@ -11,4 +11,14 @@ export const protoHubRoutes: RouteObject[] = [
     HydrateFallback: () => null,
     lazy: () => import("@/features/proto-hub/email-composer-page"),
   },
+  {
+    path: "proto-hub/job-board-integration",
+    HydrateFallback: () => null,
+    lazy: () => import("@/features/proto-hub/job-board-integration-page"),
+  },
+  {
+    path: "proto-hub/candidate-profile",
+    HydrateFallback: () => null,
+    lazy: () => import("@/features/proto-hub/candidate-profile-page"),
+  },
 ];
