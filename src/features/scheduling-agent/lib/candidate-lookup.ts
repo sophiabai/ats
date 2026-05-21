@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import type { SchedulingAgentScope } from "@/features/scheduling-agent/types";
 
 export interface ResolvedStageInterview {
   id: string;
@@ -49,6 +50,7 @@ interface CandidateRow {
 
 interface ApplicationRow {
   id: string;
+  candidate_id: string;
   status: string;
   current_milestone: string;
   current_stage_id: string | null;
@@ -100,7 +102,7 @@ async function fetchActiveApplication(candidate_id: string): Promise<Application
   const { data } = await supabase
     .from("applications")
     .select(`
-      id, status, current_milestone, current_stage_id, created_at,
+      id, candidate_id, status, current_milestone, current_stage_id, created_at,
       requisitions(id, title),
       current_stage:req_stages!current_stage_id(id, name)
     `)
@@ -109,6 +111,21 @@ async function fetchActiveApplication(candidate_id: string): Promise<Application
     .order("created_at", { ascending: false })
     .limit(1);
   return (data?.[0] as unknown as ApplicationRow | undefined) ?? null;
+}
+
+async function fetchApplicationById(
+  application_id: string,
+): Promise<ApplicationRow | null> {
+  const { data } = await supabase
+    .from("applications")
+    .select(`
+      id, candidate_id, status, current_milestone, current_stage_id, created_at,
+      requisitions(id, title),
+      current_stage:req_stages!current_stage_id(id, name)
+    `)
+    .eq("id", application_id)
+    .maybeSingle();
+  return (data as unknown as ApplicationRow | null) ?? null;
 }
 
 async function fetchApplicationsSummary(
@@ -153,28 +170,38 @@ async function fetchStageInterviews(stage_id: string): Promise<ResolvedStageInte
 
 export async function lookupCandidateForAgent(
   input: string,
+  scope?: SchedulingAgentScope,
 ): Promise<ResolvedCandidate | null> {
   const row = await findCandidateRow(input);
   if (!row) return null;
 
-  const [application, summary] = await Promise.all([
-    fetchActiveApplication(row.id),
+  const useScopedApplication =
+    !!scope?.applicationId &&
+    (!scope.candidateId || scope.candidateId === row.id);
+
+  const [summary, scopedApplication] = await Promise.all([
     fetchApplicationsSummary(row.id),
+    useScopedApplication ? fetchApplicationById(scope.applicationId!) : Promise.resolve(null),
   ]);
 
+  const resolvedApplication =
+    scopedApplication?.candidate_id === row.id
+      ? scopedApplication
+      : await fetchActiveApplication(row.id);
+
   let resolvedApp: ResolvedApplication | null = null;
-  if (application) {
-    const stage_interviews = application.current_stage_id
-      ? await fetchStageInterviews(application.current_stage_id)
+  if (resolvedApplication) {
+    const stage_interviews = resolvedApplication.current_stage_id
+      ? await fetchStageInterviews(resolvedApplication.current_stage_id)
       : [];
     resolvedApp = {
-      id: application.id,
-      status: application.status,
-      milestone: application.current_milestone,
-      stage_id: application.current_stage_id,
-      stage_name: application.current_stage?.name ?? null,
-      req_id: application.requisitions?.id ?? null,
-      req_title: application.requisitions?.title ?? null,
+      id: resolvedApplication.id,
+      status: resolvedApplication.status,
+      milestone: resolvedApplication.current_milestone,
+      stage_id: resolvedApplication.current_stage_id,
+      stage_name: resolvedApplication.current_stage?.name ?? null,
+      req_id: resolvedApplication.requisitions?.id ?? null,
+      req_title: resolvedApplication.requisitions?.title ?? null,
       stage_interviews,
     };
   }
@@ -193,9 +220,7 @@ export async function lookupCandidateForAgent(
 
 export async function getCandidateById(
   candidate_id: string,
+  scope?: SchedulingAgentScope,
 ): Promise<ResolvedCandidate | null> {
-  if (!isUuid(candidate_id)) {
-    return lookupCandidateForAgent(candidate_id);
-  }
-  return lookupCandidateForAgent(candidate_id);
+  return lookupCandidateForAgent(candidate_id, scope);
 }

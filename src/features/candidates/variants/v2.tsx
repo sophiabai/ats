@@ -862,7 +862,7 @@ function PipelineMilestone({
                       <span className="ml-1.5">(current stage)</span>
                     )}
                   </span>
-                  {isCurrent && !allScheduled && (
+                  {app.status === "active" && isCurrent && !allScheduled && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                         <Button size="sm">Schedule</Button>
@@ -872,6 +872,11 @@ function PipelineMilestone({
                           onSelect={() =>
                             scheduleWithAI.launch(
                               `Schedule ${candidateName ?? "the candidate"} for the ${stage.name}.`,
+                              {
+                                candidateId: app.candidate_id,
+                                applicationId: app.id,
+                                stageId: stage.id,
+                              },
                             )
                           }
                           disabled={scheduleWithAI.isPending}
@@ -1227,7 +1232,7 @@ export function JobApplicationsTabContent({
   const defaultAppId =
     preselectedAppId && apps.some((a) => a.id === preselectedAppId)
       ? preselectedAppId
-      : apps[0]?.id ?? null;
+      : apps.find((a) => a.status === "active")?.id ?? apps[0]?.id ?? null;
   const [selectedAppId, setSelectedAppId] = useState<string | null>(
     defaultAppId,
   );

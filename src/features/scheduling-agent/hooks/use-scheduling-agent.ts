@@ -2,29 +2,35 @@ import { useCallback, useState } from "react";
 import { useChatStore } from "@/features/chat/stores/chat-store";
 import { runAgent } from "@/features/scheduling-agent/agent-runner";
 import { useAgentThreadStore } from "@/features/scheduling-agent/stores/agent-thread-store";
-import type { ToolCallLogEntry } from "@/features/scheduling-agent/types";
+import type {
+  SchedulingAgentScope,
+  ToolCallLogEntry,
+} from "@/features/scheduling-agent/types";
 
 const THREAD_ID = "default";
 
 export function useSchedulingAgent() {
   const { addMessage, updateLastMessage } = useChatStore();
-  const { thread, setThread } = useAgentThreadStore();
+  const { thread, scope, setThread, setScope } = useAgentThreadStore();
   const [isPending, setIsPending] = useState(false);
   const [isError, setIsError] = useState(false);
 
   const run = useCallback(
-    async (userInput: string) => {
+    async (userInput: string, nextScope?: SchedulingAgentScope) => {
       setIsPending(true);
       setIsError(false);
 
       let logMessageIndex: number | null = null;
       const currentLog: ToolCallLogEntry[] = [];
+      const effectiveScope = nextScope ?? scope;
 
       try {
+        if (nextScope) setScope(nextScope);
+
         const result = await runAgent(
           thread,
           userInput,
-          { threadId: THREAD_ID },
+          { threadId: THREAD_ID, scope: effectiveScope },
           {
             onToolCallBatch: (entries) => {
               currentLog.push(...entries);
@@ -77,7 +83,7 @@ export function useSchedulingAgent() {
         setIsPending(false);
       }
     },
-    [thread, setThread, addMessage, updateLastMessage],
+    [thread, scope, setThread, setScope, addMessage, updateLastMessage],
   );
 
   return { run, isPending, isError };

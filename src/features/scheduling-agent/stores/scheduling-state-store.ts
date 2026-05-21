@@ -18,6 +18,8 @@ export interface SchedulingInterviewDetail {
 export interface SchedulingRequest {
   id: string;
   candidate_id: string;
+  application_id?: string;
+  stage_id?: string;
   candidate_name: string;
   candidate_email: string;
   candidate_role: string;
@@ -88,6 +90,7 @@ interface SchedulingState {
   ) => SchedulingRequest;
   updateRequest: (id: string, patch: Partial<SchedulingRequest>) => void;
   getRequestByCandidate: (candidate_id: string) => SchedulingRequest | undefined;
+  getRequestByApplication: (application_id: string) => SchedulingRequest | undefined;
 
   addSlackDM: (dm: Omit<SlackDM, "id" | "sent_at" | "status">) => SlackDM;
   updateSlackDM: (id: string, patch: Partial<SlackDM>) => void;
@@ -134,6 +137,16 @@ export const useSchedulingStateStore = create<SchedulingState>()(
           .find(
             (r) =>
               r.candidate_id === candidate_id &&
+              r.status !== "cancelled" &&
+              r.status !== "completed",
+          ),
+
+      getRequestByApplication: (application_id) =>
+        [...get().requests]
+          .reverse()
+          .find(
+            (r) =>
+              r.application_id === application_id &&
               r.status !== "cancelled" &&
               r.status !== "completed",
           ),

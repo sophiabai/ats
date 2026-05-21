@@ -4,6 +4,7 @@ export { useAgentRequestSync } from "@/features/scheduling-agent/hooks/use-agent
 export { useSchedulingStateStore } from "@/features/scheduling-agent/stores/scheduling-state-store";
 export { useAgentThreadStore } from "@/features/scheduling-agent/stores/agent-thread-store";
 export { ToolCallCard } from "@/features/scheduling-agent/components/tool-call-card";
+export { ScenarioPanel } from "@/features/scheduling-agent/components/scenario-panel";
 export type {
   ToolCallLogEntry,
   AgentThreadMessage,

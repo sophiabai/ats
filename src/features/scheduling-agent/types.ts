@@ -2,6 +2,12 @@ import type { ChatCompletionMessageParam } from "openai/resources/chat/completio
 
 export type AgentThreadMessage = ChatCompletionMessageParam;
 
+export interface SchedulingAgentScope {
+  candidateId?: string;
+  applicationId?: string;
+  stageId?: string;
+}
+
 export interface ToolCallLogEntry {
   id: string;
   name: string;
@@ -14,6 +20,7 @@ export interface ToolCallLogEntry {
 
 export interface ToolHandlerContext {
   threadId: string;
+  scope?: SchedulingAgentScope;
 }
 
 export type ToolHandler = (

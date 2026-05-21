@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { RouterProvider } from "react-router";
 import { Providers } from "@/app/providers";
 import { createRouter } from "@/app/router";
+import { ScenarioPanel } from "@/features/scheduling-agent";
 import "@/index.css";
 import "@/stores/theme-store";
 
@@ -12,6 +13,7 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Providers>
       <RouterProvider router={router} />
+      <ScenarioPanel />
     </Providers>
   </StrictMode>,
 );

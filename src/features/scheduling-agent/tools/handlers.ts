@@ -9,7 +9,10 @@ import {
 } from "@/features/scheduling-agent/stores/scheduling-state-store";
 import { useChatStore } from "@/features/chat/stores/chat-store";
 import { useSchedulingRulesStore } from "@/features/scheduling-agent/stores/scheduling-rules-store";
-import type { ToolDefinition } from "@/features/scheduling-agent/types";
+import type {
+  ToolDefinition,
+  ToolHandlerContext,
+} from "@/features/scheduling-agent/types";
 
 const INTERVIEWER_DIRECTORY: Record<
   string,
@@ -223,6 +226,20 @@ function applyRules(slots: SuggestedSlot[]): SuggestedSlot[] {
   });
 }
 
+function getRequestForContext(
+  store: ReturnType<typeof useSchedulingStateStore.getState>,
+  candidateId: string,
+  ctx: ToolHandlerContext,
+) {
+  const scopedApplicationId =
+    ctx.scope?.candidateId === candidateId ? ctx.scope.applicationId : undefined;
+
+  return scopedApplicationId
+    ? store.getRequestByApplication(scopedApplicationId) ??
+        store.getRequestByCandidate(candidateId)
+    : store.getRequestByCandidate(candidateId);
+}
+
 export const schedulingTools: ToolDefinition[] = [
   {
     name: "get_candidate_info",
@@ -239,9 +256,9 @@ export const schedulingTools: ToolDefinition[] = [
       },
       required: ["candidate_id"],
     },
-    handler: async (args) => {
+    handler: async (args, ctx) => {
       const input = String(args.candidate_id ?? "");
-      const resolved = await lookupCandidateForAgent(input);
+      const resolved = await lookupCandidateForAgent(input, ctx.scope);
       if (!resolved)
         return {
           error: `No candidate matching '${input}' found in the ATS.`,
@@ -266,8 +283,11 @@ export const schedulingTools: ToolDefinition[] = [
       },
       required: ["candidate_id"],
     },
-    handler: async (args) => {
-      const resolved = await lookupCandidateForAgent(String(args.candidate_id ?? ""));
+    handler: async (args, ctx) => {
+      const resolved = await lookupCandidateForAgent(
+        String(args.candidate_id ?? ""),
+        ctx.scope,
+      );
       if (!resolved) return { error: `Candidate not found.` };
       if (!resolved.application)
         return {
@@ -359,12 +379,12 @@ export const schedulingTools: ToolDefinition[] = [
       },
       required: ["candidate_id", "template"],
     },
-    handler: async (args) => {
-      const candidate = await getCandidateById(String(args.candidate_id));
+    handler: async (args, ctx) => {
+      const candidate = await getCandidateById(String(args.candidate_id), ctx.scope);
       if (!candidate) return { error: `Candidate not found.` };
 
       const store = useSchedulingStateStore.getState();
-      const existing = store.getRequestByCandidate(candidate.id);
+      const existing = getRequestForContext(store, candidate.id, ctx);
       if (existing) {
         return {
           error: `A scheduling request to ${candidate.name} is already outstanding (status: ${existing.status}).`,
@@ -393,6 +413,8 @@ export const schedulingTools: ToolDefinition[] = [
 
       const req = store.addRequest({
         candidate_id: candidate.id,
+        application_id: candidate.application?.id,
+        stage_id: candidate.application?.stage_id ?? undefined,
         candidate_name: candidate.name,
         candidate_email: candidate.email ?? "",
         candidate_role: role,
@@ -432,10 +454,10 @@ export const schedulingTools: ToolDefinition[] = [
       },
       required: ["candidate_id", "email_body"],
     },
-    handler: (args) => {
+    handler: (args, ctx) => {
       const id = String(args.candidate_id);
       const store = useSchedulingStateStore.getState();
-      const req = store.getRequestByCandidate(id);
+      const req = getRequestForContext(store, id, ctx);
       if (!req) {
         return { error: `No outstanding scheduling request found for candidate.` };
       }
@@ -469,9 +491,10 @@ export const schedulingTools: ToolDefinition[] = [
       },
       required: ["candidate_id"],
     },
-    handler: (args) => {
+    handler: (args, ctx) => {
       const id = String(args.candidate_id);
-      const req = useSchedulingStateStore.getState().getRequestByCandidate(id);
+      const store = useSchedulingStateStore.getState();
+      const req = getRequestForContext(store, id, ctx);
       if (!req) return { reply: null, status: "no_outstanding_request" };
       if (!req.candidate_reply)
         return {
@@ -632,8 +655,8 @@ export const schedulingTools: ToolDefinition[] = [
       },
       required: ["candidate_id", "interviewer_ids", "slot", "duration_min", "confirmation_email_body"],
     },
-    handler: async (args) => {
-      const candidate = await getCandidateById(String(args.candidate_id));
+    handler: async (args, ctx) => {
+      const candidate = await getCandidateById(String(args.candidate_id), ctx.scope);
       if (!candidate) return { error: `Candidate not found.` };
 
       const interviewerIds = Array.isArray(args.interviewer_ids)
@@ -655,7 +678,7 @@ export const schedulingTools: ToolDefinition[] = [
         hackerrank_link: hackerrankLink,
       });
 
-      const req = store.getRequestByCandidate(candidate.id);
+      const req = getRequestForContext(store, candidate.id, ctx);
       if (req) store.updateRequest(req.id, { status: "completed" });
 
       return {
