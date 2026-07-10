@@ -10,6 +10,14 @@ export const requisitionsRoutes: RouteObject[] = [
     lazy: () => import("@/features/requisitions/requisitions-page"),
   },
   {
+    path: "requisitions/new",
+    handle: routeHandle({
+      title: "New requisition",
+      parents: [REQUISITIONS_PARENT],
+    }),
+    lazy: () => import("@/features/requisitions/requisition-new-page"),
+  },
+  {
     path: "requisitions/:reqId",
     handle: routeHandle({ parents: [REQUISITIONS_PARENT] }),
     lazy: () => import("@/features/requisitions/requisition-detail-page"),

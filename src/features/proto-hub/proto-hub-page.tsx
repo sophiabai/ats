@@ -101,9 +101,6 @@ export function Component() {
       <div className="w-full max-w-2xl space-y-8">
         <div className="space-y-1 text-center">
           <h1 className="text-2xl font-semibold tracking-tight">Proto hub</h1>
-          <p className="text-sm text-muted-foreground">
-            Select a prototype to open
-          </p>
         </div>
         {sections.map((section) => (
           <section key={section.title} className="space-y-3">

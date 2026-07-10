@@ -1,4 +1,5 @@
 import {
+  Bug,
   ChevronsUpDown,
   FlaskConical,
   Gem,
@@ -14,6 +15,8 @@ import { useSchedulingStateStore } from "@/features/scheduling-agent/stores/sche
 import { useSchedulingRulesStore } from "@/features/scheduling-agent/stores/scheduling-rules-store"
 import { useChatStore } from "@/features/chat/stores/chat-store"
 import { useAgentThreadStore } from "@/features/scheduling-agent/stores/agent-thread-store"
+import { useScenarioPanelStore } from "@/features/scheduling-agent/stores/scenario-panel-store"
+import { resetLocalDb } from "@/lib/local-db"
 
 import {
   Avatar,
@@ -146,12 +149,20 @@ export function NavUser({
               Proto hub
             </DropdownMenuItem>
             <DropdownMenuItem
+              onClick={() => useScenarioPanelStore.getState().setHidden(false)}
+            >
+              <Bug />
+              Demo controls
+            </DropdownMenuItem>
+            <DropdownMenuItem
               onClick={() => {
                 useSchedulingStateStore.getState().resetAll();
                 useSchedulingRulesStore.getState().resetRules();
                 useChatStore.getState().clearMessages();
                 useAgentThreadStore.getState().resetThread();
-                toast.success("Demo data reset — agent activity cleared.");
+                resetLocalDb();
+                toast.success("Demo data reset — reloading…");
+                setTimeout(() => window.location.reload(), 400);
               }}
             >
               <RotateCcw />

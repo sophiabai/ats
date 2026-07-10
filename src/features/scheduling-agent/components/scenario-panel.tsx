@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Bug, Check, RotateCcw, Send, X } from "lucide-react";
+import { useRef, useState } from "react";
+import { Bug, Check, EyeOff, GripVertical, RotateCcw, Send, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,35 +18,121 @@ import { useSchedulingRulesStore } from "@/features/scheduling-agent/stores/sche
 import { useSchedulingAgent } from "@/features/scheduling-agent/hooks/use-scheduling-agent";
 import { useAgentThreadStore } from "@/features/scheduling-agent/stores/agent-thread-store";
 import { useChatStore } from "@/features/chat/stores/chat-store";
+import { useScenarioPanelStore } from "@/features/scheduling-agent/stores/scenario-panel-store";
+
+type Position = { x: number; y: number } | null;
+
+function useDraggable(elRef: React.RefObject<HTMLElement | null>) {
+  const [position, setPosition] = useState<Position>(null);
+  const draggedRef = useRef(false);
+
+  function onPointerDown(e: React.PointerEvent) {
+    if (e.button !== 0) return;
+    const target = e.target as HTMLElement;
+    if (target.closest("[data-no-drag]")) return;
+
+    const el = elRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const offsetY = e.clientY - rect.top;
+    const startX = e.clientX;
+    const startY = e.clientY;
+    let moved = false;
+
+    function onMove(ev: PointerEvent) {
+      if (!moved && Math.hypot(ev.clientX - startX, ev.clientY - startY) < 4) {
+        return;
+      }
+      moved = true;
+      draggedRef.current = true;
+      const width = rect.width;
+      const height = rect.height;
+      const x = Math.max(0, Math.min(window.innerWidth - width, ev.clientX - offsetX));
+      const y = Math.max(0, Math.min(window.innerHeight - height, ev.clientY - offsetY));
+      setPosition({ x, y });
+    }
+    function onUp() {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      setTimeout(() => { draggedRef.current = false; }, 0);
+    }
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  }
+
+  return { position, onPointerDown, draggedRef };
+}
 
 export function ScenarioPanel() {
   const [open, setOpen] = useState(false);
+  const hidden = useScenarioPanelStore((s) => s.hidden);
+  const setHidden = useScenarioPanelStore((s) => s.setHidden);
+  const ref = useRef<HTMLDivElement>(null);
+  const { position, onPointerDown, draggedRef } = useDraggable(ref);
+
+  if (hidden) return null;
+
+  const positionStyle: React.CSSProperties = position
+    ? { left: position.x, top: position.y, right: "auto", bottom: "auto" }
+    : { right: 16, bottom: 16 };
 
   if (!open) {
     return (
-      <button
-        onClick={() => setOpen(true)}
-        className="fixed bottom-4 right-4 z-50 flex items-center gap-1.5 rounded-full bg-foreground/90 px-3 py-2 text-xs font-medium text-background shadow-lg hover:bg-foreground"
+      <div
+        ref={ref}
+        onPointerDown={onPointerDown}
+        style={positionStyle}
+        className="fixed z-50 touch-none"
       >
-        <Bug className="size-3.5" />
-        Demo controls
-      </button>
+        <button
+          onClick={() => {
+            if (draggedRef.current) return;
+            setOpen(true);
+          }}
+          className="flex items-center gap-1.5 rounded-full bg-foreground/90 px-3 py-2 text-xs font-medium text-background shadow-lg hover:bg-foreground cursor-grab active:cursor-grabbing"
+        >
+          <Bug className="size-3.5" />
+          Demo controls
+        </button>
+      </div>
     );
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex max-h-[80vh] w-[380px] flex-col rounded-xl border bg-card shadow-2xl">
-      <div className="flex items-center justify-between border-b px-4 py-2.5">
+    <div
+      ref={ref}
+      style={positionStyle}
+      className="fixed z-50 flex max-h-[80vh] w-[380px] flex-col rounded-xl border bg-card shadow-2xl touch-none"
+    >
+      <div
+        onPointerDown={onPointerDown}
+        className="flex items-center justify-between border-b px-4 py-2.5 cursor-grab active:cursor-grabbing select-none"
+      >
         <div className="flex items-center gap-2">
+          <GripVertical className="size-3.5 text-muted-foreground" />
           <Bug className="size-3.5 text-muted-foreground" />
           <span className="text-sm font-semibold">Demo controls</span>
         </div>
-        <button
-          onClick={() => setOpen(false)}
-          className="rounded-md p-1 text-muted-foreground hover:bg-muted"
-        >
-          <X className="size-4" />
-        </button>
+        <div className="flex items-center gap-0.5" data-no-drag>
+          <button
+            onClick={() => {
+              setHidden(true);
+              setOpen(false);
+            }}
+            title="Hide demo controls"
+            className="rounded-md p-1 text-muted-foreground hover:bg-muted"
+          >
+            <EyeOff className="size-4" />
+          </button>
+          <button
+            onClick={() => setOpen(false)}
+            title="Collapse"
+            className="rounded-md p-1 text-muted-foreground hover:bg-muted"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-3">

@@ -53,6 +53,15 @@ interface CreateRequisitionDialogProps {
   onCreated?: (id: string) => void;
 }
 
+interface RequisitionFormBodyProps {
+  initialData?: Partial<FormState>;
+  autoGenerate?: boolean;
+  isEditing?: boolean;
+  onCancel: () => void;
+  onCreated?: (id: string) => void;
+  className?: string;
+}
+
 const DEPARTMENTS = [
   "Any department",
   "Engineering",
@@ -157,16 +166,16 @@ async function aiGenerateDirect(prompt: string): Promise<string> {
 const aiGenerate = import.meta.env.DEV ? aiGenerateDirect : aiGenerateViaApi;
 
 
-export function CreateRequisitionDialog({
-  open,
-  onOpenChange,
+export function RequisitionFormBody({
   initialData,
   autoGenerate,
+  isEditing = false,
+  onCancel,
   onCreated,
-}: CreateRequisitionDialogProps) {
+  className,
+}: RequisitionFormBodyProps) {
   const createReq = useCreateRequisition();
   const linkPoolsMutation = useLinkPoolsToReq();
-  const isEditing = !!initialData?.title && !autoGenerate;
   const [step, setStep] = React.useState(1);
   const [form, setForm] = React.useState<FormState>({
     ...INITIAL_FORM,
@@ -176,27 +185,19 @@ export function CreateRequisitionDialog({
   const pendingAutoGenerate = React.useRef(false);
 
   React.useEffect(() => {
-    if (open && initialData) {
-      setForm({ ...INITIAL_FORM, ...initialData });
-      if (autoGenerate && initialData.title) {
-        setStep(2);
-        pendingAutoGenerate.current = true;
-      } else {
-        setStep(1);
-      }
+    if (autoGenerate && initialData?.title) {
+      setStep(2);
+      pendingAutoGenerate.current = true;
     }
-  }, [open, initialData, autoGenerate]);
+    // Run once on mount only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function updateField<K extends keyof FormState>(
     field: K,
     value: FormState[K],
   ) {
     setForm((prev) => ({ ...prev, [field]: value }));
-  }
-
-  function reset() {
-    setForm({ ...INITIAL_FORM, ...initialData });
-    setStep(1);
   }
 
   const generateDescription = useMutation({
@@ -298,8 +299,6 @@ Return ONLY a valid JSON array of strings, no other text. Example: ["Technical d
         poolIds: form.linked_pool_ids,
       });
     }
-    reset();
-    onOpenChange(false);
     onCreated?.(result.id);
   }
 
@@ -310,98 +309,108 @@ Return ONLY a valid JSON array of strings, no other text. Example: ["Technical d
   }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => {
-        if (!v) reset();
-        onOpenChange(v);
-      }}
-    >
-      <DialogContent className="sm:max-w-4xl p-0 gap-0" showCloseButton={false}>
-        <div className="flex h-[75vh]">
-          <div className="flex flex-col border-r bg-muted/30 p-5">
-            <DialogHeader className="mb-4 pl-3">
-              <DialogTitle className="text-base">{isEditing ? "Edit requisition" : "New requisition"}</DialogTitle>
-              <DialogDescription className="sr-only">
-                Step {step} of {STEPS.length}
-              </DialogDescription>
-            </DialogHeader>
-            <StepNav
-              steps={STEPS}
-              current={step - 1}
-              onStepClick={(i) => setStep(i + 1)}
-              className="w-52"
+    <div className={cn("flex", className)}>
+      <div className="flex flex-col border-r bg-muted/30 p-5">
+        <StepNav
+          steps={STEPS}
+          current={step - 1}
+          onStepClick={(i) => setStep(i + 1)}
+          className="w-52"
+        />
+      </div>
+
+      <div className="flex flex-1 flex-col min-w-0">
+        <div className={cn("flex-1 overflow-y-auto p-10", step === 2 && "flex flex-col overflow-hidden")}>
+          {step === 1 && <Step1 form={form} updateField={updateField} />}
+          {step === 2 && (
+            <Step2
+              form={form}
+              updateField={updateField}
+              generateDescription={generateDescription}
             />
-          </div>
-
-          <div className="flex flex-1 flex-col">
-            <div className={cn("flex-1 overflow-y-auto p-10", step === 2 && "flex flex-col overflow-hidden")}>
-              {step === 1 && <Step1 form={form} updateField={updateField} />}
-              {step === 2 && (
-                <Step2
-                  form={form}
-                  updateField={updateField}
-                  generateDescription={generateDescription}
-                />
-              )}
-              {step === 3 && (
-                <Step3
-                  form={form}
-                  updateField={updateField}
-                  generateCriteria={generateCriteria}
-                />
-              )}
-              {step === 4 && (
-                <Step4 form={form} updateField={updateField} />
-              )}
-              {step === 5 && (
-                <Step5 form={form} updateField={updateField} />
-              )}
-            </div>
-
-            <div className="flex items-center justify-end gap-2 px-6 py-4">
-              {step > 1 && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setStep((s) => s - 1)}
-                >
-                  Back
-                </Button>
-              )}
-              <div className="flex-1" />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  reset();
-                  onOpenChange(false);
-                }}
-              >
-                Cancel
-              </Button>
-              {step < STEPS.length ? (
-                <Button
-                  type="button"
-                  disabled={!canAdvance()}
-                  onClick={() => setStep((s) => s + 1)}
-                >
-                  Continue
-                </Button>
-              ) : (
-                <Button
-                  type="button"
-                  disabled={createReq.isPending || linkPoolsMutation.isPending || !canAdvance()}
-                  onClick={handleSubmit}
-                >
-                  {createReq.isPending
-                    ? isEditing ? "Saving..." : "Creating..."
-                    : isEditing ? "Save" : "Create requisition"}
-                </Button>
-              )}
-            </div>
-          </div>
+          )}
+          {step === 3 && (
+            <Step3
+              form={form}
+              updateField={updateField}
+              generateCriteria={generateCriteria}
+            />
+          )}
+          {step === 4 && (
+            <Step4 form={form} updateField={updateField} />
+          )}
+          {step === 5 && (
+            <Step5 form={form} updateField={updateField} />
+          )}
         </div>
+
+        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t">
+          {step > 1 && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setStep((s) => s - 1)}
+            >
+              Back
+            </Button>
+          )}
+          <div className="flex-1" />
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          {step < STEPS.length ? (
+            <Button
+              type="button"
+              disabled={!canAdvance()}
+              onClick={() => setStep((s) => s + 1)}
+            >
+              Continue
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              disabled={createReq.isPending || linkPoolsMutation.isPending || !canAdvance()}
+              onClick={handleSubmit}
+            >
+              {createReq.isPending
+                ? isEditing ? "Saving..." : "Creating..."
+                : isEditing ? "Save" : "Create requisition"}
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function CreateRequisitionDialog({
+  open,
+  onOpenChange,
+  initialData,
+  autoGenerate,
+  onCreated,
+}: CreateRequisitionDialogProps) {
+  const isEditing = !!initialData?.title && !autoGenerate;
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-4xl p-0 gap-0" showCloseButton={false}>
+        <DialogHeader className="sr-only">
+          <DialogTitle>{isEditing ? "Edit requisition" : "New requisition"}</DialogTitle>
+          <DialogDescription>Multi-step form</DialogDescription>
+        </DialogHeader>
+        {open && (
+          <RequisitionFormBody
+            initialData={initialData}
+            autoGenerate={autoGenerate}
+            isEditing={isEditing}
+            onCancel={() => onOpenChange(false)}
+            onCreated={(id) => {
+              onOpenChange(false);
+              onCreated?.(id);
+            }}
+            className="h-[75vh]"
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

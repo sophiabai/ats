@@ -7,6 +7,7 @@ import {
   Check,
   CheckCircle2,
   ChevronDown,
+  CircleAlert,
   FileText,
   ListFilter,
   Mail,
@@ -91,6 +92,53 @@ interface ApplicationRow extends Application {
   emails: EmailPreview[];
 }
 
+interface ApplicationQueryRow extends Application {
+  candidates:
+    | (Candidate & {
+        criteria_evaluations:
+          | Pick<CriteriaEvaluation, "req_id" | "criterion" | "met">[]
+          | null;
+      })
+    | null;
+  requisitions:
+    | (Pick<Requisition, "id" | "title" | "req_number"> & {
+        req_stages: ReqStage[] | null;
+      })
+    | null;
+  application_interviews: ApplicationInterview[] | null;
+  stage_decisions: StageDecision[] | null;
+  emails: EmailPreview[] | null;
+}
+
+function asArray<T>(value: T[] | null | undefined): T[] {
+  return Array.isArray(value) ? value : [];
+}
+
+function normalizeApplicationRows(
+  rows: ApplicationQueryRow[] | null,
+): ApplicationRow[] {
+  return (rows ?? []).flatMap((row) => {
+    if (!row.candidates || !row.requisitions) return [];
+
+    return [
+      {
+        ...row,
+        candidates: {
+          ...row.candidates,
+          criteria_evaluations: asArray(row.candidates.criteria_evaluations),
+        },
+        requisitions: {
+          ...row.requisitions,
+          req_stages: asArray(row.requisitions.req_stages),
+        },
+        application_interviews: asArray(row.application_interviews),
+        stage_decisions: asArray(row.stage_decisions),
+        emails: asArray(row.emails),
+      },
+    ];
+  });
+}
+
 function useStageBoard() {
   return useQuery({
     queryKey: ["inbox-stage-board"],
@@ -109,7 +157,7 @@ function useStageBoard() {
         .order("applied_date", { ascending: false });
 
       if (error) throw error;
-      return data as unknown as ApplicationRow[];
+      return normalizeApplicationRows(data as unknown as ApplicationQueryRow[]);
     },
   });
 }
@@ -697,6 +745,23 @@ function ReqGroupSkeleton() {
   );
 }
 
+function InboxQueryError({ error }: { error: unknown }) {
+  const message =
+    error instanceof Error
+      ? error.message
+      : "Unable to load inbox applications.";
+
+  return (
+    <div className="flex items-start gap-3 rounded-md border border-destructive/20 bg-destructive/5 p-4 text-sm">
+      <CircleAlert className="mt-0.5 size-4 shrink-0 text-destructive" />
+      <div>
+        <div className="font-medium text-foreground">Inbox data unavailable</div>
+        <p className="mt-1 text-muted-foreground">{message}</p>
+      </div>
+    </div>
+  );
+}
+
 function SearchableFilter({
   label,
   options,
@@ -873,7 +938,7 @@ export function InboxV2() {
   });
   const { appId: selectedAppId, toggle: toggleDetail, close: closeDetail } =
     useInboxDetailStore();
-  const { data: applications, isLoading } = useStageBoard();
+  const { data: applications, error, isError, isLoading } = useStageBoard();
 
   useEffect(() => () => closeDetail(), [closeDetail]);
 
@@ -916,6 +981,8 @@ export function InboxV2() {
         <div className="space-y-6">
           {isLoading ? (
             <ReqGroupSkeleton />
+          ) : isError ? (
+            <InboxQueryError error={error} />
           ) : reqGroups.length === 0 ? (
             <div className="text-sm text-muted-foreground">
               No active applications.

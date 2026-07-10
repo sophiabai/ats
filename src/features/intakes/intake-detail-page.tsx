@@ -7,10 +7,7 @@ import { RichTextEditor } from "@/components/custom/rich-text-editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  CreateRequisitionDialog,
-  type FormState,
-} from "@/features/requisitions/components/create-requisition-dialog";
+import type { FormState } from "@/features/requisitions/components/create-requisition-dialog";
 import { StatusBadge } from "@/features/requisitions/components/status-badge";
 import { useIntake } from "@/features/intakes/api/use-intake";
 import { useUpdateIntake } from "@/features/intakes/api/use-update-intake";
@@ -27,7 +24,6 @@ export function Component() {
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [createOpen, setCreateOpen] = useState(false);
 
   // Track which values have been synced from the server so we don't overwrite
   // user edits when the query refetches.
@@ -132,7 +128,14 @@ export function Component() {
           <Button
             size="sm"
             className="ml-8 shrink-0 gap-1.5"
-            onClick={() => setCreateOpen(true)}
+            onClick={() =>
+              navigate("/requisitions/new", {
+                state: {
+                  initialData: initialReqData,
+                  successBreadcrumb: reqCrumbState,
+                },
+              })
+            }
           >
             <Plus className="size-4" />
             Add a requisition
@@ -209,14 +212,6 @@ export function Component() {
         </div>
       </aside>
 
-      <CreateRequisitionDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        initialData={initialReqData}
-        onCreated={(id) =>
-          navigate(`/requisitions/${id}`, { state: reqCrumbState })
-        }
-      />
     </div>
   );
 }

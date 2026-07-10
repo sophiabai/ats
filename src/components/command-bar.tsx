@@ -28,8 +28,6 @@ import { MessageSkeleton } from "@/features/chat/components/message-skeleton"
 import { useChat } from "@/features/chat/api/use-chat"
 import { useChatStore } from "@/features/chat/stores/chat-store"
 import { useParseRequisition } from "@/features/requisitions/api/use-parse-requisition"
-import { CreateRequisitionDialog } from "@/features/requisitions/components/create-requisition-dialog"
-import type { FormState } from "@/features/requisitions/components/create-requisition-dialog"
 import {
   EMAIL_INTENT_RE,
   useEmailIntent,
@@ -90,8 +88,6 @@ export function CommandBar() {
   const [selectedIndex, setSelectedIndex] = useState(0)
   const reqModeRef = useRef(false)
   const [activeCommand, setActiveCommand] = useState<string | null>(null)
-  const [reqDialogOpen, setReqDialogOpen] = useState(false)
-  const [reqInitialData, setReqInitialData] = useState<Partial<FormState> | undefined>()
   const { handleEmailIntent, isPending: isDraftingEmail } = useEmailIntent()
 
   const dropdownItems = useMemo(() => {
@@ -180,8 +176,13 @@ export function CommandBar() {
   }, [messages, chat.isPending, expanded])
 
   function openReqDialog(formData?: ReqDraftFormData) {
-    setReqInitialData(formData ? { ...formData } : undefined)
-    setReqDialogOpen(true)
+    setOpen(false)
+    navigate("/requisitions/new", {
+      state: {
+        initialData: formData ? { ...formData } : undefined,
+        autoGenerate: true,
+      },
+    })
   }
 
   function handleReqParse(allMessages: ChatMessage[]) {
@@ -462,16 +463,6 @@ export function CommandBar() {
         </DialogContent>
       </Dialog>
 
-      <CreateRequisitionDialog
-        open={reqDialogOpen}
-        onOpenChange={setReqDialogOpen}
-        initialData={reqInitialData}
-        autoGenerate
-        onCreated={(id) => {
-          setOpen(false)
-          navigate(`/requisitions/${id}`)
-        }}
-      />
     </>
   )
 }

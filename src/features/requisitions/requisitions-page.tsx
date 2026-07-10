@@ -4,7 +4,6 @@ import { Briefcase, FileText, Plus } from "lucide-react";
 import { useRequisitions } from "@/features/requisitions/api/use-requisitions";
 import { RequisitionsTable } from "@/features/requisitions/components/requisitions-table";
 import { RequisitionsSkeleton } from "@/features/requisitions/components/requisitions-skeleton";
-import { CreateRequisitionDialog } from "@/features/requisitions/components/create-requisition-dialog";
 import { useIntakes } from "@/features/intakes/api/use-intakes";
 import { useCreateIntake } from "@/features/intakes/api/use-create-intake";
 import { IntakesTable } from "@/features/intakes/components/intakes-table";
@@ -33,7 +32,6 @@ export function RequisitionsPage() {
   const createIntake = useCreateIntake();
 
   const [tab, setTab] = useState<TabKey>("requisitions");
-  const [createOpen, setCreateOpen] = useState(false);
 
   function handleNewIntake() {
     createIntake.mutate(
@@ -90,7 +88,7 @@ export function RequisitionsPage() {
           <Button
             size="sm"
             className="gap-1.5"
-            onClick={() => setCreateOpen(true)}
+            onClick={() => navigate("/requisitions/new")}
           >
             <Plus className="size-4" />
             New job req
@@ -121,7 +119,7 @@ export function RequisitionsPage() {
               title="No requisitions yet"
               body="Create your first job requisition to get started."
               action={
-                <Button size="sm" onClick={() => setCreateOpen(true)} className="gap-1.5">
+                <Button size="sm" onClick={() => navigate("/requisitions/new")} className="gap-1.5">
                   <Plus className="size-4" />
                   New job req
                 </Button>
@@ -168,11 +166,6 @@ export function RequisitionsPage() {
         </TabsContent>
       </Tabs>
 
-      <CreateRequisitionDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        onCreated={(id) => navigate(`/requisitions/${id}`)}
-      />
     </div>
   );
 }

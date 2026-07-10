@@ -33,7 +33,7 @@ export const useThemeStore = create<ThemeState>()(
       setTheme: (theme) => set({ theme }),
       setMode: (mode) => set({ mode }),
     }),
-    { name: "ats-theme", version: 2 },
+    { name: "ats-theme", version: 3 },
   ),
 )
 
