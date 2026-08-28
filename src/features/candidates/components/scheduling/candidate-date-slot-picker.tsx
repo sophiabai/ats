@@ -1,13 +1,19 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-const MONTH_NAMES = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
-const DAY_LONG = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-const DAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+import {
+  DAY_LONG,
+  DAY_SHORT,
+  MONTH_NAMES,
+  addBusinessDays,
+  dateKey,
+  getCalendarGrid,
+} from "@/features/candidates/components/scheduling/scheduling-date-utils";
+import {
+  createSelfScheduleWindow,
+  isSelfScheduleDate,
+  makeSelfScheduleSlotGenerator,
+} from "@/features/candidates/components/scheduling/self-schedule-slots";
 
 export type CandidateTimeSlot = {
   time: string;
@@ -15,63 +21,10 @@ export type CandidateTimeSlot = {
   multiDay?: { label: string; ranges: string[] }[];
 };
 
-function addBusinessDays(from: Date, n: number) {
-  const d = new Date(from);
-  let added = 0;
-  while (added < n) {
-    d.setDate(d.getDate() + 1);
-    const dow = d.getDay();
-    if (dow !== 0 && dow !== 6) added++;
-  }
-  return d;
-}
 
-function dateKey(d: Date) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
 
-function getCalendarGrid(year: number, month: number) {
-  const first = new Date(year, month, 1);
-  const startDay = first.getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const prevMonthDays = new Date(year, month, 0).getDate();
-  const cells: { day: number; current: boolean; date: Date }[] = [];
-  for (let i = startDay - 1; i >= 0; i--) {
-    const d = prevMonthDays - i;
-    cells.push({ day: d, current: false, date: new Date(year, month - 1, d) });
-  }
-  for (let d = 1; d <= daysInMonth; d++) {
-    cells.push({ day: d, current: true, date: new Date(year, month, d) });
-  }
-  const remaining = 42 - cells.length;
-  for (let d = 1; d <= remaining; d++) {
-    cells.push({ day: d, current: false, date: new Date(year, month + 1, d) });
-  }
-  return cells;
-}
 
-function defaultIsAvailableDate(d: Date, windowStart: Date, windowEnd: Date) {
-  const dow = d.getDay();
-  if (dow === 0 || dow === 6) return false;
-  const dk = dateKey(d);
-  return dk >= dateKey(windowStart) && dk <= dateKey(windowEnd);
-}
 
-function defaultGenerateSlots(
-  date: Date,
-  windowStart: Date,
-  windowEnd: Date,
-): CandidateTimeSlot[] {
-  const dow = date.getDay();
-  if (dow === 0 || dow === 6 || !defaultIsAvailableDate(date, windowStart, windowEnd)) {
-    return [];
-  }
-  return [
-    { time: "9:00 am", available: true },
-    { time: "10:00 am", available: true },
-    { time: "1:00 pm", available: true },
-  ];
-}
 
 // ---------------------------------------------------------------------------
 // Calendar grid (month view)
@@ -84,8 +37,12 @@ export type CandidateCalendarGridProps = {
   onSelectDate: (d: Date) => void;
   isAvailableDate: (d: Date) => boolean;
   className?: string;
-  /** When true, shows Today button + previous/next month in a compact header. */
+  /** When true, hides the Today button. */
   compactHeader?: boolean;
+  /** `sm` for the recruiter preview panel, `md` for the full candidate page. */
+  size?: "sm" | "md";
+  /** `split` puts next beside Today; `grouped` puts prev+next together on the left. */
+  navLayout?: "split" | "grouped";
 };
 
 export function CandidateCalendarGrid({
@@ -96,7 +53,14 @@ export function CandidateCalendarGrid({
   isAvailableDate,
   className,
   compactHeader = false,
+  size = "sm",
+  navLayout = "split",
 }: CandidateCalendarGridProps) {
+  const md = size === "md";
+  const navBtn = md
+    ? "rounded-lg p-1.5 hover:bg-stone-100"
+    : "rounded-md p-1 hover:bg-stone-100";
+  const navIcon = md ? "h-4 w-4 text-stone-900" : "h-3.5 w-3.5 text-stone-900";
   const cells = useMemo(
     () => getCalendarGrid(viewMonth.year, viewMonth.month),
     [viewMonth],
@@ -120,23 +84,39 @@ export function CandidateCalendarGrid({
 
   return (
     <div className={className}>
-      <div className="flex items-center justify-between pb-3">
-        <button className="rounded-md p-1 hover:bg-stone-100" onClick={prevMonth}>
-          <ChevronLeftIcon className="h-3.5 w-3.5 text-stone-900" />
-        </button>
-        <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+      <div className={cn("flex items-center justify-between", md ? "pb-4" : "pb-3")}>
+        {navLayout === "grouped" ? (
+          <div className="flex items-center gap-1">
+            <button className={navBtn} onClick={prevMonth}>
+              <ChevronLeftIcon className={navIcon} />
+            </button>
+            <button className={navBtn} onClick={nextMonth}>
+              <ChevronRightIcon className={navIcon} />
+            </button>
+          </div>
+        ) : (
+          <button className={navBtn} onClick={prevMonth}>
+            <ChevronLeftIcon className={navIcon} />
+          </button>
+        )}
+
+        <div
+          className={cn(
+            "flex items-center font-medium text-foreground",
+            md ? "gap-3 text-lg" : "gap-2 text-sm",
+          )}
+        >
           <span>{MONTH_NAMES[viewMonth.month]}</span>
           <span className="font-normal text-muted-foreground">{viewMonth.year}</span>
         </div>
-        {compactHeader ? (
-          <button className="rounded-md p-1 hover:bg-stone-100" onClick={nextMonth}>
-            <ChevronRightIcon className="h-3.5 w-3.5 text-stone-900" />
-          </button>
-        ) : (
-          <div className="flex items-center gap-1">
-            <button className="rounded-md p-1 hover:bg-stone-100" onClick={nextMonth}>
-              <ChevronRightIcon className="h-3.5 w-3.5 text-stone-900" />
+
+        <div className="flex items-center gap-1">
+          {navLayout === "split" && (
+            <button className={navBtn} onClick={nextMonth}>
+              <ChevronRightIcon className={navIcon} />
             </button>
+          )}
+          {!compactHeader && (
             <Button
               variant="ghost"
               size="sm"
@@ -147,18 +127,23 @@ export function CandidateCalendarGrid({
             >
               Today
             </Button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      <div className="grid grid-cols-7 gap-0.5 text-center text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+      <div
+        className={cn(
+          "grid grid-cols-7 text-center font-medium uppercase tracking-wide text-muted-foreground",
+          md ? "gap-1 text-[11px]" : "gap-0.5 text-[10px]",
+        )}
+      >
         {DAY_SHORT.map((d) => (
-          <div key={d} className="py-0.5">{d}</div>
+          <div key={d} className={md ? "py-1" : "py-0.5"}>{d}</div>
         ))}
       </div>
       <div className="mb-1 h-px bg-border" />
 
-      <div className="grid grid-cols-7 gap-0.5">
+      <div className={cn("grid grid-cols-7", md ? "gap-1" : "gap-0.5")}>
         {cells.map((cell, i) => {
           const dk = dateKey(cell.date);
           const isToday = dk === today;
@@ -171,7 +156,8 @@ export function CandidateCalendarGrid({
               disabled={!available}
               onClick={() => onSelectDate(cell.date)}
               className={cn(
-                "relative flex aspect-square items-center justify-center rounded-md text-xs transition-colors",
+                "relative flex aspect-square items-center justify-center transition-colors",
+                md ? "rounded-lg text-sm" : "rounded-md text-xs",
                 !cell.current && "text-stone-300",
                 cell.current && !available && "text-stone-300",
                 cell.current && available && !isSelected && "text-foreground hover:bg-stone-100",
@@ -207,31 +193,74 @@ export function CandidateSlotList({
   selectedSlot,
   onSelectSlot,
   className,
+  size = "sm",
+  hideMultiDay = false,
+  selectMode = "direct",
+  onConfirmSlot,
+  tone = "outline",
+  showHeading = true,
 }: {
   selectedDate: Date | null;
   slots: CandidateTimeSlot[];
   selectedSlot: string | null;
   onSelectSlot: (slotId: string) => void;
   className?: string;
+  /** `sm` for the recruiter preview panel, `md` for the full candidate page. */
+  size?: "sm" | "md";
+  /** Hide multi-day options (the mobile slot screen shows single-day only). */
+  hideMultiDay?: boolean;
+  /**
+   * `direct` selects on tap. `confirm` reveals an inline Select button beside
+   * the tapped slot — the mobile two-tap guard, so a mis-tap on a small target
+   * cannot book an interview.
+   */
+  selectMode?: "direct" | "confirm";
+  /** Called when the Select button is pressed in `confirm` mode. */
+  onConfirmSlot?: (slotId: string) => void;
+  /** `accent` gives filled slot buttons — bigger touch affordance on mobile. */
+  tone?: "outline" | "accent";
+  /** Suppress the day heading when the host already shows the date. */
+  showHeading?: boolean;
 }) {
+  const md = size === "md";
+  const accent = tone === "accent";
+  const visibleSlots = hideMultiDay ? slots.filter((s) => !s.multiDay) : slots;
   return (
     <div className={cn("flex flex-col", className)}>
       {selectedDate ? (
         <>
-          <h3 className="pb-3 text-sm font-semibold text-foreground">
-            {DAY_LONG[selectedDate.getDay()]} {selectedDate.getDate()}
-          </h3>
-          <div className="flex flex-col gap-1.5 overflow-y-auto">
-            {slots.map((slot, i) =>
+          {showHeading && (
+            <h3
+              className={cn(
+                "font-semibold text-foreground",
+                md ? "pb-4 text-base" : "pb-3 text-sm",
+              )}
+            >
+              {DAY_LONG[selectedDate.getDay()]} {selectedDate.getDate()}
+            </h3>
+          )}
+          <div
+            className={cn(
+              "flex flex-col overflow-y-auto",
+              accent ? "gap-4" : md ? "gap-2" : "gap-1.5",
+            )}
+          >
+            {visibleSlots.map((slot, i) =>
               slot.multiDay ? (
                 <div key={i} className="flex flex-col gap-1">
-                  <p className="pt-1.5 text-xs font-medium text-muted-foreground">
+                  <p
+                    className={cn(
+                      "font-medium text-muted-foreground",
+                      md ? "pt-2 text-xs" : "pt-1.5 text-xs",
+                    )}
+                  >
                     Multi-day options starting on this day
                   </p>
                   <button
                     onClick={() => onSelectSlot(`multi-${i}`)}
                     className={cn(
-                      "rounded-md border px-2.5 py-1.5 text-left text-xs transition-colors",
+                      "border text-left transition-colors",
+                      md ? "rounded-lg px-3 py-2 text-sm" : "rounded-md px-2.5 py-1.5 text-xs",
                       selectedSlot === `multi-${i}`
                         ? "border-primary bg-primary text-primary-foreground"
                         : "border-border text-foreground hover:border-primary/40",
@@ -256,18 +285,37 @@ export function CandidateSlotList({
                   </button>
                 </div>
               ) : (
-                <button
-                  key={i}
-                  onClick={() => onSelectSlot(slot.time)}
-                  className={cn(
-                    "rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors",
-                    selectedSlot === slot.time
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border text-foreground hover:border-primary/40",
+                <div key={i} className={cn("flex", selectMode === "confirm" && "gap-2")}>
+                  <button
+                    onClick={() => onSelectSlot(slot.time)}
+                    className={cn(
+                      "border font-medium transition-colors",
+                      accent
+                        ? "rounded-lg px-6 py-2.5 text-sm"
+                        : md
+                          ? "rounded-lg px-3 py-2 text-sm"
+                          : "rounded-md px-2.5 py-1.5 text-xs",
+                      selectMode === "confirm" && "flex-1",
+                      accent
+                        ? selectedSlot === slot.time
+                          ? "border-primary bg-accent text-foreground"
+                          : "border-border bg-accent text-foreground"
+                        : selectedSlot === slot.time
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border text-foreground hover:border-primary/40",
+                    )}
+                  >
+                    {slot.time}
+                  </button>
+                  {selectMode === "confirm" && selectedSlot === slot.time && (
+                    <Button
+                      className="cand-fade-in h-auto flex-1"
+                      onClick={() => onConfirmSlot?.(slot.time)}
+                    >
+                      Select
+                    </Button>
                   )}
-                >
-                  {slot.time}
-                </button>
+                </div>
               ),
             )}
           </div>
@@ -318,22 +366,24 @@ export function CandidateDateSlotPicker({
   slotsClassName,
   compactCalendarHeader = false,
 }: CandidateDateSlotPickerProps) {
-  const defaultWindowStart = useMemo(
-    () => windowStart ?? addBusinessDays(new Date(), 2),
-    [windowStart],
+  // Defaults to the shared self-schedule rules, so this preview and the real
+  // candidate page cannot drift apart.
+  const window = useMemo(() => {
+    const base = createSelfScheduleWindow();
+    return { start: windowStart ?? base.start, end: windowEnd ?? base.end };
+  }, [windowStart, windowEnd]);
+
+  const defaultWindowStart = window.start;
+
+  const isAvailableDate = useMemo(
+    () => (d: Date) => isSelfScheduleDate(d, window),
+    [window],
   );
-  const defaultWindowEnd = useMemo(() => {
-    if (windowEnd) return windowEnd;
-    const d = new Date(defaultWindowStart);
-    d.setDate(d.getDate() + 13);
-    return d;
-  }, [windowEnd, defaultWindowStart]);
 
-  const isAvailableDate = (d: Date) =>
-    defaultIsAvailableDate(d, defaultWindowStart, defaultWindowEnd);
-
-  const slotGenerator =
-    generateSlots ?? ((d: Date) => defaultGenerateSlots(d, defaultWindowStart, defaultWindowEnd));
+  const slotGenerator = useMemo(
+    () => generateSlots ?? makeSelfScheduleSlotGenerator(window),
+    [generateSlots, window],
+  );
 
   const [viewMonth, setViewMonth] = useState(() => ({
     year: (initialDate ?? defaultWindowStart).getFullYear(),
