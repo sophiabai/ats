@@ -195,12 +195,13 @@ function PreviewAsCandidate({
         </div>
       }
     >
-      <div className="max-w-[440px] overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+      <div className="w-full overflow-hidden rounded-xl border border-border bg-card shadow-sm">
         <CandidateDateSlotPicker
           compactCalendarHeader
           onSelectionChange={onSelectionChange}
-          calendarClassName="flex flex-col flex-1 p-3 border-r border-border"
-          slotsClassName="flex w-[132px] shrink-0 flex-col p-3"
+          className="w-full"
+          calendarClassName="flex w-[308px] shrink-0 flex-col p-4 border-r border-border"
+          slotsClassName="flex flex-1 flex-col p-4"
         />
       </div>
     </SectionCard>

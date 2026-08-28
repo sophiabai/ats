@@ -295,7 +295,9 @@ export function CandidateSlotList({
                         : md
                           ? "rounded-lg px-3 py-2 text-sm"
                           : "rounded-md px-2.5 py-1.5 text-xs",
-                      selectMode === "confirm" && "flex-1",
+                      // Fills the column; in confirm mode it shares the row
+                      // with the Select button.
+                      "flex-1",
                       accent
                         ? selectedSlot === slot.time
                           ? "border-primary bg-accent text-foreground"
