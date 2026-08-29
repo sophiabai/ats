@@ -8,6 +8,7 @@ import { agentsRoutes } from "@/features/agents/routes";
 import { applicationsRoutes } from "@/features/applications/routes";
 import { assessmentRoutes } from "@/features/assessment/routes";
 import { candidatesRoutes } from "@/features/candidates/routes";
+import { componentGalleryRoutes } from "@/features/component-gallery/routes";
 import { docsRoutes } from "@/features/docs/routes";
 import { emailsRoutes } from "@/features/emails/routes";
 import { headcountPlanningRoutes } from "@/features/headcount-planning/routes";
@@ -43,6 +44,7 @@ const recruitingRoutes: RouteObject[] = [
 
 // Routes outside any app shell (public pages, prototypes).
 const publicRoutes: RouteObject[] = [
+  ...componentGalleryRoutes,
   ...docsRoutes,
   ...protoHubRoutes,
   ...schedulingRoutes,

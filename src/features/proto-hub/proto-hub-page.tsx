@@ -87,6 +87,11 @@ const sections: Section[] = [
         href: "/proto-hub/candidate-profile",
       },
       {
+        title: "Components",
+        description: "Every ui/ primitive in each variant and size it defines",
+        href: "/components",
+      },
+      {
         title: "Slack mock",
         description: "Agent's Slack DMs with interviewers and the recruiter",
         href: "/slack",
